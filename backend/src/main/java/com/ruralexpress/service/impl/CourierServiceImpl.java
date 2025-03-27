@@ -383,4 +383,140 @@ public class CourierServiceImpl implements CourierService {
                   
         return courierMapper.selectList(queryWrapper);
     }
+
+    /**
+     * 根据位置信息获取附近的快递员
+     * @param latitude 纬度
+     * @param longitude 经度
+     * @param limit 限制数量
+     * @return 快递员列表
+     */
+    @Override
+    public List<Courier> getNearestCouriers(double latitude, double longitude, int limit) {
+        logger.info("获取附近快递员: 纬度={}, 经度={}, 限制={}", latitude, longitude, limit);
+        
+        try {
+            // 获取所有激活状态的快递员
+            List<Courier> allCouriers = getAllActiveCouriers();
+            
+            // 计算距离并排序
+            List<Courier> sortedCouriers = allCouriers.stream()
+                .filter(courier -> courier.getLatitude() != null && courier.getLongitude() != null)
+                .sorted((c1, c2) -> {
+                    // 计算距离
+                    double distance1 = calculateDistance(latitude, longitude, 
+                                        c1.getLatitude(), c1.getLongitude());
+                    double distance2 = calculateDistance(latitude, longitude, 
+                                        c2.getLatitude(), c2.getLongitude());
+                    return Double.compare(distance1, distance2);
+                })
+                .limit(limit)
+                .collect(Collectors.toList());
+            
+            // 设置距离信息
+            for (Courier courier : sortedCouriers) {
+                double distance = calculateDistance(latitude, longitude, 
+                                    courier.getLatitude(), courier.getLongitude());
+                courier.setDistance(Math.round(distance * 10) / 10.0); // 保留一位小数
+            }
+            
+            return sortedCouriers;
+        } catch (Exception e) {
+            logger.error("获取附近快递员失败", e);
+            // 如果发生异常，返回推荐快递员
+            return getRecommendedCouriers(limit);
+        }
+    }
+    
+    /**
+     * 获取所有激活状态的快递员
+     * @return 快递员列表
+     */
+    private List<Courier> getAllActiveCouriers() {
+        // 这里简化处理，直接返回所有审核通过的快递员
+        // 实际项目中应该从数据库查询，并增加状态过滤
+        List<Courier> couriers = new ArrayList<>();
+        
+        // TODO: 替换为实际数据库查询
+        // 模拟数据
+        Courier c1 = new Courier();
+        c1.setId(1L);
+        c1.setName("张师傅");
+        c1.setRating(4.8);
+        c1.setCompletedOrders(128);
+        c1.setLatitude(30.5866);
+        c1.setLongitude(104.0655);
+        c1.setAvatarUrl("/static/images/courier-1.png");
+        
+        Courier c2 = new Courier();
+        c2.setId(2L);
+        c2.setName("李师傅");
+        c2.setRating(4.9);
+        c2.setCompletedOrders(156);
+        c2.setLatitude(30.5830);
+        c2.setLongitude(104.0682);
+        c2.setAvatarUrl("/static/images/courier-2.png");
+        
+        Courier c3 = new Courier();
+        c3.setId(3L);
+        c3.setName("王师傅");
+        c3.setRating(4.7);
+        c3.setCompletedOrders(98);
+        c3.setLatitude(30.5920);
+        c3.setLongitude(104.0612);
+        c3.setAvatarUrl("/static/images/courier-3.png");
+        
+        Courier c4 = new Courier();
+        c4.setId(4L);
+        c4.setName("刘师傅");
+        c4.setRating(4.6);
+        c4.setCompletedOrders(76);
+        c4.setLatitude(30.5890);
+        c4.setLongitude(104.0730);
+        c4.setAvatarUrl("/static/images/courier-4.png");
+        
+        Courier c5 = new Courier();
+        c5.setId(5L);
+        c5.setName("赵师傅");
+        c5.setRating(4.5);
+        c5.setCompletedOrders(64);
+        c5.setLatitude(30.5950);
+        c5.setLongitude(104.0580);
+        c5.setAvatarUrl("/static/images/courier-5.png");
+        
+        couriers.add(c1);
+        couriers.add(c2);
+        couriers.add(c3);
+        couriers.add(c4);
+        couriers.add(c5);
+        
+        return couriers;
+    }
+    
+    /**
+     * 使用Haversine公式计算两点间的距离（单位：公里）
+     * @param lat1 纬度1
+     * @param lon1 经度1
+     * @param lat2 纬度2
+     * @param lon2 经度2
+     * @return 距离，单位为公里
+     */
+    private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+        // 地球平均半径（单位：千米）
+        final int R = 6371;
+        
+        // 将经纬度转换为弧度
+        double latDistance = Math.toRadians(lat2 - lat1);
+        double lonDistance = Math.toRadians(lon2 - lon1);
+        
+        // Haversine公式
+        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+        
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        
+        // 计算距离
+        return R * c;
+    }
 } 

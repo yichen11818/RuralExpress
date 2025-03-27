@@ -3,6 +3,7 @@ package com.ruralexpress.entity;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -100,4 +101,47 @@ public class Courier {
      * 平均响应时间（分钟）
      */
     private Integer responseTime;
+    
+    /**
+     * 纬度
+     */
+    private Double latitude;
+    
+    /**
+     * 经度
+     */
+    private Double longitude;
+    
+    /**
+     * 距离（单位：公里），计算所得，非数据库字段
+     */
+    @TableField(exist = false)
+    private Double distance;
+    
+    // Getter and Setter for latitude
+    public Double getLatitude() {
+        return latitude;
+    }
+    
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+    
+    // Getter and Setter for longitude
+    public Double getLongitude() {
+        return longitude;
+    }
+    
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
+    }
+    
+    // Getter and Setter for distance
+    public Double getDistance() {
+        return distance;
+    }
+    
+    public void setDistance(Double distance) {
+        this.distance = distance;
+    }
 } 

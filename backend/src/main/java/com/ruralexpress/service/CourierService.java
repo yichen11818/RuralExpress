@@ -121,4 +121,13 @@ public interface CourierService {
      * @return 是否成功
      */
     boolean updateCourierInfo(Long courierId, Courier courier);
+    
+    /**
+     * 根据位置信息获取附近的快递员
+     * @param latitude 纬度
+     * @param longitude 经度
+     * @param limit 限制数量
+     * @return 快递员列表
+     */
+    List<Courier> getNearestCouriers(double latitude, double longitude, int limit);
 } 

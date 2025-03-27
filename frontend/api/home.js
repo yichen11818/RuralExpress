@@ -27,8 +27,18 @@ export function getNotices() {
 /**
  * 获取附近快递员
  * @param {Number} limit 获取数量
+ * @param {Number} latitude 纬度
+ * @param {Number} longitude 经度
  * @returns {Promise} 快递员列表
  */
-export function getNearestCouriers(limit = 5) {
-  return request.get('/home/couriers/nearest', { limit });
+export function getNearestCouriers(limit = 5, latitude, longitude) {
+  const params = { limit };
+  
+  // 如果提供了位置信息，添加到请求参数
+  if (latitude !== undefined && longitude !== undefined) {
+    params.latitude = latitude;
+    params.longitude = longitude;
+  }
+  
+  return request.get('/home/couriers/nearest', params);
 } 

@@ -145,14 +145,26 @@ public class HomeController {
     
     /**
      * 获取附近快递员
+     * @param latitude 纬度
+     * @param longitude 经度
      * @param limit 限制数量
      * @return 快递员列表
      */
     @GetMapping("/couriers/nearest")
-    public ResponseEntity<List<Courier>> getNearestCouriers(@RequestParam(defaultValue = "5") int limit) {
+    public ResponseEntity<List<Courier>> getNearestCouriers(
+            @RequestParam(required = false) Double latitude,
+            @RequestParam(required = false) Double longitude,
+            @RequestParam(defaultValue = "5") int limit) {
         try {
-            // 这里应该根据用户位置获取附近快递员，暂时返回推荐快递员
-            return ResponseEntity.ok(courierService.getRecommendedCouriers(limit));
+            if (latitude != null && longitude != null) {
+                // 使用位置信息查询附近快递员
+                logger.info("使用位置信息查询附近快递员: 纬度={}, 经度={}, 限制数量={}", latitude, longitude, limit);
+                return ResponseEntity.ok(courierService.getNearestCouriers(latitude, longitude, limit));
+            } else {
+                // 降级处理，返回推荐快递员
+                logger.info("位置信息不可用，返回推荐快递员");
+                return ResponseEntity.ok(courierService.getRecommendedCouriers(limit));
+            }
         } catch (Exception e) {
             // 如果出现异常，返回空列表并记录错误
             logger.error("获取附近快递员失败", e);

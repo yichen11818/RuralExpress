@@ -13,7 +13,14 @@ const _sfc_main = {
       loading: true,
       banners: [],
       notices: [],
-      nearestCouriers: []
+      nearestCouriers: [],
+      userLocation: null,
+      locationFailed: false,
+      recentOrders: [],
+      packageTypes: ["小件", "中件", "大件"],
+      selectedPackageType: 0,
+      distance: 10,
+      calculatedPrice: 0
     };
   },
   onLoad() {
@@ -23,18 +30,64 @@ const _sfc_main = {
       });
       return;
     }
-    this.loadHomeData();
+    this.getUserLocation();
+    this.calculatePrice();
   },
   onPullDownRefresh() {
-    this.loadHomeData(() => {
-      common_vendor.index.stopPullDownRefresh();
-      common_vendor.index.showToast({
-        title: "刷新成功",
-        icon: "success"
-      });
-    });
+    this.getUserLocation();
   },
   methods: {
+    // 获取用户位置
+    getUserLocation() {
+      common_vendor.index.showLoading({
+        title: "定位中..."
+      });
+      common_vendor.index.getLocation({
+        type: "wgs84",
+        success: (res) => {
+          const { latitude, longitude } = res;
+          this.userLocation = { latitude, longitude };
+          console.log("获取位置成功", this.userLocation);
+          this.loadNearbyCouriers();
+          this.loadHomeData();
+        },
+        fail: (err) => {
+          console.error("获取位置失败", err);
+          this.locationFailed = true;
+          common_vendor.index.showToast({
+            title: "获取位置信息失败，将显示推荐快递员",
+            icon: "none",
+            duration: 2e3
+          });
+          this.loadHomeData();
+        },
+        complete: () => {
+          common_vendor.index.hideLoading();
+        }
+      });
+    },
+    // 加载附近快递员
+    loadNearbyCouriers() {
+      if (!this.userLocation)
+        return;
+      const { latitude, longitude } = this.userLocation;
+      api_home.getNearestCouriers(5, latitude, longitude).then((res) => {
+        console.log("附近快递员响应:", res);
+        if (res && res.code === 200 && res.data) {
+          this.nearestCouriers = res.data.map((courier) => {
+            return {
+              id: courier.id,
+              name: courier.name || courier.userName || "未知快递员",
+              avatar: courier.avatar || "/static/images/default-avatar.png",
+              rating: courier.rating || 5,
+              completedOrders: courier.completedOrders || 0
+            };
+          });
+        }
+      }).catch((err) => {
+        console.error("获取附近快递员失败", err);
+      });
+    },
     // 加载首页数据
     loadHomeData(callback) {
       this.loading = true;
@@ -44,23 +97,24 @@ const _sfc_main = {
           const data = res.data;
           this.banners = data.banners || [];
           this.notices = data.notices || [];
-          this.nearestCouriers = data.nearestCouriers || [];
-          this.nearestCouriers = this.nearestCouriers.map((courier) => {
-            return {
-              id: courier.id,
-              name: courier.name || courier.userName || "未知快递员",
-              avatar: courier.avatar || "/static/images/default-avatar.png",
-              rating: courier.rating || 5,
-              completedOrders: courier.completedOrders || 0
-            };
-          });
+          if (!this.userLocation || this.nearestCouriers.length === 0) {
+            this.nearestCouriers = (data.nearestCouriers || []).map((courier) => {
+              return {
+                id: courier.id,
+                name: courier.name || courier.userName || "未知快递员",
+                avatar: courier.avatar || "/static/images/default-avatar.png",
+                rating: courier.rating || 5,
+                completedOrders: courier.completedOrders || 0
+              };
+            });
+          }
+          this.recentOrders = data.recentOrders || [];
         } else {
           console.warn("首页数据返回格式不正确:", res);
           common_vendor.index.showToast({
             title: "数据加载异常",
             icon: "none"
           });
-          this.clearData();
         }
       }).catch((err) => {
         console.error("获取首页数据失败", err);
@@ -68,10 +122,12 @@ const _sfc_main = {
           title: "数据加载失败",
           icon: "none"
         });
-        this.clearData();
       }).finally(() => {
         this.loading = false;
-        callback && callback();
+        if (typeof callback === "function") {
+          callback();
+        }
+        common_vendor.index.stopPullDownRefresh();
       });
     },
     // 清空数据
@@ -79,6 +135,7 @@ const _sfc_main = {
       this.banners = [];
       this.notices = [];
       this.nearestCouriers = [];
+      this.recentOrders = [];
     },
     // 页面导航
     navigateTo(url) {
@@ -97,6 +154,49 @@ const _sfc_main = {
       if (notice.linkUrl) {
         this.navigateTo(notice.linkUrl);
       }
+    },
+    // 获取订单状态文本
+    getOrderStatusText(status) {
+      const statusTexts = {
+        "pending": "待发货",
+        "shipped": "已发货",
+        "delivered": "已送达",
+        "cancelled": "已取消"
+      };
+      return statusTexts[status] || "未知状态";
+    },
+    // 格式化日期
+    formatDate(dateStr) {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString() + " " + date.toLocaleTimeString();
+    },
+    // 处理包裹类型变化
+    handlePackageTypeChange(e) {
+      this.selectedPackageType = e.detail.value;
+      this.calculatePrice();
+    },
+    // 处理距离变化
+    handleDistanceChange(e) {
+      this.distance = e.detail.value;
+      this.calculatePrice();
+    },
+    // 计算价格
+    calculatePrice() {
+      const basePrice = 5;
+      const distanceFee = Math.max(0, this.distance - 2) * 1;
+      let packageTypeFee = 0;
+      switch (parseInt(this.selectedPackageType)) {
+        case 0:
+          packageTypeFee = 0;
+          break;
+        case 1:
+          packageTypeFee = 3;
+          break;
+        case 2:
+          packageTypeFee = 6;
+          break;
+      }
+      this.calculatedPrice = basePrice + distanceFee + packageTypeFee;
     }
   }
 };
@@ -110,43 +210,62 @@ if (!Math) {
 }
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
-    a: common_vendor.p({
+    a: $data.loading
+  }, $data.loading ? {
+    b: common_vendor.f(4, (i, k0, i0) => {
+      return {
+        a: i
+      };
+    }),
+    c: common_vendor.f(4, (i, k0, i0) => {
+      return {
+        a: i
+      };
+    }),
+    d: common_vendor.f(2, (i, k0, i0) => {
+      return {
+        a: i
+      };
+    })
+  } : common_vendor.e({
+    e: common_vendor.p({
       type: "search",
       size: "18",
       color: "#666"
     }),
-    b: common_vendor.o(($event) => $options.navigateTo("/pages/search/search")),
-    c: common_vendor.f($data.banners, (item, index, i0) => {
+    f: common_vendor.o(($event) => $options.navigateTo("/pages/search/search")),
+    g: common_vendor.f($data.banners, (item, index, i0) => {
       return {
         a: item.imageUrl,
         b: index,
         c: common_vendor.o(($event) => $options.handleBannerClick(item), index)
       };
     }),
-    d: common_assets._imports_0,
-    e: common_vendor.o(($event) => $options.navigateTo("/pages/delivery/send")),
-    f: common_assets._imports_1,
-    g: common_vendor.o(($event) => $options.navigateTo("/pages/delivery/receive")),
-    h: common_assets._imports_2,
-    i: common_vendor.o(($event) => $options.navigateTo("/pages/order/track")),
-    j: common_assets._imports_3,
-    k: common_vendor.o(($event) => $options.navigateTo("/pages/courier/recruitment")),
-    l: common_vendor.p({
+    h: common_assets._imports_0,
+    i: common_vendor.o(($event) => $options.navigateTo("/pages/delivery/send")),
+    j: common_assets._imports_1,
+    k: common_vendor.o(($event) => $options.navigateTo("/pages/delivery/receive")),
+    l: common_assets._imports_2,
+    m: common_vendor.o(($event) => $options.navigateTo("/pages/order/track")),
+    n: common_assets._imports_3,
+    o: common_vendor.o(($event) => $options.navigateTo("/pages/courier/recruitment")),
+    p: common_vendor.p({
       type: "notification",
       size: "18",
       color: "#3cc51f"
     }),
-    m: common_vendor.f($data.notices, (item, index, i0) => {
+    q: common_vendor.f($data.notices, (item, index, i0) => {
       return {
         a: common_vendor.t(item.content),
         b: index,
         c: common_vendor.o(($event) => $options.handleNoticeClick(item), index)
       };
     }),
-    n: $data.nearestCouriers.length > 0
+    r: $data.nearestCouriers.length > 0
   }, $data.nearestCouriers.length > 0 ? {
-    o: common_vendor.o(($event) => $options.navigateTo("/pages/courier/list")),
-    p: common_vendor.f($data.nearestCouriers, (item, index, i0) => {
+    s: common_vendor.t($data.userLocation ? "附近快递员" : "推荐快递员"),
+    t: common_vendor.o(($event) => $options.navigateTo("/pages/courier/list")),
+    v: common_vendor.f($data.nearestCouriers, (item, index, i0) => {
       return {
         a: item.avatar || "/static/images/default-avatar.png",
         b: common_vendor.t(item.name),
@@ -157,29 +276,62 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         g: common_vendor.o(($event) => $options.navigateTo(`/pages/courier/detail?id=${item.id}`), index)
       };
     }),
-    q: common_vendor.p({
+    w: common_vendor.p({
       type: "star-filled",
       size: "12",
       color: "#ff9900"
     })
   } : {}, {
-    r: common_vendor.p({
+    x: $data.recentOrders.length > 0
+  }, $data.recentOrders.length > 0 ? {
+    y: common_vendor.o(($event) => $options.navigateTo("/pages/order/order")),
+    z: common_vendor.f($data.recentOrders, (item, index, i0) => {
+      return {
+        a: common_vendor.t($options.getOrderStatusText(item.status)),
+        b: common_vendor.n("status-" + item.status),
+        c: common_vendor.t($options.formatDate(item.createdAt)),
+        d: common_vendor.t(item.senderAddress),
+        e: common_vendor.t(item.receiverAddress),
+        f: "1a526eb5-3-" + i0,
+        g: index,
+        h: common_vendor.o(($event) => $options.navigateTo(`/pages/order/detail?id=${item.id}`), index)
+      };
+    }),
+    A: common_vendor.p({
+      type: "right",
+      size: "16",
+      color: "#999"
+    })
+  } : {}, {
+    B: common_vendor.t($data.packageTypes[$data.selectedPackageType]),
+    C: common_vendor.p({
+      type: "arrowdown",
+      size: "14",
+      color: "#666"
+    }),
+    D: $data.packageTypes,
+    E: common_vendor.o((...args) => $options.handlePackageTypeChange && $options.handlePackageTypeChange(...args)),
+    F: $data.distance,
+    G: common_vendor.o((...args) => $options.handleDistanceChange && $options.handleDistanceChange(...args)),
+    H: common_vendor.t($data.distance),
+    I: common_vendor.t($data.calculatedPrice.toFixed(2)),
+    J: common_vendor.o(($event) => $options.navigateTo("/pages/delivery/send")),
+    K: common_vendor.p({
       type: "checkmarkempty",
       size: "20",
       color: "#3cc51f"
     }),
-    s: common_vendor.p({
+    L: common_vendor.p({
       type: "checkmarkempty",
       size: "20",
       color: "#3cc51f"
     }),
-    t: common_vendor.p({
+    M: common_vendor.p({
       type: "checkmarkempty",
       size: "20",
       color: "#3cc51f"
-    }),
-    v: $data.loading
-  }, $data.loading ? {} : {});
+    })
+  }));
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);
 wx.createPage(MiniProgramPage);
