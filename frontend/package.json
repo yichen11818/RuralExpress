@@ -1,0 +1,19 @@
+{
+  "name": "rural-express",
+  "version": "1.0.0",
+  "description": "乡递通 - 乡村兼职快递服务小程序",
+  "main": "main.js",
+  "scripts": {
+    "dev": "echo \"请使用HBuilderX运行本项目\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@dcloudio/uni-app": "^2.0.1",
+    "pinia": "^2.0.33",
+    "vue": "^3.2.47"
+  },
+  "devDependencies": {
+    "typescript": "^4.9.5"
+  }
+} 

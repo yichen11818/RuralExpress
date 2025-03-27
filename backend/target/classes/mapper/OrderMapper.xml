@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruralexpress.mapper.OrderMapper">
+
+    <!-- 基础查询列 -->
+    <sql id="Base_Column_List">
+        id, order_no, user_id, courier_id, sender_name, sender_phone, sender_address, 
+        receiver_name, receiver_phone, receiver_address, package_type, weight, price, 
+        status, expected_pickup_time, actual_pickup_time, expected_delivery_time, 
+        actual_delivery_time, remark, cancel_reason, created_at, updated_at
+    </sql>
+    
+    <!-- 查询用户订单列表 -->
+    <select id="findUserOrders" resultType="com.ruralexpress.entity.Order">
+        SELECT <include refid="Base_Column_List" />
+        FROM t_order
+        WHERE user_id = #{filter.userId}
+        <if test="filter.status != null">
+            AND status = #{filter.status}
+        </if>
+        <if test="filter.startDate != null and filter.startDate != ''">
+            AND created_at &gt;= #{filter.startDate}
+        </if>
+        <if test="filter.endDate != null and filter.endDate != ''">
+            AND created_at &lt;= #{filter.endDate}
+        </if>
+        <if test="filter.keyword != null and filter.keyword != ''">
+            AND (
+                order_no LIKE CONCAT('%', #{filter.keyword}, '%')
+                OR sender_name LIKE CONCAT('%', #{filter.keyword}, '%')
+                OR receiver_name LIKE CONCAT('%', #{filter.keyword}, '%')
+            )
+        </if>
+        ORDER BY 
+        <choose>
+            <when test="filter.sortField != null and filter.sortField != ''">
+                ${filter.sortField} 
+                <if test="filter.sortDirection != null and filter.sortDirection != ''">
+                    ${filter.sortDirection}
+                </if>
+            </when>
+            <otherwise>
+                created_at DESC
+            </otherwise>
+        </choose>
+        LIMIT #{filter.offset}, #{filter.size}
+    </select>
+    
+    <!-- 统计用户订单数量 -->
+    <select id="countUserOrders" resultType="int">
+        SELECT COUNT(*)
+        FROM t_order
+        WHERE user_id = #{filter.userId}
+        <if test="filter.status != null">
+            AND status = #{filter.status}
+        </if>
+        <if test="filter.startDate != null and filter.startDate != ''">
+            AND created_at &gt;= #{filter.startDate}
+        </if>
+        <if test="filter.endDate != null and filter.endDate != ''">
+            AND created_at &lt;= #{filter.endDate}
+        </if>
+        <if test="filter.keyword != null and filter.keyword != ''">
+            AND (
+                order_no LIKE CONCAT('%', #{filter.keyword}, '%')
+                OR sender_name LIKE CONCAT('%', #{filter.keyword}, '%')
+                OR receiver_name LIKE CONCAT('%', #{filter.keyword}, '%')
+            )
+        </if>
+    </select>
+    
+    <!-- 查询快递员订单列表 -->
+    <select id="findCourierOrders" resultType="com.ruralexpress.entity.Order">
+        SELECT <include refid="Base_Column_List" />
+        FROM t_order
+        WHERE courier_id = #{filter.courierId}
+        <if test="filter.status != null">
+            AND status = #{filter.status}
+        </if>
+        <if test="filter.startDate != null and filter.startDate != ''">
+            AND created_at &gt;= #{filter.startDate}
+        </if>
+        <if test="filter.endDate != null and filter.endDate != ''">
+            AND created_at &lt;= #{filter.endDate}
+        </if>
+        <if test="filter.keyword != null and filter.keyword != ''">
+            AND (
+                order_no LIKE CONCAT('%', #{filter.keyword}, '%')
+                OR sender_name LIKE CONCAT('%', #{filter.keyword}, '%')
+                OR receiver_name LIKE CONCAT('%', #{filter.keyword}, '%')
+            )
+        </if>
+        ORDER BY 
+        <choose>
+            <when test="filter.sortField != null and filter.sortField != ''">
+                ${filter.sortField} 
+                <if test="filter.sortDirection != null and filter.sortDirection != ''">
+                    ${filter.sortDirection}
+                </if>
+            </when>
+            <otherwise>
+                created_at DESC
+            </otherwise>
+        </choose>
+        LIMIT #{filter.offset}, #{filter.size}
+    </select>
+    
+    <!-- 统计快递员订单数量 -->
+    <select id="countCourierOrders" resultType="int">
+        SELECT COUNT(*)
+        FROM t_order
+        WHERE courier_id = #{filter.courierId}
+        <if test="filter.status != null">
+            AND status = #{filter.status}
+        </if>
+        <if test="filter.startDate != null and filter.startDate != ''">
+            AND created_at &gt;= #{filter.startDate}
+        </if>
+        <if test="filter.endDate != null and filter.endDate != ''">
+            AND created_at &lt;= #{filter.endDate}
+        </if>
+        <if test="filter.keyword != null and filter.keyword != ''">
+            AND (
+                order_no LIKE CONCAT('%', #{filter.keyword}, '%')
+                OR sender_name LIKE CONCAT('%', #{filter.keyword}, '%')
+                OR receiver_name LIKE CONCAT('%', #{filter.keyword}, '%')
+            )
+        </if>
+    </select>
+    
+    <!-- 查询待接单列表 -->
+    <select id="findPendingOrders" resultType="com.ruralexpress.entity.Order">
+        SELECT <include refid="Base_Column_List" />
+        FROM t_order
+        WHERE status = 0
+        ORDER BY created_at DESC
+        LIMIT #{filter.offset}, #{filter.size}
+    </select>
+    
+    <!-- 统计待接单数量 -->
+    <select id="countPendingOrders" resultType="int">
+        SELECT COUNT(*)
+        FROM t_order
+        WHERE status = 0
+    </select>
+    
+</mapper> 

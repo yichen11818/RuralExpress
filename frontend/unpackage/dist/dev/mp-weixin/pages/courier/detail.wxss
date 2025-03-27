@@ -1,0 +1,249 @@
+
+.detail-container {
+  min-height: 100vh;
+  background-color: #f8f8f8;
+  padding-bottom: 40rpx;
+}
+
+/* 头部信息样式 */
+.header-section {
+  background-color: #fff;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+}
+.courier-basic {
+  display: flex;
+}
+.courier-avatar {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 80rpx;
+  background-color: #f0f0f0;
+  margin-right: 30rpx;
+  flex-shrink: 0;
+}
+.courier-info {
+  flex: 1;
+}
+.courier-name-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10rpx;
+}
+.courier-name {
+  font-size: 36rpx;
+  font-weight: bold;
+  margin-right: 20rpx;
+}
+.courier-tag {
+  font-size: 22rpx;
+  color: #fff;
+  background-color: #3cc51f;
+  padding: 4rpx 12rpx;
+  border-radius: 20rpx;
+}
+.courier-tag.off {
+  background-color: #999;
+}
+.courier-rating {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+.rating-text {
+  font-size: 24rpx;
+  color: #ff9900;
+  margin: 0 8rpx;
+}
+.rating-count {
+  font-size: 24rpx;
+  color: #999;
+}
+.courier-stats {
+  display: flex;
+  align-items: center;
+}
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.stat-value {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 4rpx;
+}
+.stat-label {
+  font-size: 22rpx;
+  color: #999;
+}
+.stat-divider {
+  width: 1rpx;
+  height: 50rpx;
+  background-color: #eee;
+  margin: 0 30rpx;
+}
+.action-buttons {
+  display: flex;
+  margin-top: 30rpx;
+}
+.action-btn {
+  flex: 1;
+  height: 80rpx;
+  border-radius: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  color: #fff;
+  margin: 0;
+}
+.action-btn text {
+  margin-left: 8rpx;
+}
+.call-btn {
+  background-color: #ff9900;
+  margin-right: 20rpx;
+}
+.order-btn {
+  background-color: #3cc51f;
+}
+
+/* 服务信息样式 */
+.info-section, .tags-section, .review-section {
+  background-color: #fff;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+}
+.section-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  margin-bottom: 20rpx;
+}
+.info-item {
+  display: flex;
+  margin-bottom: 16rpx;
+}
+.info-item:last-child {
+  margin-bottom: 0;
+}
+.info-label {
+  font-size: 28rpx;
+  color: #666;
+  width: 160rpx;
+  flex-shrink: 0;
+}
+.info-value {
+  font-size: 28rpx;
+  color: #333;
+  flex: 1;
+}
+
+/* 标签样式 */
+.tags-list {
+  display: flex;
+  flex-wrap: wrap;
+}
+.tag {
+  font-size: 24rpx;
+  color: #3cc51f;
+  background-color: rgba(60, 197, 31, 0.1);
+  padding: 8rpx 20rpx;
+  border-radius: 24rpx;
+  margin-right: 20rpx;
+  margin-bottom: 16rpx;
+}
+
+/* 评价样式 */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+.review-filter {
+  display: flex;
+  align-items: center;
+  font-size: 26rpx;
+  color: #666;
+}
+.review-filter text {
+  margin-right: 6rpx;
+}
+.review-item {
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+.review-item:last-child {
+  border-bottom: none;
+}
+.review-user {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+.user-avatar {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 32rpx;
+  margin-right: 16rpx;
+  background-color: #f0f0f0;
+}
+.user-info {
+  flex: 1;
+}
+.user-name {
+  font-size: 28rpx;
+  color: #333;
+  margin-bottom: 4rpx;
+}
+.review-time {
+  font-size: 24rpx;
+  color: #999;
+}
+.review-rating {
+  display: flex;
+}
+.review-content {
+  font-size: 28rpx;
+  color: #333;
+  margin-bottom: 16rpx;
+  line-height: 1.5;
+}
+.order-info {
+  font-size: 24rpx;
+  color: #999;
+  margin-bottom: 16rpx;
+}
+.courier-reply {
+  background-color: #f8f8f8;
+  padding: 16rpx;
+  border-radius: 8rpx;
+  font-size: 24rpx;
+  color: #666;
+}
+.reply-label {
+  color: #3cc51f;
+  margin-right: 8rpx;
+}
+.empty-review {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60rpx 0;
+  color: #999;
+  font-size: 28rpx;
+}
+.empty-image {
+  width: 160rpx;
+  height: 160rpx;
+  margin-bottom: 20rpx;
+}
+.load-more {
+  text-align: center;
+  padding: 20rpx 0;
+  color: #3cc51f;
+  font-size: 28rpx;
+  margin-top: 20rpx;
+}

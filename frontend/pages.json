@@ -1,0 +1,156 @@
+{
+  "pages": [
+    {
+      "path": "pages/index/index",
+      "style": {
+        "navigationBarTitleText": "乡递通",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/login/login",
+      "style": {
+        "navigationBarTitleText": "登录",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/user/user",
+      "style": {
+        "navigationBarTitleText": "个人中心"
+      }
+    },
+    {
+      "path": "pages/order/order",
+      "style": {
+        "navigationBarTitleText": "我的订单"
+      }
+    },
+    {
+      "path": "pages/user/profile-setup",
+      "style": {
+        "navigationBarTitleText": "完善个人信息"
+      }
+    },
+    {
+      "path": "pages/agreement/privacy",
+      "style": {
+        "navigationBarTitleText": "隐私政策"
+      }
+    },
+    {
+      "path": "pages/agreement/user",
+      "style": {
+        "navigationBarTitleText": "用户协议"
+      }
+    },
+    {
+      "path": "pages/notice/detail",
+      "style": {
+        "navigationBarTitleText": "公告详情"
+      }
+    },
+    {
+      "path": "pages/delivery/send",
+      "style": {
+        "navigationBarTitleText": "寄件"
+      }
+    },
+    {
+      "path": "pages/delivery/receive",
+      "style": {
+        "navigationBarTitleText": "收件"
+      }
+    },
+    {
+      "path": "pages/order/track",
+      "style": {
+        "navigationBarTitleText": "物流追踪"
+      }
+    },
+    {
+      "path": "pages/courier/recruitment",
+      "style": {
+        "navigationBarTitleText": "骑手招募"
+      }
+    },
+    {
+      "path": "pages/courier/list",
+      "style": {
+        "navigationBarTitleText": "骑手列表"
+      }
+    },
+    {
+      "path": "pages/courier/detail",
+      "style": {
+        "navigationBarTitleText": "骑手详情"
+      }
+    },
+    {
+      "path": "pages/user/settings",
+      "style": {
+        "navigationBarTitleText": "设置",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/user/profile",
+      "style": {
+        "navigationBarTitleText": "个人资料",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/user/address",
+      "style": {
+        "navigationBarTitleText": "我的地址",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/about/about",
+      "style": {
+        "navigationBarTitleText": "关于我们",
+        "navigationStyle": "custom"
+      }
+    }
+  ],
+  "tabBar": {
+    "color": "#7A7E83",
+    "selectedColor": "#3cc51f",
+    "borderStyle": "black",
+    "backgroundColor": "#ffffff",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "iconPath": "static/images/tabbar/home.png",
+        "selectedIconPath": "static/images/tabbar/home-active.png",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/order/order",
+        "iconPath": "static/images/tabbar/order.png",
+        "selectedIconPath": "static/images/tabbar/order-active.png",
+        "text": "订单"
+      },
+      {
+        "pagePath": "pages/user/user",
+        "iconPath": "static/images/tabbar/mine.png",
+        "selectedIconPath": "static/images/tabbar/mine-active.png",
+        "text": "我的"
+      }
+    ]
+  },
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "乡递通",
+    "navigationBarBackgroundColor": "#F8F8F8",
+    "backgroundColor": "#F8F8F8"
+  },
+  "easycom": {
+    "autoscan": true,
+    "custom": {
+      "^uni-(.*)": "@/uni_modules/uni-$1/components/uni-$1/uni-$1.vue"
+    }
+  }
+} 

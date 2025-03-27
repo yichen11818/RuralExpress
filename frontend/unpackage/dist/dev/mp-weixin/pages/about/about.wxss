@@ -1,0 +1,104 @@
+
+.about-container {
+  min-height: 100vh;
+  background-color: #f8f8f8;
+  padding-bottom: 40rpx;
+}
+
+/* 状态栏占位 */
+.status-bar {
+  width: 100%;
+  background-color: #fff;
+}
+.about-header {
+  position: relative;
+  padding: 30rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #fff;
+  margin-bottom: 20rpx;
+  /* 调整顶部和底部的padding更合理 */
+  padding-top: 20rpx;
+  padding-bottom: 20rpx;
+}
+.back-btn {
+  position: absolute;
+  left: 30rpx;
+}
+.page-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+}
+.logo-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60rpx 0;
+  background-color: #fff;
+  margin-bottom: 20rpx;
+  margin: 20rpx;
+  border-radius: 12rpx;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+}
+.logo {
+  width: 150rpx;
+  height: 150rpx;
+  margin-bottom: 20rpx;
+}
+.app-name {
+  font-size: 40rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 10rpx;
+}
+.app-version {
+  font-size: 26rpx;
+  color: #999;
+}
+.about-content {
+  background-color: #fff;
+  padding: 30rpx;
+  margin: 20rpx;
+  border-radius: 12rpx;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+}
+.about-section {
+  margin-bottom: 40rpx;
+}
+.about-section:last-child {
+  margin-bottom: 0;
+}
+.section-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 20rpx;
+  display: block;
+}
+.section-text {
+  font-size: 28rpx;
+  color: #666;
+  line-height: 1.6;
+  display: block;
+}
+.contact-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+.contact-item:last-child {
+  margin-bottom: 0;
+}
+.contact-text {
+  font-size: 28rpx;
+  color: #666;
+  margin-left: 20rpx;
+}
+.copyright {
+  font-size: 24rpx;
+  color: #999;
+  text-align: center;
+  padding: 30rpx 0;
+}

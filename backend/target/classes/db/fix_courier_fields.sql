@@ -1,0 +1,19 @@
+-- 选择数据库
+USE rural_express;
+
+-- 修复 t_courier 表中缺失的字段
+ALTER TABLE t_courier 
+ADD COLUMN IF NOT EXISTS work_start_time VARCHAR(5) DEFAULT '08:00' COMMENT '工作开始时间',
+ADD COLUMN IF NOT EXISTS work_end_time VARCHAR(5) DEFAULT '20:00' COMMENT '工作结束时间',
+ADD COLUMN IF NOT EXISTS vehicle VARCHAR(50) COMMENT '交通工具',
+ADD COLUMN IF NOT EXISTS introduction VARCHAR(500) COMMENT '简介',
+ADD COLUMN IF NOT EXISTS response_time INT DEFAULT 15 COMMENT '平均响应时间(分钟)';
+
+-- 修改 created_at 和 updated_at 字段的默认值
+ALTER TABLE t_courier 
+MODIFY COLUMN created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+MODIFY COLUMN updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间';
+
+-- 清理重复的数据
+DELETE FROM banner WHERE id > 3;
+DELETE FROM notice WHERE id > 3; 
