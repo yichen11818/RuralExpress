@@ -93,6 +93,7 @@
               <text class="rating-text">{{ item.rating }}</text>
             </view>
             <text class="courier-orders">已完成{{ item.completedOrders }}单</text>
+            <text v-if="item.distance" class="courier-distance">{{ item.distance }}</text>
           </view>
         </scroll-view>
       </view>
@@ -221,23 +222,148 @@ export default {
   },
   
   onPullDownRefresh() {
-    // 下拉刷新，重新获取位置和数据
-    this.getUserLocation();
+    // 清除首页加载标记，以便重新显示loading
+    uni.removeStorageSync('_home_loaded_');
+    
+    // 是否重新获取位置 - 通常下拉刷新不需要重新定位，以避免频繁请求位置权限
+    // 而是重新加载数据即可
+    if (this.userLocation && !this.locationFailed) {
+      // 如果已有位置信息，直接刷新数据
+      this.loadNearbyCouriers();
+      this.loadHomeData(() => {
+        uni.showToast({
+          title: '刷新成功',
+          icon: 'success',
+          duration: 1500
+        });
+      });
+    } else {
+      // 如果没有位置信息或获取位置失败过，尝试重新获取位置
+      this.getUserLocation();
+    }
   },
   
   methods: {
     // 获取用户位置
     getUserLocation() {
-      uni.showLoading({
-        title: '定位中...'
-      });
+      // 标记是否已关闭loading
+      let loadingClosed = false;
       
+      // 先检查位置权限
+      uni.getSetting({
+        success: (res) => {
+          // 判断是否已经授权位置权限
+          if (res.authSetting['scope.userLocation']) {
+            // 已授权，显示loading
+            uni.showLoading({
+              title: '定位中...'
+            });
+            
+            // 设置一个超时处理，确保loading不会一直显示
+            const timeout = setTimeout(() => {
+              if (!loadingClosed) {
+                loadingClosed = true;
+                uni.hideLoading();
+              }
+            }, 10000); // 10秒超时
+            
+            // 获取位置
+            this.getLocationInfo(loadingClosed, timeout);
+          } else {
+            // 未授权，先显示申请权限的提示
+            uni.showModal({
+              title: '位置信息',
+              content: '为了向您提供附近的快递员服务，我们需要获取您的位置信息',
+              success: (modalRes) => {
+                if (modalRes.confirm) {
+                  // 用户同意，申请权限
+                  this.requestLocationPermission(loadingClosed);
+                } else {
+                  // 用户拒绝，提示并使用推荐快递员
+                  this.handleLocationFailed('您拒绝了位置授权，将显示推荐快递员');
+                }
+              }
+            });
+          }
+        },
+        fail: () => {
+          // 获取设置信息失败
+          this.handleLocationFailed('获取权限信息失败，将显示推荐快递员');
+        }
+      });
+    },
+    
+    // 申请位置权限
+    requestLocationPermission(loadingClosed) {
+      uni.authorize({
+        scope: 'scope.userLocation',
+        success: () => {
+          // 授权成功，显示loading
+          uni.showLoading({
+            title: '定位中...'
+          });
+          
+          // 设置一个超时处理
+          const timeout = setTimeout(() => {
+            if (!loadingClosed) {
+              loadingClosed = true;
+              uni.hideLoading();
+            }
+          }, 10000); // 10秒超时
+          
+          // 获取位置
+          this.getLocationInfo(loadingClosed, timeout);
+        },
+        fail: () => {
+          // 授权失败，提示用户在设置中开启
+          uni.showModal({
+            title: '提示',
+            content: '获取位置权限失败，您可以在系统设置中开启位置权限',
+            confirmText: '去设置',
+            cancelText: '取消',
+            success: (modalRes) => {
+              if (modalRes.confirm) {
+                // 打开设置页
+                uni.openSetting({
+                  success: (settingRes) => {
+                    if (settingRes.authSetting['scope.userLocation']) {
+                      // 用户在设置页开启了权限
+                      uni.showLoading({
+                        title: '定位中...'
+                      });
+                      
+                      const timeout = setTimeout(() => {
+                        if (!loadingClosed) {
+                          loadingClosed = true;
+                          uni.hideLoading();
+                        }
+                      }, 10000);
+                      
+                      this.getLocationInfo(loadingClosed, timeout);
+                    } else {
+                      // 用户仍然拒绝授权
+                      this.handleLocationFailed('您拒绝了位置授权，将显示推荐快递员');
+                    }
+                  }
+                });
+              } else {
+                // 用户取消，使用推荐快递员
+                this.handleLocationFailed('您拒绝了位置授权，将显示推荐快递员');
+              }
+            }
+          });
+        }
+      });
+    },
+    
+    // 获取位置信息
+    getLocationInfo(loadingClosed, timeout) {
       uni.getLocation({
         type: 'wgs84',
         success: (res) => {
+          console.log('获取位置成功', res);
           const { latitude, longitude } = res;
           this.userLocation = { latitude, longitude };
-          console.log('获取位置成功', this.userLocation);
           
           // 使用位置信息加载附近快递员
           this.loadNearbyCouriers();
@@ -247,21 +373,41 @@ export default {
         },
         fail: (err) => {
           console.error('获取位置失败', err);
-          this.locationFailed = true;
-          
-          uni.showToast({
-            title: '获取位置信息失败，将显示推荐快递员',
-            icon: 'none',
-            duration: 2000
-          });
-          
-          // 退回使用普通首页数据
-          this.loadHomeData();
+          this.handleLocationFailed();
         },
         complete: () => {
-          uni.hideLoading();
+          // 防止重复关闭loading
+          if (!loadingClosed) {
+            loadingClosed = true;
+            uni.hideLoading();
+            clearTimeout(timeout);
+          }
         }
       });
+    },
+    
+    // 处理位置获取失败
+    handleLocationFailed(message) {
+      console.error('位置获取失败');
+      this.locationFailed = true;
+      
+      // 显示提示
+      if (message) {
+        uni.showToast({
+          title: message,
+          icon: 'none',
+          duration: 3000
+        });
+      } else {
+        uni.showToast({
+          title: '获取位置信息失败，将显示推荐快递员',
+          icon: 'none',
+          duration: 2000
+        });
+      }
+      
+      // 退回使用普通首页数据
+      this.loadHomeData();
     },
     
     // 加载附近快递员
@@ -275,12 +421,43 @@ export default {
           if (res && res.code === 200 && res.data) {
             // 处理快递员数据
             this.nearestCouriers = res.data.map(courier => {
+              // 由于后端数据模型变更，这里需要适配
+              // 快递员名称应该从用户表获取，这里使用模拟数据
+              const mockNames = {
+                '101': '张师傅',
+                '102': '李师傅',
+                '103': '王师傅',
+                '104': '刘师傅',
+                '105': '赵师傅'
+              };
+              
+              const mockAvatars = {
+                '101': '/static/images/courier-1.png',
+                '102': '/static/images/courier-2.png',
+                '103': '/static/images/courier-3.png',
+                '104': '/static/images/courier-4.png',
+                '105': '/static/images/courier-5.png'
+              };
+              
+              // 获取快递员名称，优先使用后端返回的name，否则使用模拟数据或默认值
+              const name = courier.name || 
+                           mockNames[courier.userId] || 
+                           courier.userName || 
+                           '未知快递员';
+              
+              // 获取头像，优先使用后端返回的avatar，否则使用模拟数据或默认值
+              const avatar = courier.avatar || 
+                             mockAvatars[courier.userId] || 
+                             '/static/images/default-avatar.png';
+              
               return {
                 id: courier.id,
-                name: courier.name || courier.userName || '未知快递员',
-                avatar: courier.avatar || '/static/images/default-avatar.png',
-                rating: courier.rating || 5.0,
-                completedOrders: courier.completedOrders || 0
+                name: name,
+                avatar: avatar,
+                rating: parseFloat(courier.rating) || 5.0,
+                completedOrders: courier.completedOrders || 0,
+                // 添加距离信息
+                distance: courier.distance ? `${courier.distance}公里` : '未知距离'
               };
             });
           }
@@ -293,7 +470,16 @@ export default {
     
     // 加载首页数据
     loadHomeData(callback) {
+      // 设置加载状态
       this.loading = true;
+      
+      // 避免重复显示loading
+      const showLoading = !uni.getStorageSync('_home_loaded_');
+      if (showLoading) {
+        uni.showLoading({
+          title: '加载数据中...'
+        });
+      }
       
       getHomeData()
         .then(res => {
@@ -306,11 +492,38 @@ export default {
             // 如果没有位置信息或获取附近快递员失败，使用推荐快递员
             if (!this.userLocation || this.nearestCouriers.length === 0) {
               this.nearestCouriers = (data.nearestCouriers || []).map(courier => {
+                // 模拟数据映射
+                const mockNames = {
+                  '101': '张师傅',
+                  '102': '李师傅',
+                  '103': '王师傅',
+                  '104': '刘师傅',
+                  '105': '赵师傅'
+                };
+                
+                const mockAvatars = {
+                  '101': '/static/images/courier-1.png',
+                  '102': '/static/images/courier-2.png',
+                  '103': '/static/images/courier-3.png',
+                  '104': '/static/images/courier-4.png',
+                  '105': '/static/images/courier-5.png'
+                };
+                
+                // 获取名称和头像
+                const name = courier.name || 
+                             mockNames[courier.userId] || 
+                             courier.userName || 
+                             '未知快递员';
+                
+                const avatar = courier.avatar || 
+                               mockAvatars[courier.userId] || 
+                               '/static/images/default-avatar.png';
+                
                 return {
                   id: courier.id,
-                  name: courier.name || courier.userName || '未知快递员',
-                  avatar: courier.avatar || '/static/images/default-avatar.png',
-                  rating: courier.rating || 5.0,
+                  name: name,
+                  avatar: avatar,
+                  rating: parseFloat(courier.rating) || 5.0,
                   completedOrders: courier.completedOrders || 0
                 };
               });
@@ -318,6 +531,9 @@ export default {
             
             // 获取最近订单
             this.recentOrders = data.recentOrders || [];
+            
+            // 标记首页已加载，避免重复显示loading
+            uni.setStorageSync('_home_loaded_', true);
           } else {
             console.warn('首页数据返回格式不正确:', res);
             // 显示错误提示
@@ -335,10 +551,17 @@ export default {
           });
         })
         .finally(() => {
+          // 关闭loading
+          if (showLoading) {
+            uni.hideLoading();
+          }
+          
           this.loading = false;
+          
           if (typeof callback === 'function') {
             callback();
           }
+          
           uni.stopPullDownRefresh();
         });
     },
@@ -616,6 +839,12 @@ export default {
 .courier-orders {
   font-size: 24rpx;
   color: #999;
+}
+
+.courier-distance {
+  font-size: 24rpx;
+  color: #999;
+  margin-left: 10rpx;
 }
 
 .recent-orders {

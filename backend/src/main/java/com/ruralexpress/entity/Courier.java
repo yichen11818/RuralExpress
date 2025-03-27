@@ -105,11 +105,13 @@ public class Courier {
     /**
      * 纬度
      */
+    @TableField(exist = false)
     private Double latitude;
     
     /**
      * 经度
      */
+    @TableField(exist = false)
     private Double longitude;
     
     /**

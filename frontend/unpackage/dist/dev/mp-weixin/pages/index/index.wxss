@@ -157,6 +157,11 @@
   font-size: 24rpx;
   color: #999;
 }
+.courier-distance {
+  font-size: 24rpx;
+  color: #999;
+  margin-left: 10rpx;
+}
 .recent-orders {
   padding: 0 30rpx;
 }

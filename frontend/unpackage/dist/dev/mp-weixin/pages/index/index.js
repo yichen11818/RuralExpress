@@ -34,37 +34,148 @@ const _sfc_main = {
     this.calculatePrice();
   },
   onPullDownRefresh() {
-    this.getUserLocation();
+    common_vendor.index.removeStorageSync("_home_loaded_");
+    if (this.userLocation && !this.locationFailed) {
+      this.loadNearbyCouriers();
+      this.loadHomeData(() => {
+        common_vendor.index.showToast({
+          title: "刷新成功",
+          icon: "success",
+          duration: 1500
+        });
+      });
+    } else {
+      this.getUserLocation();
+    }
   },
   methods: {
     // 获取用户位置
     getUserLocation() {
-      common_vendor.index.showLoading({
-        title: "定位中..."
+      let loadingClosed = false;
+      common_vendor.index.getSetting({
+        success: (res) => {
+          if (res.authSetting["scope.userLocation"]) {
+            common_vendor.index.showLoading({
+              title: "定位中..."
+            });
+            const timeout = setTimeout(() => {
+              if (!loadingClosed) {
+                loadingClosed = true;
+                common_vendor.index.hideLoading();
+              }
+            }, 1e4);
+            this.getLocationInfo(loadingClosed, timeout);
+          } else {
+            common_vendor.index.showModal({
+              title: "位置信息",
+              content: "为了向您提供附近的快递员服务，我们需要获取您的位置信息",
+              success: (modalRes) => {
+                if (modalRes.confirm) {
+                  this.requestLocationPermission(loadingClosed);
+                } else {
+                  this.handleLocationFailed("您拒绝了位置授权，将显示推荐快递员");
+                }
+              }
+            });
+          }
+        },
+        fail: () => {
+          this.handleLocationFailed("获取权限信息失败，将显示推荐快递员");
+        }
       });
+    },
+    // 申请位置权限
+    requestLocationPermission(loadingClosed) {
+      common_vendor.index.authorize({
+        scope: "scope.userLocation",
+        success: () => {
+          common_vendor.index.showLoading({
+            title: "定位中..."
+          });
+          const timeout = setTimeout(() => {
+            if (!loadingClosed) {
+              loadingClosed = true;
+              common_vendor.index.hideLoading();
+            }
+          }, 1e4);
+          this.getLocationInfo(loadingClosed, timeout);
+        },
+        fail: () => {
+          common_vendor.index.showModal({
+            title: "提示",
+            content: "获取位置权限失败，您可以在系统设置中开启位置权限",
+            confirmText: "去设置",
+            cancelText: "取消",
+            success: (modalRes) => {
+              if (modalRes.confirm) {
+                common_vendor.index.openSetting({
+                  success: (settingRes) => {
+                    if (settingRes.authSetting["scope.userLocation"]) {
+                      common_vendor.index.showLoading({
+                        title: "定位中..."
+                      });
+                      const timeout = setTimeout(() => {
+                        if (!loadingClosed) {
+                          loadingClosed = true;
+                          common_vendor.index.hideLoading();
+                        }
+                      }, 1e4);
+                      this.getLocationInfo(loadingClosed, timeout);
+                    } else {
+                      this.handleLocationFailed("您拒绝了位置授权，将显示推荐快递员");
+                    }
+                  }
+                });
+              } else {
+                this.handleLocationFailed("您拒绝了位置授权，将显示推荐快递员");
+              }
+            }
+          });
+        }
+      });
+    },
+    // 获取位置信息
+    getLocationInfo(loadingClosed, timeout) {
       common_vendor.index.getLocation({
         type: "wgs84",
         success: (res) => {
+          console.log("获取位置成功", res);
           const { latitude, longitude } = res;
           this.userLocation = { latitude, longitude };
-          console.log("获取位置成功", this.userLocation);
           this.loadNearbyCouriers();
           this.loadHomeData();
         },
         fail: (err) => {
           console.error("获取位置失败", err);
-          this.locationFailed = true;
-          common_vendor.index.showToast({
-            title: "获取位置信息失败，将显示推荐快递员",
-            icon: "none",
-            duration: 2e3
-          });
-          this.loadHomeData();
+          this.handleLocationFailed();
         },
         complete: () => {
-          common_vendor.index.hideLoading();
+          if (!loadingClosed) {
+            loadingClosed = true;
+            common_vendor.index.hideLoading();
+            clearTimeout(timeout);
+          }
         }
       });
+    },
+    // 处理位置获取失败
+    handleLocationFailed(message) {
+      console.error("位置获取失败");
+      this.locationFailed = true;
+      if (message) {
+        common_vendor.index.showToast({
+          title: message,
+          icon: "none",
+          duration: 3e3
+        });
+      } else {
+        common_vendor.index.showToast({
+          title: "获取位置信息失败，将显示推荐快递员",
+          icon: "none",
+          duration: 2e3
+        });
+      }
+      this.loadHomeData();
     },
     // 加载附近快递员
     loadNearbyCouriers() {
@@ -75,12 +186,30 @@ const _sfc_main = {
         console.log("附近快递员响应:", res);
         if (res && res.code === 200 && res.data) {
           this.nearestCouriers = res.data.map((courier) => {
+            const mockNames = {
+              "101": "张师傅",
+              "102": "李师傅",
+              "103": "王师傅",
+              "104": "刘师傅",
+              "105": "赵师傅"
+            };
+            const mockAvatars = {
+              "101": "/static/images/courier-1.png",
+              "102": "/static/images/courier-2.png",
+              "103": "/static/images/courier-3.png",
+              "104": "/static/images/courier-4.png",
+              "105": "/static/images/courier-5.png"
+            };
+            const name = courier.name || mockNames[courier.userId] || courier.userName || "未知快递员";
+            const avatar = courier.avatar || mockAvatars[courier.userId] || "/static/images/default-avatar.png";
             return {
               id: courier.id,
-              name: courier.name || courier.userName || "未知快递员",
-              avatar: courier.avatar || "/static/images/default-avatar.png",
-              rating: courier.rating || 5,
-              completedOrders: courier.completedOrders || 0
+              name,
+              avatar,
+              rating: parseFloat(courier.rating) || 5,
+              completedOrders: courier.completedOrders || 0,
+              // 添加距离信息
+              distance: courier.distance ? `${courier.distance}公里` : "未知距离"
             };
           });
         }
@@ -91,6 +220,12 @@ const _sfc_main = {
     // 加载首页数据
     loadHomeData(callback) {
       this.loading = true;
+      const showLoading = !common_vendor.index.getStorageSync("_home_loaded_");
+      if (showLoading) {
+        common_vendor.index.showLoading({
+          title: "加载数据中..."
+        });
+      }
       api_home.getHomeData().then((res) => {
         console.log("首页数据响应:", res);
         if (res && res.code === 200 && res.data) {
@@ -99,16 +234,33 @@ const _sfc_main = {
           this.notices = data.notices || [];
           if (!this.userLocation || this.nearestCouriers.length === 0) {
             this.nearestCouriers = (data.nearestCouriers || []).map((courier) => {
+              const mockNames = {
+                "101": "张师傅",
+                "102": "李师傅",
+                "103": "王师傅",
+                "104": "刘师傅",
+                "105": "赵师傅"
+              };
+              const mockAvatars = {
+                "101": "/static/images/courier-1.png",
+                "102": "/static/images/courier-2.png",
+                "103": "/static/images/courier-3.png",
+                "104": "/static/images/courier-4.png",
+                "105": "/static/images/courier-5.png"
+              };
+              const name = courier.name || mockNames[courier.userId] || courier.userName || "未知快递员";
+              const avatar = courier.avatar || mockAvatars[courier.userId] || "/static/images/default-avatar.png";
               return {
                 id: courier.id,
-                name: courier.name || courier.userName || "未知快递员",
-                avatar: courier.avatar || "/static/images/default-avatar.png",
-                rating: courier.rating || 5,
+                name,
+                avatar,
+                rating: parseFloat(courier.rating) || 5,
                 completedOrders: courier.completedOrders || 0
               };
             });
           }
           this.recentOrders = data.recentOrders || [];
+          common_vendor.index.setStorageSync("_home_loaded_", true);
         } else {
           console.warn("首页数据返回格式不正确:", res);
           common_vendor.index.showToast({
@@ -123,6 +275,9 @@ const _sfc_main = {
           icon: "none"
         });
       }).finally(() => {
+        if (showLoading) {
+          common_vendor.index.hideLoading();
+        }
         this.loading = false;
         if (typeof callback === "function") {
           callback();
@@ -266,15 +421,19 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     s: common_vendor.t($data.userLocation ? "附近快递员" : "推荐快递员"),
     t: common_vendor.o(($event) => $options.navigateTo("/pages/courier/list")),
     v: common_vendor.f($data.nearestCouriers, (item, index, i0) => {
-      return {
+      return common_vendor.e({
         a: item.avatar || "/static/images/default-avatar.png",
         b: common_vendor.t(item.name),
         c: "1a526eb5-2-" + i0,
         d: common_vendor.t(item.rating),
         e: common_vendor.t(item.completedOrders),
-        f: index,
-        g: common_vendor.o(($event) => $options.navigateTo(`/pages/courier/detail?id=${item.id}`), index)
-      };
+        f: item.distance
+      }, item.distance ? {
+        g: common_vendor.t(item.distance)
+      } : {}, {
+        h: index,
+        i: common_vendor.o(($event) => $options.navigateTo(`/pages/courier/detail?id=${item.id}`), index)
+      });
     }),
     w: common_vendor.p({
       type: "star-filled",

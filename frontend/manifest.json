@@ -56,7 +56,13 @@
             "ignoreDevUnusedFiles" : false,
             "ignoreUploadUnusedFiles" : false
         },
-        "usingComponents" : true
+        "usingComponents" : true,
+        "requiredPrivateInfos": ["getLocation"],
+        "permission": {
+            "scope.userLocation": {
+                "desc": "您的位置信息将用于查找附近的快递员"
+            }
+        }
     },
     "mp-alipay" : {
         "usingComponents" : true

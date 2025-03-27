@@ -152,5 +152,13 @@
     "custom": {
       "^uni-(.*)": "@/uni_modules/uni-$1/components/uni-$1/uni-$1.vue"
     }
-  }
+  },
+  "permission": {
+    "scope.userLocation": {
+      "desc": "您的位置信息将用于查找附近的快递员"
+    }
+  },
+  "requiredPrivateInfos": [
+    "getLocation"
+  ]
 } 
