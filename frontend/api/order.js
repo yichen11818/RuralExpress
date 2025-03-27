@@ -28,7 +28,7 @@ export function getOrderDetail(id) {
  * @returns {Promise} 订单列表
  */
 export function getUserOrders(userId, params = {}) {
-  return request.get(`/api/order/user/${userId}`, params);
+  return request.get(`/order/user/${userId}`, params);
 }
 
 /**
