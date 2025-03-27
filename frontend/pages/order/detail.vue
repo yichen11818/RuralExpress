@@ -128,6 +128,13 @@
         评价订单
       </view>
       <view 
+        class="action-btn primary-btn" 
+        v-if="order.orderStatus === 6 && order.hasReview"
+        @click="viewReview(order.id)"
+      >
+        查看评价
+      </view>
+      <view 
         class="action-btn" 
         v-if="order.orderStatus === 5"
         @click="reorder()"
@@ -267,32 +274,31 @@ export default {
     
     // 格式化手机号，中间4位显示*
     formatPhone(phone) {
-      if (!phone) return '';
-      return phone.substring(0, 3) + '****' + phone.substring(7);
+      if (!phone || phone.length !== 11) return phone;
+      return phone.substr(0, 3) + '****' + phone.substr(7);
     },
     
     // 取消订单
-    cancelOrder(id) {
+    cancelOrder(orderId) {
       uni.showModal({
-        title: '提示',
+        title: '取消订单',
         content: '确定要取消该订单吗？',
         success: (res) => {
           if (res.confirm) {
-            // 调用取消订单API
             uni.showLoading({
               title: '取消中...'
             });
             
-            cancelOrder(id, '用户主动取消')
+            cancelOrder(orderId, '用户主动取消')
               .then(res => {
+                uni.hideLoading();
                 if (res.code === 200) {
                   uni.showToast({
                     title: '取消成功',
                     icon: 'success'
                   });
-                  // 修改订单状态
-                  this.order.orderStatus = 6; // 或者重新获取订单详情
-                  // this.getOrderDetail();
+                  // 刷新订单详情
+                  this.getOrderDetail();
                 } else {
                   uni.showToast({
                     title: res.message || '取消失败',
@@ -301,14 +307,12 @@ export default {
                 }
               })
               .catch(err => {
+                uni.hideLoading();
                 console.error('取消订单失败', err);
                 uni.showToast({
                   title: '取消失败',
                   icon: 'none'
                 });
-              })
-              .finally(() => {
-                uni.hideLoading();
               });
           }
         }
@@ -316,39 +320,51 @@ export default {
     },
     
     // 评价订单
-    evaluateOrder(id) {
+    evaluateOrder(orderId) {
       uni.navigateTo({
-        url: `/pages/order/evaluate?id=${id}`
+        url: `/pages/order/review?id=${orderId}`
+      });
+    },
+    
+    // 查看评价
+    viewReview(orderId) {
+      uni.navigateTo({
+        url: `/pages/order/review-detail?id=${orderId}`
       });
     },
     
     // 再次下单
     reorder() {
+      // 复制当前订单信息，跳转到下单页面
+      const orderInfo = {
+        senderName: this.order.senderName,
+        senderPhone: this.order.senderPhone,
+        senderAddress: this.order.senderAddress,
+        receiverName: this.order.receiverName,
+        receiverPhone: this.order.receiverPhone,
+        receiverAddress: this.order.receiverAddress,
+        packageType: this.order.packageType,
+        weight: this.order.weight,
+        note: this.order.note
+      };
+      
+      // 存储到本地缓存
+      uni.setStorageSync('reorderInfo', JSON.stringify(orderInfo));
+      
+      // 跳转到下单页面
       uni.navigateTo({
-        url: '/pages/delivery/send',
-        success: (res) => {
-          // 传递订单数据
-          res.eventChannel.emit('reorderData', {
-            senderName: this.order.senderName,
-            senderPhone: this.order.senderPhone,
-            senderAddress: this.order.senderAddress,
-            receiverName: this.order.receiverName,
-            receiverPhone: this.order.receiverPhone,
-            receiverAddress: this.order.receiverAddress,
-            packageType: this.order.packageType,
-            weight: this.order.weight
-          });
-        }
+        url: '/pages/delivery/send?type=reorder'
       });
     },
     
     // 联系客服
     contactService() {
+      // 拨打客服电话
       uni.makePhoneCall({
-        phoneNumber: '4008007001',
+        phoneNumber: '400-123-4567',
         fail: () => {
           uni.showToast({
-            title: '拨打电话失败',
+            title: '拨打失败，请手动拨打客服电话',
             icon: 'none'
           });
         }

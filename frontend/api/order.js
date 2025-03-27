@@ -141,4 +141,37 @@ export function getPackageTypeText(type) {
     2: '大件'
   };
   return typeMap[type] || '未知类型';
+}
+
+/**
+ * 提交订单评价
+ * @param {Object} data 评价信息
+ * @returns {Promise} 提交结果
+ */
+export function submitOrderReview(data) {
+  return request.post('/order/review', data);
+}
+
+/**
+ * 获取订单评价详情
+ * @param {Number} orderId 订单ID
+ * @returns {Promise} 评价详情
+ */
+export function getOrderReview(orderId) {
+  return request.get(`/order/${orderId}/review`);
+}
+
+/**
+ * 上传评价图片
+ * @param {File} file 图片文件
+ * @returns {Promise} 上传结果
+ */
+export function uploadReviewImage(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  return request.post('/order/review/upload', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  });
 } 

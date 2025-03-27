@@ -132,6 +132,7 @@
 <script>
 import uniIcons from '@/uni_modules/uni-icons/components/uni-icons/uni-icons.vue';
 import { isLoggedIn } from '@/api/auth';
+import { getOrderDetail, submitOrderReview, getOrderReview, uploadReviewImage } from '@/api/order';
 
 export default {
   components: {
@@ -187,6 +188,7 @@ export default {
     if (options.id) {
       this.orderId = options.id;
       this.loadOrderInfo();
+      this.checkExistingReview();
     } else {
       uni.showToast({
         title: '订单ID不存在',
@@ -201,49 +203,53 @@ export default {
   methods: {
     // 加载订单信息
     loadOrderInfo() {
-      // 实际应用中，这里应该调用API获取订单信息
-      // 示例：
-      /*
       uni.showLoading({
         title: '加载中...'
       });
       
-      uni.request({
-        url: `https://api.example.com/orders/${this.orderId}`,
-        method: 'GET',
-        success: (res) => {
+      getOrderDetail(this.orderId)
+        .then(res => {
           uni.hideLoading();
-          if (res.data.success) {
-            this.orderInfo = res.data.data;
+          if (res.success) {
+            this.orderInfo = res.data;
           } else {
             uni.showToast({
-              title: res.data.message || '获取订单信息失败',
+              title: res.message || '获取订单信息失败',
               icon: 'none'
             });
             setTimeout(() => {
               uni.navigateBack();
             }, 1500);
           }
-        },
-        fail: () => {
+        })
+        .catch(() => {
           uni.hideLoading();
           uni.showToast({
             title: '网络异常，请稍后重试',
             icon: 'none'
           });
-        }
-      });
-      */
-      
-      // 模拟订单信息
-      this.orderInfo = {
-        id: this.orderId,
-        company: '顺丰速运',
-        trackingNo: 'SF1234567890',
-        courierName: '张师傅',
-        address: '江西省南昌市青山湖区艾溪湖北路77号',
-        receivedTime: '2023-03-21 15:30'
-      };
+        });
+    },
+    
+    // 检查是否已评价
+    checkExistingReview() {
+      getOrderReview(this.orderId)
+        .then(res => {
+          if (res.success && res.data) {
+            // 订单已评价，跳转到查看评价页面或显示提示
+            uni.showModal({
+              title: '提示',
+              content: '该订单已评价',
+              showCancel: false,
+              success: () => {
+                uni.navigateBack();
+              }
+            });
+          }
+        })
+        .catch(() => {
+          // 可能未评价，忽略错误
+        });
     },
     
     // 设置评分
@@ -334,17 +340,14 @@ export default {
       return new Promise((resolve, reject) => {
         const uploadPromises = this.reviewData.images.map(path => {
           return new Promise((resolveUpload, rejectUpload) => {
-            // 实际应用中，这里应该调用API上传图片
-            // 示例：
-            /*
             uni.uploadFile({
-              url: 'https://api.example.com/upload',
+              url: '/api/order/review/upload', // 后端上传接口
               filePath: path,
               name: 'file',
               success: (res) => {
                 const data = JSON.parse(res.data);
                 if (data.success) {
-                  resolveUpload(data.url);
+                  resolveUpload(data.data.url);
                 } else {
                   rejectUpload(new Error(data.message || '上传失败'));
                 }
@@ -353,12 +356,6 @@ export default {
                 rejectUpload(new Error('上传失败'));
               }
             });
-            */
-            
-            // 模拟上传成功
-            setTimeout(() => {
-              resolveUpload(path);
-            }, 500);
           });
         });
         
@@ -381,16 +378,10 @@ export default {
         isAnonymous: this.reviewData.isAnonymous
       };
       
-      // 实际应用中，这里应该调用API提交评价
-      // 示例：
-      /*
-      uni.request({
-        url: 'https://api.example.com/orders/review',
-        method: 'POST',
-        data: reviewParams,
-        success: (res) => {
+      submitOrderReview(reviewParams)
+        .then(res => {
           uni.hideLoading();
-          if (res.data.success) {
+          if (res.success) {
             uni.showToast({
               title: '评价成功',
               icon: 'success'
@@ -400,32 +391,18 @@ export default {
             }, 1500);
           } else {
             uni.showToast({
-              title: res.data.message || '评价失败',
+              title: res.message || '评价失败',
               icon: 'none'
             });
           }
-        },
-        fail: () => {
+        })
+        .catch(() => {
           uni.hideLoading();
           uni.showToast({
             title: '网络异常，请稍后重试',
             icon: 'none'
           });
-        }
-      });
-      */
-      
-      // 模拟提交成功
-      setTimeout(() => {
-        uni.hideLoading();
-        uni.showToast({
-          title: '评价成功',
-          icon: 'success'
         });
-        setTimeout(() => {
-          uni.navigateBack();
-        }, 1500);
-      }, 1000);
     }
   }
 };
