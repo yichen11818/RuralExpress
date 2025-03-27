@@ -34,15 +34,17 @@
     <!-- 实际内容 -->
     <block v-else>
       <!-- 头部搜索区域 -->
-      <view class="search-container">
-        <view class="search-box" @click="navigateTo('/pages/search/search')">
-          <uni-icons type="search" size="18" color="#666"></uni-icons>
-          <text class="search-placeholder">搜索订单/快递单号</text>
+      <view class="header-container">
+        <view class="search-container">
+          <view class="search-box" @click="navigateTo('/pages/search/search')">
+            <uni-icons type="search" size="18" color="#999"></uni-icons>
+            <text class="search-placeholder">搜索订单/快递单号</text>
+          </view>
         </view>
       </view>
       
       <!-- 轮播图区域 -->
-      <swiper class="banner-swiper" indicator-dots autoplay interval="3000" duration="500" circular>
+      <swiper class="banner-swiper" indicator-dots autoplay interval="3000" duration="500" circular indicator-color="rgba(255,255,255,0.6)" indicator-active-color="#FF6B35">
         <swiper-item v-for="(item, index) in banners" :key="index" @click="handleBannerClick(item)">
           <image :src="item.imageUrl" mode="aspectFill" class="banner-image"></image>
         </swiper-item>
@@ -51,26 +53,36 @@
       <!-- 功能导航区域 -->
       <view class="nav-container">
         <view class="nav-item" @click="navigateTo('/pages/delivery/send')">
-          <image src="/static/images/send.png" mode="aspectFit" class="nav-image"></image>
+          <view class="nav-icon-wrapper nav-send">
+            <image src="/static/images/send.png" mode="aspectFit" class="nav-image"></image>
+          </view>
           <text class="nav-text">寄件</text>
         </view>
         <view class="nav-item" @click="navigateTo('/pages/delivery/receive')">
-          <image src="/static/images/receive.png" mode="aspectFit" class="nav-image"></image>
+          <view class="nav-icon-wrapper nav-receive">
+            <image src="/static/images/receive.png" mode="aspectFit" class="nav-image"></image>
+          </view>
           <text class="nav-text">收件</text>
         </view>
         <view class="nav-item" @click="navigateTo('/pages/order/track')">
-          <image src="/static/images/track.png" mode="aspectFit" class="nav-image"></image>
+          <view class="nav-icon-wrapper nav-track">
+            <image src="/static/images/track.png" mode="aspectFit" class="nav-image"></image>
+          </view>
           <text class="nav-text">物流跟踪</text>
         </view>
         <view class="nav-item" @click="navigateTo('/pages/courier/recruitment')">
-          <image src="/static/images/recruit.png" mode="aspectFit" class="nav-image"></image>
+          <view class="nav-icon-wrapper nav-recruit">
+            <image src="/static/images/recruit.png" mode="aspectFit" class="nav-image"></image>
+          </view>
           <text class="nav-text">招募快递员</text>
         </view>
       </view>
       
       <!-- 公告区域 -->
       <view class="notice-container">
-        <uni-icons type="notification" size="18" color="#3cc51f"></uni-icons>
+        <view class="notice-icon">
+          <uni-icons type="notification-filled" size="18" color="#FF6B35"></uni-icons>
+        </view>
         <swiper class="notice-swiper" vertical autoplay circular interval="3000" duration="500">
           <swiper-item v-for="(item, index) in notices" :key="index" @click="handleNoticeClick(item)">
             <text class="notice-text">{{ item.content }}</text>
@@ -81,19 +93,30 @@
       <!-- 推荐快递员 -->
       <view class="section-container" v-if="nearestCouriers.length > 0">
         <view class="section-header">
-          <text class="section-title">{{ userLocation ? '附近快递员' : '推荐快递员' }}</text>
-          <text class="section-more" @click="navigateTo('/pages/courier/list')">查看更多</text>
+          <view class="section-title-wrapper">
+            <view class="section-title-mark"></view>
+            <text class="section-title">{{ userLocation ? '附近快递员' : '推荐快递员' }}</text>
+          </view>
+          <view class="section-more" @click="navigateTo('/pages/courier/list')">
+            <text>查看更多</text>
+            <uni-icons type="right" size="14" color="#999"></uni-icons>
+          </view>
         </view>
-        <scroll-view scroll-x class="courier-scroll">
+        <scroll-view scroll-x class="courier-scroll" show-scrollbar="false">
           <view class="courier-item" v-for="(item, index) in nearestCouriers" :key="index" @click="navigateTo(`/pages/courier/detail?id=${item.id}`)">
             <image :src="item.avatar || '/static/images/default-avatar.png'" mode="aspectFill" class="courier-avatar"></image>
-            <text class="courier-name">{{ item.name }}</text>
-            <view class="courier-rating">
-              <uni-icons type="star-filled" size="12" color="#ff9900"></uni-icons>
-              <text class="rating-text">{{ item.rating }}</text>
+            <text class="courier-name">{{ item.name || '快递员' + (index + 1) }}</text>
+            <view class="courier-info">
+              <view class="courier-rating">
+                <uni-icons type="star-filled" size="12" color="#FFAC33"></uni-icons>
+                <text class="rating-text">{{ (item.rating || 5.0).toFixed(1) }}</text>
+              </view>
+              <view class="courier-orders">已完成{{ item.completedOrders || 0 }}单</view>
             </view>
-            <text class="courier-orders">已完成{{ item.completedOrders }}单</text>
-            <text v-if="item.distance" class="courier-distance">{{ item.distance }}</text>
+            <text v-if="item.distance" class="courier-distance">
+              <uni-icons type="location" size="12" color="#999"></uni-icons>
+              {{ item.distance }}
+            </text>
           </view>
         </scroll-view>
       </view>
@@ -101,61 +124,74 @@
       <!-- 最近订单 -->
       <view class="section-container" v-if="recentOrders.length > 0">
         <view class="section-header">
-          <text class="section-title">最近订单</text>
-          <text class="section-more" @click="navigateTo('/pages/order/order')">查看更多</text>
+          <view class="section-title-wrapper">
+            <view class="section-title-mark"></view>
+            <text class="section-title">最近订单</text>
+          </view>
+          <view class="section-more" @click="navigateTo('/pages/order/order')">
+            <text>查看更多</text>
+            <uni-icons type="right" size="14" color="#999"></uni-icons>
+          </view>
         </view>
         <view class="recent-orders">
           <view class="order-item" v-for="(item, index) in recentOrders" :key="index" @click="navigateTo(`/pages/order/detail?id=${item.id}`)">
-            <view class="order-info">
+            <view class="order-left">
               <view class="order-status" :class="'status-' + item.status">{{ getOrderStatusText(item.status) }}</view>
               <view class="order-time">{{ formatDate(item.createdAt) }}</view>
             </view>
             <view class="order-addresses">
               <view class="address-line">
-                <text class="address-label">寄</text>
+                <text class="address-label sender">寄</text>
                 <text class="address-value ellipsis">{{ item.senderAddress }}</text>
               </view>
+              <view class="address-route">
+                <view class="route-line"></view>
+                <uni-icons type="arrowdown" size="14" color="#ddd"></uni-icons>
+              </view>
               <view class="address-line">
-                <text class="address-label">收</text>
+                <text class="address-label receiver">收</text>
                 <text class="address-value ellipsis">{{ item.receiverAddress }}</text>
               </view>
             </view>
-            <view class="order-action">
-              <uni-icons type="right" size="16" color="#999"></uni-icons>
+            <view class="order-arrow">
+              <uni-icons type="right" size="16" color="#C8C8C8"></uni-icons>
             </view>
           </view>
         </view>
       </view>
       
       <!-- 价格计算器 -->
-      <view class="section-container">
+      <view class="section-container calc-section">
         <view class="section-header">
-          <text class="section-title">快递费用计算</text>
+          <view class="section-title-wrapper">
+            <view class="section-title-mark"></view>
+            <text class="section-title">快递费用计算</text>
+          </view>
         </view>
         <view class="calculator-container">
           <view class="calculator-form">
             <view class="form-item">
               <text class="label">包裹类型</text>
-              <picker mode="selector" :range="packageTypes" @change="handlePackageTypeChange">
+              <picker mode="selector" :range="packageTypes" @change="handlePackageTypeChange" class="picker">
                 <view class="picker-value">
                   <text>{{ packageTypes[selectedPackageType] }}</text>
-                  <uni-icons type="arrowdown" size="14" color="#666"></uni-icons>
+                  <uni-icons type="arrowdown" size="14" color="#999"></uni-icons>
                 </view>
               </picker>
             </view>
             <view class="form-item">
               <text class="label">预估距离</text>
               <view class="distance-slider">
-                <slider :min="1" :max="20" :value="distance" :block-size="18" show-value @change="handleDistanceChange"></slider>
+                <slider :min="1" :max="20" :value="distance" :block-size="20" show-value @change="handleDistanceChange" active-color="#FF6B35" block-color="#FF6B35"></slider>
                 <text class="distance-value">{{ distance }}公里</text>
               </view>
             </view>
           </view>
-          <view class="price-result">
-            <text class="price-label">预估费用:</text>
-            <text class="price-value">¥{{ calculatedPrice.toFixed(2) }}</text>
-          </view>
-          <view class="calculator-actions">
+          <view class="calculator-result">
+            <view class="price-result">
+              <text class="price-label">预估费用</text>
+              <text class="price-value">¥{{ calculatedPrice.toFixed(2) }}</text>
+            </view>
             <button class="calc-btn" @click="navigateTo('/pages/delivery/send')">立即下单</button>
           </view>
         </view>
@@ -164,15 +200,15 @@
       <!-- 服务保障 -->
       <view class="guarantee-container">
         <view class="guarantee-item">
-          <uni-icons type="checkmarkempty" size="20" color="#3cc51f"></uni-icons>
+          <uni-icons type="checkmarkempty" size="16" color="#FF6B35"></uni-icons>
           <text class="guarantee-text">快递安全保障</text>
         </view>
         <view class="guarantee-item">
-          <uni-icons type="checkmarkempty" size="20" color="#3cc51f"></uni-icons>
+          <uni-icons type="checkmarkempty" size="16" color="#FF6B35"></uni-icons>
           <text class="guarantee-text">专业物流配送</text>
         </view>
         <view class="guarantee-item">
-          <uni-icons type="checkmarkempty" size="20" color="#3cc51f"></uni-icons>
+          <uni-icons type="checkmarkempty" size="16" color="#FF6B35"></uni-icons>
           <text class="guarantee-text">7*24小时服务</text>
         </view>
       </view>
@@ -656,22 +692,30 @@ export default {
 <style>
 .index-container {
   min-height: 100vh;
-  background-color: #f8f8f8;
+  background-color: #F6F6F6;
   padding-bottom: 40rpx;
 }
 
+/* 头部样式 */
+.header-container {
+  background: linear-gradient(to right, #FF6B35, #FF9A5A);
+  padding: 20rpx 30rpx 30rpx;
+  border-radius: 0 0 30rpx 30rpx;
+  box-shadow: 0 4rpx 12rpx rgba(255, 107, 53, 0.15);
+}
+
 .search-container {
-  padding: 20rpx 30rpx;
-  background-color: #3cc51f;
+  position: relative;
 }
 
 .search-box {
   display: flex;
   align-items: center;
   background-color: #fff;
-  height: 70rpx;
-  border-radius: 35rpx;
+  height: 80rpx;
+  border-radius: 40rpx;
   padding: 0 30rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
 }
 
 .search-placeholder {
@@ -680,24 +724,29 @@ export default {
   margin-left: 10rpx;
 }
 
+/* 轮播图样式 */
 .banner-swiper {
   width: 100%;
-  height: 300rpx;
+  height: 340rpx;
+  margin-top: -20rpx;
 }
 
 .banner-image {
   width: 100%;
   height: 100%;
+  border-radius: 20rpx;
+  margin: 0 20rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.1);
 }
 
+/* 导航样式 */
 .nav-container {
   display: flex;
   background-color: #fff;
-  padding: 30rpx 20rpx;
-  margin-bottom: 20rpx;
-  border-radius: 12rpx;
-  margin: 20rpx;
-  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+  padding: 40rpx 20rpx;
+  margin: 30rpx 20rpx;
+  border-radius: 20rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05);
 }
 
 .nav-item {
@@ -707,77 +756,125 @@ export default {
   align-items: center;
 }
 
-.nav-image {
-  width: 80rpx;
-  height: 80rpx;
-  margin-bottom: 10rpx;
-  background-color: #3cc51f;
-  border-radius: 50%;
-  padding: 16rpx;
-  box-sizing: border-box;
+.nav-icon-wrapper {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 28rpx;
+  margin-bottom: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8rpx 16rpx rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-icon-wrapper::after {
+  content: '';
+  position: absolute;
+  width: 120%;
+  height: 120%;
+  background: linear-gradient(45deg, rgba(255,255,255,0.1), rgba(255,255,255,0.3));
+  transform: translateY(100%);
   transition: transform 0.3s ease;
-  box-shadow: 0 6rpx 12rpx rgba(0, 0, 0, 0.1);
 }
 
-.nav-item:nth-child(1) .nav-image {
-  background-color: #3cc51f;
+.nav-item:active .nav-icon-wrapper::after {
+  transform: translateY(0);
 }
 
-.nav-item:nth-child(2) .nav-image {
-  background-color: #1296db;
+.nav-send {
+  background: linear-gradient(135deg, #FF6B35, #FF9A5A);
 }
 
-.nav-item:nth-child(3) .nav-image {
-  background-color: #ff9900;
+.nav-receive {
+  background: linear-gradient(135deg, #4D96FF, #6EAEFF);
 }
 
-.nav-item:nth-child(4) .nav-image {
-  background-color: #e64340;
+.nav-track {
+  background: linear-gradient(135deg, #FFAC33, #FFD280);
 }
 
-.nav-item:active .nav-image {
-  transform: scale(0.9);
+.nav-recruit {
+  background: linear-gradient(135deg, #7A42F4, #B388FF);
+}
+
+.nav-image {
+  width: 50rpx;
+  height: 50rpx;
+  z-index: 1;
 }
 
 .nav-text {
   font-size: 28rpx;
+  font-weight: 500;
   color: #333;
-  margin-top: 6rpx;
 }
 
+/* 公告样式 */
 .notice-container {
   display: flex;
   align-items: center;
-  background-color: #fff;
-  padding: 20rpx 30rpx;
-  margin-bottom: 20rpx;
+  background-color: #FFF7F2;
+  padding: 16rpx 30rpx;
+  margin: 0 20rpx 30rpx;
+  border-radius: 16rpx;
+  box-shadow: 0 2rpx 10rpx rgba(255, 107, 53, 0.1);
+  border-left: 8rpx solid #FF6B35;
+}
+
+.notice-icon {
+  background-color: rgba(255, 107, 53, 0.1);
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 30rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 20rpx;
 }
 
 .notice-swiper {
   flex: 1;
-  height: 40rpx;
-  margin-left: 20rpx;
+  height: 60rpx;
 }
 
 .notice-text {
   font-size: 26rpx;
   color: #666;
+  line-height: 60rpx;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+/* 板块通用样式 */
 .section-container {
   background-color: #fff;
-  margin-bottom: 20rpx;
+  margin: 0 20rpx 30rpx;
   padding: 30rpx;
+  border-radius: 20rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05);
 }
 
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20rpx;
+  margin-bottom: 30rpx;
+}
+
+.section-title-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+.section-title-mark {
+  width: 8rpx;
+  height: 36rpx;
+  background-color: #FF6B35;
+  border-radius: 4rpx;
+  margin-right: 16rpx;
 }
 
 .section-title {
@@ -787,139 +884,204 @@ export default {
 }
 
 .section-more {
+  display: flex;
+  align-items: center;
+  color: #999;
   font-size: 26rpx;
-  color: #666;
 }
 
+/* 快递员模块样式 */
 .courier-scroll {
   width: 100%;
   white-space: nowrap;
-  padding: 20rpx 0;
+  padding: 10rpx 0;
 }
 
 .courier-item {
   display: inline-block;
   width: 200rpx;
-  margin-right: 20rpx;
+  margin-right: 24rpx;
   background-color: #fff;
-  border-radius: 10rpx;
+  border-radius: 16rpx;
   padding: 20rpx;
   text-align: center;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  vertical-align: top;
+}
+
+.courier-item:active {
+  transform: scale(0.96);
 }
 
 .courier-avatar {
-  width: 120rpx;
-  height: 120rpx;
-  border-radius: 60rpx;
-  margin-bottom: 10rpx;
+  width: 130rpx;
+  height: 130rpx;
+  border-radius: 65rpx;
+  margin-bottom: 16rpx;
+  border: 4rpx solid #F6F6F6;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.1);
 }
 
 .courier-name {
+  display: block;
   font-size: 28rpx;
-  margin-bottom: 10rpx;
+  font-weight: 500;
+  margin-bottom: 12rpx;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  width: 100%;
+  text-align: center;
+  color: #333;
+  height: 40rpx;
+  line-height: 40rpx;
+}
+
+.courier-info {
+  margin-bottom: 10rpx;
 }
 
 .courier-rating {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 10rpx;
+  margin-bottom: 8rpx;
 }
 
 .rating-text {
   font-size: 24rpx;
-  color: #ff9900;
-  margin-left: 5rpx;
+  color: #FFAC33;
+  margin-left: 6rpx;
 }
 
 .courier-orders {
-  font-size: 24rpx;
+  font-size: 22rpx;
   color: #999;
 }
 
 .courier-distance {
-  font-size: 24rpx;
+  font-size: 22rpx;
   color: #999;
-  margin-left: 10rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
+/* 订单模块样式 */
 .recent-orders {
-  padding: 0 30rpx;
+  padding: 0;
 }
 
 .order-item {
   display: flex;
-  justify-content: space-between;
   background-color: #fff;
-  border-radius: 10rpx;
-  padding: 30rpx;
-  margin-bottom: 20rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+  border-radius: 16rpx;
+  padding: 24rpx 0;
+  margin-bottom: 24rpx;
+  border-bottom: 2rpx solid #F6F6F6;
+  position: relative;
 }
 
-.order-info {
+.order-item:last-child {
+  margin-bottom: 0;
+  border-bottom: none;
+}
+
+.order-left {
+  width: 180rpx;
+  padding: 0 20rpx;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  width: 180rpx;
 }
 
 .order-status {
   font-size: 28rpx;
   font-weight: bold;
-  color: #3cc51f;
+  padding: 6rpx 16rpx;
+  border-radius: 8rpx;
+  display: inline-block;
 }
 
-.order-status.status-pending {
-  color: #ff9900;
+.status-pending {
+  color: #FFAC33;
+  background-color: rgba(255, 172, 51, 0.1);
 }
 
-.order-status.status-cancelled {
-  color: #ff3b30;
+.status-shipped {
+  color: #4D96FF;
+  background-color: rgba(77, 150, 255, 0.1);
+}
+
+.status-delivered {
+  color: #3CC75A;
+  background-color: rgba(60, 199, 90, 0.1);
+}
+
+.status-cancelled {
+  color: #FF5151;
+  background-color: rgba(255, 81, 81, 0.1);
 }
 
 .order-time {
-  font-size: 24rpx;
+  font-size: 22rpx;
   color: #999;
+  margin-top: 16rpx;
 }
 
 .order-addresses {
   flex: 1;
-  padding: 0 20rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 0 16rpx;
 }
 
 .address-line {
   display: flex;
   align-items: center;
-  margin-bottom: 10rpx;
+  margin-bottom: 6rpx;
 }
 
 .address-label {
-  width: 40rpx;
-  height: 40rpx;
-  line-height: 40rpx;
+  width: 36rpx;
+  height: 36rpx;
+  line-height: 36rpx;
   text-align: center;
-  border-radius: 20rpx;
-  font-size: 24rpx;
-  margin-right: 10rpx;
+  border-radius: 8rpx;
+  font-size: 22rpx;
+  margin-right: 16rpx;
   color: #fff;
 }
 
-.address-line:first-child .address-label {
-  background-color: #3cc51f;
+.address-label.sender {
+  background-color: #FF6B35;
 }
 
-.address-line:last-child .address-label {
-  background-color: #ff9900;
+.address-label.receiver {
+  background-color: #4D96FF;
+}
+
+.address-route {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-left: 18rpx;
+  height: 30rpx;
+  margin-bottom: 6rpx;
+}
+
+.route-line {
+  width: 2rpx;
+  height: 16rpx;
+  background-color: #ddd;
 }
 
 .address-value {
-  font-size: 28rpx;
-  width: 380rpx;
+  font-size: 26rpx;
+  color: #333;
+  width: 360rpx;
 }
 
 .ellipsis {
@@ -928,16 +1090,110 @@ export default {
   text-overflow: ellipsis;
 }
 
-.order-action {
+.order-arrow {
+  padding: 0 20rpx;
   display: flex;
   align-items: center;
 }
 
+/* 计算器样式 */
+.calc-section {
+  background: linear-gradient(to bottom, #fff, #FFF7F2);
+}
+
+.calculator-container {
+  padding: 10rpx 0;
+}
+
+.calculator-form {
+  margin-bottom: 30rpx;
+}
+
+.form-item {
+  margin-bottom: 24rpx;
+}
+
+.label {
+  display: block;
+  font-size: 28rpx;
+  color: #333;
+  margin-bottom: 16rpx;
+}
+
+.picker {
+  width: 100%;
+}
+
+.picker-value {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #F8F8F8;
+  height: 80rpx;
+  border-radius: 12rpx;
+  padding: 0 30rpx;
+}
+
+.distance-slider {
+  background-color: #F8F8F8;
+  border-radius: 12rpx;
+  padding: 20rpx 30rpx;
+}
+
+.distance-value {
+  font-size: 28rpx;
+  color: #333;
+  margin-top: 16rpx;
+  display: block;
+  text-align: right;
+}
+
+.calculator-result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 40rpx;
+}
+
+.price-result {
+  display: flex;
+  align-items: baseline;
+}
+
+.price-label {
+  font-size: 28rpx;
+  color: #666;
+  margin-right: 16rpx;
+}
+
+.price-value {
+  font-size: 40rpx;
+  font-weight: bold;
+  color: #FF6B35;
+}
+
+.calc-btn {
+  background: linear-gradient(to right, #FF6B35, #FF9A5A);
+  color: #fff;
+  padding: 12rpx 40rpx;
+  border-radius: 40rpx;
+  font-size: 28rpx;
+  border: none;
+  box-shadow: 0 8rpx 16rpx rgba(255, 107, 53, 0.2);
+}
+
+.calc-btn:active {
+  transform: scale(0.96);
+}
+
+/* 服务保障样式 */
 .guarantee-container {
   background-color: #fff;
   display: flex;
   padding: 20rpx 0;
   justify-content: space-around;
+  margin: 0 20rpx;
+  border-radius: 16rpx;
 }
 
 .guarantee-item {
@@ -946,36 +1202,9 @@ export default {
 }
 
 .guarantee-text {
-  font-size: 24rpx;
+  font-size: 22rpx;
   color: #666;
-  margin-left: 6rpx;
-}
-
-.loading-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 30rpx;
-}
-
-.loading-spinner {
-  width: 40rpx;
-  height: 40rpx;
-  border: 4rpx solid rgba(0, 0, 0, 0.1);
-  border-left-color: #3cc51f;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-.loading-text {
-  font-size: 24rpx;
-  color: #999;
-  margin-top: 10rpx;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
+  margin-left: 8rpx;
 }
 
 /* 骨架屏样式 */
@@ -984,160 +1213,94 @@ export default {
 }
 
 .search-skeleton {
-  height: 70rpx;
+  height: 80rpx;
   margin: 20rpx 30rpx;
-  background-color: #f0f0f0;
-  border-radius: 35rpx;
-  animation: skeleton-loading 1.5s infinite;
+  background-color: #EFEFEF;
+  border-radius: 40rpx;
+  animation: skeleton-pulse 1.5s infinite;
 }
 
 .banner-skeleton {
-  height: 300rpx;
-  background-color: #f0f0f0;
-  animation: skeleton-loading 1.5s infinite;
+  height: 340rpx;
+  margin: 0 20rpx;
+  background-color: #EFEFEF;
+  border-radius: 20rpx;
+  animation: skeleton-pulse 1.5s infinite;
 }
 
 .nav-skeleton {
   display: flex;
   justify-content: space-around;
-  padding: 30rpx;
+  padding: 40rpx 20rpx;
+  margin: 30rpx 20rpx;
+  background-color: #fff;
+  border-radius: 20rpx;
 }
 
 .nav-item-skeleton {
-  width: 120rpx;
-  height: 120rpx;
-  border-radius: 60rpx;
-  background-color: #f0f0f0;
-  margin-bottom: 20rpx;
-  animation: skeleton-loading 1.5s infinite;
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 28rpx;
+  background-color: #EFEFEF;
+  margin-bottom: 16rpx;
+  animation: skeleton-pulse 1.5s infinite;
 }
 
 .notice-skeleton {
-  height: 60rpx;
-  margin: 20rpx 30rpx;
-  background-color: #f0f0f0;
-  border-radius: 30rpx;
-  animation: skeleton-loading 1.5s infinite;
+  height: 80rpx;
+  margin: 0 20rpx 30rpx;
+  background-color: #EFEFEF;
+  border-radius: 16rpx;
+  animation: skeleton-pulse 1.5s infinite;
 }
 
 .section-skeleton {
-  margin: 30rpx 0;
+  margin: 0 20rpx 30rpx;
+  padding: 30rpx;
+  background-color: #fff;
+  border-radius: 20rpx;
 }
 
 .title-skeleton {
   width: 200rpx;
-  height: 40rpx;
-  margin: 20rpx 30rpx;
-  background-color: #f0f0f0;
+  height: 36rpx;
+  margin-bottom: 30rpx;
+  background-color: #EFEFEF;
   border-radius: 4rpx;
-  animation: skeleton-loading 1.5s infinite;
+  animation: skeleton-pulse 1.5s infinite;
 }
 
 .courier-skeleton {
   display: flex;
-  padding: 0 30rpx;
-  overflow-x: scroll;
+  overflow-x: hidden;
 }
 
 .courier-item-skeleton {
   width: 200rpx;
-  height: 240rpx;
-  margin-right: 20rpx;
-  background-color: #f0f0f0;
-  border-radius: 10rpx;
-  animation: skeleton-loading 1.5s infinite;
+  height: 260rpx;
+  margin-right: 24rpx;
+  background-color: #EFEFEF;
+  border-radius: 16rpx;
+  animation: skeleton-pulse 1.5s infinite;
 }
 
 .order-skeleton {
-  height: 180rpx;
-  margin: 20rpx 30rpx;
-  background-color: #f0f0f0;
-  border-radius: 10rpx;
-  animation: skeleton-loading 1.5s infinite;
+  height: 160rpx;
+  margin-bottom: 24rpx;
+  background-color: #EFEFEF;
+  border-radius: 16rpx;
+  animation: skeleton-pulse 1.5s infinite;
 }
 
-@keyframes skeleton-loading {
+@keyframes skeleton-pulse {
   0% {
     opacity: 0.6;
   }
   50% {
-    opacity: 0.8;
+    opacity: 0.3;
   }
   100% {
     opacity: 0.6;
   }
-}
-
-.calculator-container {
-  padding: 20rpx;
-  background-color: #fff;
-  border-radius: 10rpx;
-  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
-}
-
-.calculator-form {
-  margin-bottom: 20rpx;
-}
-
-.form-item {
-  margin-bottom: 20rpx;
-}
-
-.label {
-  display: block;
-  font-size: 28rpx;
-  color: #333;
-  margin-bottom: 10rpx;
-}
-
-.picker-value {
-  display: flex;
-  align-items: center;
-  background-color: #fff;
-  height: 70rpx;
-  border-radius: 35rpx;
-  padding: 0 30rpx;
-}
-
-.distance-slider {
-  display: flex;
-  align-items: center;
-  background-color: #fff;
-  height: 70rpx;
-  border-radius: 35rpx;
-  padding: 0 30rpx;
-}
-
-.distance-value {
-  font-size: 28rpx;
-  color: #333;
-  margin-left: 20rpx;
-}
-
-.price-result {
-  margin-bottom: 20rpx;
-}
-
-.price-label {
-  font-size: 28rpx;
-  color: #333;
-  margin-right: 10rpx;
-}
-
-.price-value {
-  font-size: 28rpx;
-  color: #3cc51f;
-}
-
-.calculator-actions {
-  text-align: right;
-}
-
-.calc-btn {
-  background-color: #3cc51f;
-  color: #fff;
-  padding: 10rpx 20rpx;
-  border-radius: 35rpx;
-  font-size: 28rpx;
 }
 </style> 

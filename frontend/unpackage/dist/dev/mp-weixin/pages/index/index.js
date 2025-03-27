@@ -386,7 +386,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     e: common_vendor.p({
       type: "search",
       size: "18",
-      color: "#666"
+      color: "#999"
     }),
     f: common_vendor.o(($event) => $options.navigateTo("/pages/search/search")),
     g: common_vendor.f($data.banners, (item, index, i0) => {
@@ -405,9 +405,9 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     n: common_assets._imports_3,
     o: common_vendor.o(($event) => $options.navigateTo("/pages/courier/recruitment")),
     p: common_vendor.p({
-      type: "notification",
+      type: "notification-filled",
       size: "18",
-      color: "#3cc51f"
+      color: "#FF6B35"
     }),
     q: common_vendor.f($data.notices, (item, index, i0) => {
       return {
@@ -419,76 +419,98 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     r: $data.nearestCouriers.length > 0
   }, $data.nearestCouriers.length > 0 ? {
     s: common_vendor.t($data.userLocation ? "附近快递员" : "推荐快递员"),
-    t: common_vendor.o(($event) => $options.navigateTo("/pages/courier/list")),
-    v: common_vendor.f($data.nearestCouriers, (item, index, i0) => {
+    t: common_vendor.p({
+      type: "right",
+      size: "14",
+      color: "#999"
+    }),
+    v: common_vendor.o(($event) => $options.navigateTo("/pages/courier/list")),
+    w: common_vendor.f($data.nearestCouriers, (item, index, i0) => {
       return common_vendor.e({
         a: item.avatar || "/static/images/default-avatar.png",
-        b: common_vendor.t(item.name),
-        c: "1a526eb5-2-" + i0,
-        d: common_vendor.t(item.rating),
-        e: common_vendor.t(item.completedOrders),
+        b: common_vendor.t(item.name || "快递员" + (index + 1)),
+        c: "1a526eb5-3-" + i0,
+        d: common_vendor.t((item.rating || 5).toFixed(1)),
+        e: common_vendor.t(item.completedOrders || 0),
         f: item.distance
       }, item.distance ? {
-        g: common_vendor.t(item.distance)
+        g: "1a526eb5-4-" + i0,
+        h: common_vendor.p({
+          type: "location",
+          size: "12",
+          color: "#999"
+        }),
+        i: common_vendor.t(item.distance)
       } : {}, {
-        h: index,
-        i: common_vendor.o(($event) => $options.navigateTo(`/pages/courier/detail?id=${item.id}`), index)
+        j: index,
+        k: common_vendor.o(($event) => $options.navigateTo(`/pages/courier/detail?id=${item.id}`), index)
       });
     }),
-    w: common_vendor.p({
+    x: common_vendor.p({
       type: "star-filled",
       size: "12",
-      color: "#ff9900"
+      color: "#FFAC33"
     })
   } : {}, {
-    x: $data.recentOrders.length > 0
+    y: $data.recentOrders.length > 0
   }, $data.recentOrders.length > 0 ? {
-    y: common_vendor.o(($event) => $options.navigateTo("/pages/order/order")),
-    z: common_vendor.f($data.recentOrders, (item, index, i0) => {
+    z: common_vendor.p({
+      type: "right",
+      size: "14",
+      color: "#999"
+    }),
+    A: common_vendor.o(($event) => $options.navigateTo("/pages/order/order")),
+    B: common_vendor.f($data.recentOrders, (item, index, i0) => {
       return {
         a: common_vendor.t($options.getOrderStatusText(item.status)),
         b: common_vendor.n("status-" + item.status),
         c: common_vendor.t($options.formatDate(item.createdAt)),
         d: common_vendor.t(item.senderAddress),
-        e: common_vendor.t(item.receiverAddress),
-        f: "1a526eb5-3-" + i0,
-        g: index,
-        h: common_vendor.o(($event) => $options.navigateTo(`/pages/order/detail?id=${item.id}`), index)
+        e: "1a526eb5-6-" + i0,
+        f: common_vendor.t(item.receiverAddress),
+        g: "1a526eb5-7-" + i0,
+        h: index,
+        i: common_vendor.o(($event) => $options.navigateTo(`/pages/order/detail?id=${item.id}`), index)
       };
     }),
-    A: common_vendor.p({
-      type: "right",
-      size: "16",
-      color: "#999"
-    })
-  } : {}, {
-    B: common_vendor.t($data.packageTypes[$data.selectedPackageType]),
     C: common_vendor.p({
       type: "arrowdown",
       size: "14",
-      color: "#666"
+      color: "#ddd"
     }),
-    D: $data.packageTypes,
-    E: common_vendor.o((...args) => $options.handlePackageTypeChange && $options.handlePackageTypeChange(...args)),
-    F: $data.distance,
-    G: common_vendor.o((...args) => $options.handleDistanceChange && $options.handleDistanceChange(...args)),
-    H: common_vendor.t($data.distance),
-    I: common_vendor.t($data.calculatedPrice.toFixed(2)),
-    J: common_vendor.o(($event) => $options.navigateTo("/pages/delivery/send")),
-    K: common_vendor.p({
-      type: "checkmarkempty",
-      size: "20",
-      color: "#3cc51f"
+    D: common_vendor.p({
+      type: "right",
+      size: "16",
+      color: "#C8C8C8"
+    })
+  } : {}, {
+    E: common_vendor.t($data.packageTypes[$data.selectedPackageType]),
+    F: common_vendor.p({
+      type: "arrowdown",
+      size: "14",
+      color: "#999"
     }),
-    L: common_vendor.p({
+    G: $data.packageTypes,
+    H: common_vendor.o((...args) => $options.handlePackageTypeChange && $options.handlePackageTypeChange(...args)),
+    I: $data.distance,
+    J: common_vendor.o((...args) => $options.handleDistanceChange && $options.handleDistanceChange(...args)),
+    K: common_vendor.t($data.distance),
+    L: common_vendor.t($data.calculatedPrice.toFixed(2)),
+    M: common_vendor.o(($event) => $options.navigateTo("/pages/delivery/send")),
+    N: common_vendor.p({
       type: "checkmarkempty",
-      size: "20",
-      color: "#3cc51f"
+      size: "16",
+      color: "#FF6B35"
     }),
-    M: common_vendor.p({
+    O: common_vendor.p({
       type: "checkmarkempty",
-      size: "20",
-      color: "#3cc51f"
+      size: "16",
+      color: "#FF6B35"
+    }),
+    P: common_vendor.p({
+      type: "checkmarkempty",
+      size: "16",
+      color: "#FF6B35"
     })
   }));
 }
