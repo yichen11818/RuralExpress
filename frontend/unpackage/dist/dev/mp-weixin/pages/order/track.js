@@ -1,5 +1,6 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
+const api_order = require("../../api/order.js");
 const uniIcons = () => "../../uni_modules/uni-icons/components/uni-icons/uni-icons.js";
 const _sfc_main = {
   components: {
@@ -8,49 +9,20 @@ const _sfc_main = {
   data() {
     return {
       trackingNo: "",
+      orderId: null,
+      loading: false,
       logistics: {
-        company: "顺丰速运",
-        logo: "/static/images/sf-logo.png",
-        trackingNo: "SF1234567890",
-        status: 4,
-        // 0-待揽收，1-已揽收，2-运输中，3-已到达，4-派送中，5-已签收
-        statusText: "派送中",
-        estimatedTime: "今天 18:00前",
-        address: "江西省南昌市青山湖区艾溪湖北路77号",
-        receiver: "张先生 (138****6677)",
+        company: "",
+        logo: "/static/images/package.png",
+        trackingNo: "",
+        status: 0,
+        statusText: "等待揽收",
+        estimatedTime: "",
+        address: "",
+        receiver: "",
         hasReviewed: false,
-        courier: {
-          name: "张师傅",
-          phone: "135****8888",
-          avatar: "/static/images/courier-avatar.png"
-        },
-        timeline: [
-          {
-            status: "派送中",
-            time: "2023-03-21 09:45:32",
-            detail: "【南昌市】您的快递正在派送中，快递员张师傅，电话135****8888"
-          },
-          {
-            status: "已到达",
-            time: "2023-03-21 07:30:15",
-            detail: "【南昌市】快件已到达南昌青山湖区公司"
-          },
-          {
-            status: "运输中",
-            time: "2023-03-20 23:15:48",
-            detail: "【赣州市】快件已从赣州发出，下一站南昌转运中心"
-          },
-          {
-            status: "已揽收",
-            time: "2023-03-20 17:22:10",
-            detail: "【赣州市】顺丰快递员已揽收，将送往赣州转运中心"
-          },
-          {
-            status: "待揽收",
-            time: "2023-03-20 15:30:25",
-            detail: "【赣州市】商家已发货，等待快递揽收"
-          }
-        ]
+        courier: null,
+        timeline: []
       },
       notifications: {
         statusUpdate: true,
@@ -64,9 +36,12 @@ const _sfc_main = {
     if (options.trackingNo) {
       this.trackingNo = options.trackingNo;
       this.loadTrackingInfo();
+    } else if (options.orderId) {
+      this.orderId = options.orderId;
+      this.loadTrackingInfo();
     } else {
       common_vendor.index.showToast({
-        title: "缺少运单号",
+        title: "缺少运单号或订单ID",
         icon: "none"
       });
       setTimeout(() => {
@@ -80,7 +55,65 @@ const _sfc_main = {
   methods: {
     // 加载物流信息
     loadTrackingInfo() {
-      this.logistics.trackingNo = this.trackingNo;
+      if (this.loading)
+        return;
+      this.loading = true;
+      common_vendor.index.showLoading({
+        title: "加载中..."
+      });
+      const params = {};
+      if (this.trackingNo) {
+        params.trackingNo = this.trackingNo;
+      } else if (this.orderId) {
+        params.orderId = this.orderId;
+      }
+      api_order.getLogisticsInfo(params).then((res) => {
+        if (res.code === 200 && res.data) {
+          const logisticsData = res.data;
+          this.logistics = {
+            company: logisticsData.companyName || "未知快递公司",
+            logo: logisticsData.companyLogo || "/static/images/package.png",
+            trackingNo: logisticsData.trackingNo || this.trackingNo,
+            status: logisticsData.status || 0,
+            statusText: this.getStatusTextByCode(logisticsData.status),
+            estimatedTime: logisticsData.estimatedTime || "暂无信息",
+            address: logisticsData.address || "暂无信息",
+            receiver: logisticsData.receiver || "暂无信息",
+            hasReviewed: logisticsData.hasReviewed || false,
+            courier: logisticsData.courier || null,
+            timeline: logisticsData.timeline || []
+          };
+          if (this.trackingNo === "") {
+            this.trackingNo = this.logistics.trackingNo;
+          }
+        } else {
+          common_vendor.index.showToast({
+            title: res.message || "获取物流信息失败",
+            icon: "none"
+          });
+        }
+      }).catch((err) => {
+        console.error("获取物流信息失败", err);
+        common_vendor.index.showToast({
+          title: "获取物流信息失败",
+          icon: "none"
+        });
+      }).finally(() => {
+        common_vendor.index.hideLoading();
+        this.loading = false;
+      });
+    },
+    // 获取物流状态文本
+    getStatusTextByCode(status) {
+      const statusMap = {
+        0: "等待揽收",
+        1: "已揽收",
+        2: "运输中",
+        3: "已到达",
+        4: "派送中",
+        5: "已签收"
+      };
+      return statusMap[status] || "未知状态";
     },
     // 刷新物流时间线
     refreshTimeline() {
@@ -90,15 +123,11 @@ const _sfc_main = {
       common_vendor.index.showLoading({
         title: "刷新中..."
       });
+      this.loadTrackingInfo();
       setTimeout(() => {
-        common_vendor.index.hideLoading();
         this.refreshing = false;
-        common_vendor.index.showToast({
-          title: "物流信息已更新",
-          icon: "success"
-        });
         common_vendor.index.stopPullDownRefresh();
-      }, 1500);
+      }, 500);
     },
     // 获取物流状态样式类
     getStatusClass() {

@@ -1,22 +1,20 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
-const api_auth = require("../../api/auth.js");
+const api_user = require("../../api/user.js");
 const _sfc_main = {
   data() {
     return {
       userInfo: {},
       genderArray: ["男", "女", "保密"],
       genderIndex: 2,
-      statusBarHeight: 20
+      statusBarHeight: 20,
       // 默认值
+      isLoading: false
     };
   },
   onLoad() {
     this.getStatusBarHeight();
-    this.userInfo = api_auth.getUserInfo() || {};
-    if (this.userInfo.gender !== void 0) {
-      this.genderIndex = this.userInfo.gender;
-    }
+    this.fetchUserProfile();
   },
   methods: {
     // 获取状态栏高度
@@ -36,6 +34,35 @@ const _sfc_main = {
         return "";
       return phone.substring(0, 3) + "****" + phone.substring(7);
     },
+    // 获取用户资料
+    fetchUserProfile() {
+      this.isLoading = true;
+      common_vendor.index.showLoading({
+        title: "加载中..."
+      });
+      api_user.getUserProfile().then((res) => {
+        if (res.code === 200 && res.data) {
+          this.userInfo = res.data;
+          if (this.userInfo.gender !== void 0) {
+            this.genderIndex = this.userInfo.gender;
+          }
+        } else {
+          common_vendor.index.showToast({
+            title: "获取用户信息失败",
+            icon: "none"
+          });
+        }
+      }).catch((err) => {
+        console.error("获取用户信息失败", err);
+        common_vendor.index.showToast({
+          title: "获取用户信息失败",
+          icon: "none"
+        });
+      }).finally(() => {
+        common_vendor.index.hideLoading();
+        this.isLoading = false;
+      });
+    },
     // 选择头像
     chooseAvatar() {
       common_vendor.index.chooseImage({
@@ -43,11 +70,57 @@ const _sfc_main = {
         sizeType: ["compressed"],
         sourceType: ["album", "camera"],
         success: (res) => {
-          this.userInfo.avatar = res.tempFilePaths[0];
+          const tempFilePath = res.tempFilePaths[0];
+          this.userInfo.avatar = tempFilePath;
+          this.uploadAvatar(tempFilePath);
+        }
+      });
+    },
+    // 上传头像
+    uploadAvatar(filePath) {
+      common_vendor.index.showLoading({
+        title: "上传中..."
+      });
+      common_vendor.index.uploadFile({
+        url: "http://localhost:8080/api/file/upload",
+        filePath,
+        name: "file",
+        header: {
+          "Authorization": `Bearer ${common_vendor.index.getStorageSync("token")}`
+        },
+        formData: {
+          "type": "avatar"
+        },
+        success: (uploadRes) => {
+          try {
+            const response = JSON.parse(uploadRes.data);
+            if (response.code === 200 && response.data) {
+              this.userInfo.avatar = response.data.url;
+              common_vendor.index.showToast({
+                title: "上传成功",
+                icon: "success"
+              });
+            } else {
+              common_vendor.index.showToast({
+                title: response.message || "上传失败",
+                icon: "none"
+              });
+            }
+          } catch (e) {
+            common_vendor.index.showToast({
+              title: "上传失败",
+              icon: "none"
+            });
+          }
+        },
+        fail: () => {
           common_vendor.index.showToast({
-            title: "上传头像功能开发中",
+            title: "上传失败",
             icon: "none"
           });
+        },
+        complete: () => {
+          common_vendor.index.hideLoading();
         }
       });
     },
@@ -69,20 +142,37 @@ const _sfc_main = {
     },
     // 保存资料
     saveProfile() {
+      if (this.isLoading)
+        return;
       common_vendor.index.showLoading({
         title: "保存中..."
       });
-      setTimeout(() => {
-        common_vendor.index.hideLoading();
-        api_auth.updateUserInfo(this.userInfo);
+      this.isLoading = true;
+      api_user.updateUserProfile(this.userInfo).then((res) => {
+        if (res.code === 200) {
+          common_vendor.index.showToast({
+            title: "保存成功",
+            icon: "success"
+          });
+          setTimeout(() => {
+            common_vendor.index.navigateBack();
+          }, 1500);
+        } else {
+          common_vendor.index.showToast({
+            title: res.message || "保存失败",
+            icon: "none"
+          });
+        }
+      }).catch((err) => {
+        console.error("保存用户信息失败", err);
         common_vendor.index.showToast({
-          title: "保存成功",
-          icon: "success"
+          title: "保存失败",
+          icon: "none"
         });
-        setTimeout(() => {
-          common_vendor.index.navigateBack();
-        }, 1500);
-      }, 1e3);
+      }).finally(() => {
+        common_vendor.index.hideLoading();
+        this.isLoading = false;
+      });
     }
   }
 };

@@ -174,4 +174,13 @@ export function uploadReviewImage(file) {
       'Content-Type': 'multipart/form-data'
     }
   });
+}
+
+/**
+ * 获取物流跟踪信息
+ * @param {Object} params 查询参数（trackingNo或orderId）
+ * @returns {Promise} 物流跟踪信息
+ */
+export function getLogisticsInfo(params) {
+  return request.get('/order/logistics', { params });
 } 

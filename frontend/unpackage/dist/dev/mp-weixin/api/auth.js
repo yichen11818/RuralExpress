@@ -24,13 +24,9 @@ function logout() {
     url: "/pages/login/login"
   });
 }
-function updateUserInfo(userInfo) {
-  common_vendor.index.setStorageSync("userInfo", userInfo);
-}
 exports.getUserInfo = getUserInfo;
 exports.isLoggedIn = isLoggedIn;
 exports.login = login;
 exports.logout = logout;
 exports.register = register;
 exports.saveLoginInfo = saveLoginInfo;
-exports.updateUserInfo = updateUserInfo;

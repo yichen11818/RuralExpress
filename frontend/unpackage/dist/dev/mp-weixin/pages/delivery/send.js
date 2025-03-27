@@ -1,6 +1,8 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
 const api_auth = require("../../api/auth.js");
+const api_user = require("../../api/user.js");
+const api_order = require("../../api/order.js");
 const _sfc_main = {
   data() {
     return {
@@ -50,11 +52,7 @@ const _sfc_main = {
       });
       return;
     }
-    const userInfo = api_auth.getUserInfo();
-    if (userInfo) {
-      this.formData.senderName = userInfo.name || userInfo.nickname || "";
-      this.formData.senderPhone = userInfo.phone || "";
-    }
+    this.loadUserInfo();
     const eventChannel = this.getOpenerEventChannel();
     if (eventChannel && eventChannel.on) {
       eventChannel.on("reorderData", (data) => {
@@ -72,6 +70,20 @@ const _sfc_main = {
     }
   },
   methods: {
+    // 加载用户信息
+    loadUserInfo() {
+      api_user.getUserProfile().then((res) => {
+        if (res.code === 200 && res.data) {
+          this.formData.senderName = res.data.name || res.data.nickname || "";
+          this.formData.senderPhone = res.data.phone || "";
+          if (res.data.defaultAddress) {
+            this.formData.senderAddress = res.data.defaultAddress.address || "";
+          }
+        }
+      }).catch((err) => {
+        console.error("获取用户信息失败", err);
+      });
+    },
     // 显示地址簿
     showAddressBook(type) {
       common_vendor.index.navigateTo({
@@ -212,21 +224,49 @@ const _sfc_main = {
               title: "提交中...",
               mask: true
             });
-            setTimeout(() => {
+            const orderData = {
+              senderName: this.formData.senderName,
+              senderPhone: this.formData.senderPhone,
+              senderAddress: this.formData.senderAddress,
+              receiverName: this.formData.receiverName,
+              receiverPhone: this.formData.receiverPhone,
+              receiverAddress: this.formData.receiverAddress,
+              packageType: this.formData.packageType,
+              weight: parseFloat(this.formData.weight),
+              insuranceValue: parseFloat(this.formData.insuranceValue) || 0,
+              note: this.formData.note,
+              isUrgent: this.formData.isUrgent,
+              needReceipt: this.formData.needReceipt,
+              paymentMethod: this.formData.paymentMethod,
+              deliveryFee: this.calcDeliveryFee(),
+              insuranceFee: this.calcInsuranceFee(),
+              totalFee: this.calcTotalFee()
+            };
+            api_order.createOrder(orderData).then((res2) => {
+              if (res2.code === 200 && res2.data) {
+                common_vendor.index.hideLoading();
+                common_vendor.index.navigateTo({
+                  url: `/pages/payment/payment?orderId=${res2.data.id}&amount=${this.calcTotalFee().toFixed(2)}&method=${this.formData.paymentMethod}`,
+                  success: (navRes) => {
+                    navRes.eventChannel.emit("orderData", {
+                      ...res2.data,
+                      deliveryFee: this.calcDeliveryFee(),
+                      insuranceFee: this.calcInsuranceFee(),
+                      totalFee: this.calcTotalFee()
+                    });
+                  }
+                });
+              } else {
+                throw new Error(res2.message || "创建订单失败");
+              }
+            }).catch((err) => {
               common_vendor.index.hideLoading();
-              common_vendor.index.navigateTo({
-                url: `/pages/payment/payment?amount=${this.calcTotalFee().toFixed(2)}&method=${this.formData.paymentMethod}`,
-                success: (res2) => {
-                  res2.eventChannel.emit("orderData", {
-                    ...this.formData,
-                    deliveryFee: this.calcDeliveryFee(),
-                    insuranceFee: this.calcInsuranceFee(),
-                    totalFee: this.calcTotalFee(),
-                    orderTime: (/* @__PURE__ */ new Date()).toLocaleString()
-                  });
-                }
+              console.error("创建订单失败", err);
+              common_vendor.index.showToast({
+                title: err.message || "创建订单失败，请重试",
+                icon: "none"
               });
-            }, 1e3);
+            });
           }
         }
       });

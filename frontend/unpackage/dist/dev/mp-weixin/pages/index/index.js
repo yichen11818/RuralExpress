@@ -40,7 +40,7 @@ const _sfc_main = {
       this.loading = true;
       api_home.getHomeData().then((res) => {
         console.log("首页数据响应:", res);
-        if (res && res.data) {
+        if (res && res.code === 200 && res.data) {
           const data = res.data;
           this.banners = data.banners || [];
           this.notices = data.notices || [];
@@ -56,98 +56,29 @@ const _sfc_main = {
           });
         } else {
           console.warn("首页数据返回格式不正确:", res);
-          this.useDefaultData();
+          common_vendor.index.showToast({
+            title: "数据加载异常",
+            icon: "none"
+          });
+          this.clearData();
         }
       }).catch((err) => {
         console.error("获取首页数据失败", err);
-        if (err && typeof err === "object" && (err.banners || err.notices || err.nearestCouriers)) {
-          console.warn("异常中包含有效数据，尝试使用");
-          if (err.banners)
-            this.banners = err.banners;
-          if (err.notices)
-            this.notices = err.notices;
-          if (err.nearestCouriers) {
-            this.nearestCouriers = err.nearestCouriers.map((courier) => {
-              return {
-                id: courier.id,
-                name: courier.name || courier.userName || "未知快递员",
-                avatar: courier.avatar || "/static/images/default-avatar.png",
-                rating: courier.rating || 5,
-                completedOrders: courier.completedOrders || 0
-              };
-            });
-          }
-        } else {
-          common_vendor.index.showToast({
-            title: "数据加载失败",
-            icon: "none"
-          });
-          this.useDefaultData();
-        }
+        common_vendor.index.showToast({
+          title: "数据加载失败",
+          icon: "none"
+        });
+        this.clearData();
       }).finally(() => {
         this.loading = false;
         callback && callback();
       });
     },
-    // 使用默认数据（当API请求失败时）
-    useDefaultData() {
-      this.banners = [
-        {
-          imageUrl: "/static/images/banner1.jpg",
-          linkUrl: "/pages/notice/detail?id=1",
-          title: "乡递通平台上线啦"
-        },
-        {
-          imageUrl: "/static/images/banner2.jpg",
-          linkUrl: "/pages/activity/detail?id=1",
-          title: "快递送货优惠活动"
-        },
-        {
-          imageUrl: "/static/images/banner3.jpg",
-          linkUrl: "/pages/courier/recruitment",
-          title: "快递员招募计划"
-        }
-      ];
-      this.notices = [
-        {
-          id: 1,
-          content: "乡递通平台正式上线，为乡村快递提供便捷服务",
-          linkUrl: "/pages/notice/detail?id=1"
-        },
-        {
-          id: 2,
-          content: "成为快递员，每单收益最高可达10元",
-          linkUrl: "/pages/courier/recruitment"
-        },
-        {
-          id: 3,
-          content: "乡递通招募村镇快递员，详情查看招募页面",
-          linkUrl: "/pages/notice/detail?id=3"
-        }
-      ];
-      this.nearestCouriers = [
-        {
-          id: 1,
-          name: "张师傅",
-          avatar: "/static/images/courier1.jpg",
-          rating: 4.9,
-          completedOrders: 326
-        },
-        {
-          id: 2,
-          name: "李师傅",
-          avatar: "/static/images/courier2.jpg",
-          rating: 4.8,
-          completedOrders: 215
-        },
-        {
-          id: 3,
-          name: "王师傅",
-          avatar: "/static/images/courier3.jpg",
-          rating: 4.7,
-          completedOrders: 198
-        }
-      ];
+    // 清空数据
+    clearData() {
+      this.banners = [];
+      this.notices = [];
+      this.nearestCouriers = [];
     },
     // 页面导航
     navigateTo(url) {

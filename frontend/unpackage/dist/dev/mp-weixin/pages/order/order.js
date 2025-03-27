@@ -2,6 +2,7 @@
 const common_vendor = require("../../common/vendor.js");
 const api_auth = require("../../api/auth.js");
 const api_order = require("../../api/order.js");
+const api_user = require("../../api/user.js");
 const common_assets = require("../../common/assets.js");
 const _sfc_main = {
   data() {
@@ -24,7 +25,8 @@ const _sfc_main = {
       size: 10,
       total: 0,
       // 加载状态
-      loading: false
+      loading: false,
+      userLoading: false
     };
   },
   onLoad() {
@@ -34,8 +36,7 @@ const _sfc_main = {
       });
       return;
     }
-    this.userInfo = api_auth.getUserInfo();
-    this.loadOrderData();
+    this.loadUserProfile();
   },
   onPullDownRefresh() {
     this.page = 1;
@@ -45,6 +46,33 @@ const _sfc_main = {
     }, 1e3);
   },
   methods: {
+    // 获取用户资料
+    loadUserProfile() {
+      this.userLoading = true;
+      common_vendor.index.showLoading({
+        title: "加载中..."
+      });
+      api_user.getUserProfile().then((res) => {
+        if (res.code === 200 && res.data) {
+          this.userInfo = res.data;
+          this.loadOrderData();
+        } else {
+          common_vendor.index.showToast({
+            title: "获取用户信息失败",
+            icon: "none"
+          });
+        }
+      }).catch((err) => {
+        console.error("获取用户信息失败", err);
+        common_vendor.index.showToast({
+          title: "获取用户信息失败",
+          icon: "none"
+        });
+      }).finally(() => {
+        common_vendor.index.hideLoading();
+        this.userLoading = false;
+      });
+    },
     // 切换标签页
     switchTab(index) {
       if (this.currentTab === index)

@@ -4,6 +4,35 @@
 import request from '@/utils/request';
 
 /**
+ * 获取当前登录用户的个人资料
+ * @returns {Promise} 用户资料
+ */
+export function getUserProfile() {
+  // 从本地存储获取当前用户信息
+  const userInfo = uni.getStorageSync('userInfo');
+  if (!userInfo || !userInfo.id) {
+    return Promise.reject(new Error('用户未登录或无法获取用户ID'));
+  }
+  // 使用实际的数字ID
+  return request.get(`/user/${userInfo.id}`);
+}
+
+/**
+ * 更新当前登录用户的个人资料
+ * @param {Object} data 用户资料数据
+ * @returns {Promise} 更新结果
+ */
+export function updateUserProfile(data) {
+  // 从本地存储获取当前用户信息
+  const userInfo = uni.getStorageSync('userInfo');
+  if (!userInfo || !userInfo.id) {
+    return Promise.reject(new Error('用户未登录或无法获取用户ID'));
+  }
+  // 使用实际的数字ID
+  return request.put(`/user/${userInfo.id}`, data);
+}
+
+/**
  * 获取用户信息
  * @param {Number} id 用户ID
  * @returns {Promise} 用户信息
