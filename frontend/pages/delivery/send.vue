@@ -230,7 +230,9 @@
 </template>
 
 <script>
-import { isLoggedIn, getUserInfo } from '@/api/auth';
+import { isLoggedIn } from '@/api/auth';
+import { getUserProfile } from '@/api/user';
+import { createOrder } from '@/api/order';
 
 export default {
   data() {
@@ -286,12 +288,7 @@ export default {
     }
     
     // 获取用户信息
-    const userInfo = getUserInfo();
-    if (userInfo) {
-      // 填充寄件人信息
-      this.formData.senderName = userInfo.name || userInfo.nickname || '';
-      this.formData.senderPhone = userInfo.phone || '';
-    }
+    this.loadUserInfo();
     
     // 获取通过事件通道传递的数据（再次下单场景）
     const eventChannel = this.getOpenerEventChannel();
@@ -312,6 +309,25 @@ export default {
   },
   
   methods: {
+    // 加载用户信息
+    loadUserInfo() {
+      getUserProfile()
+        .then(res => {
+          if (res.code === 200 && res.data) {
+            // 填充寄件人信息
+            this.formData.senderName = res.data.name || res.data.nickname || '';
+            this.formData.senderPhone = res.data.phone || '';
+            // 可以增加默认地址信息填充
+            if (res.data.defaultAddress) {
+              this.formData.senderAddress = res.data.defaultAddress.address || '';
+            }
+          }
+        })
+        .catch(err => {
+          console.error('获取用户信息失败', err);
+        });
+    },
+    
     // 显示地址簿
     showAddressBook(type) {
       uni.navigateTo({
@@ -482,25 +498,57 @@ export default {
               mask: true
             });
             
-            // 模拟提交订单
-            setTimeout(() => {
-              uni.hideLoading();
-              
-              // 跳转到支付页面
-              uni.navigateTo({
-                url: `/pages/payment/payment?amount=${this.calcTotalFee().toFixed(2)}&method=${this.formData.paymentMethod}`,
-                success: (res) => {
-                  // 传递订单信息
-                  res.eventChannel.emit('orderData', {
-                    ...this.formData,
-                    deliveryFee: this.calcDeliveryFee(),
-                    insuranceFee: this.calcInsuranceFee(),
-                    totalFee: this.calcTotalFee(),
-                    orderTime: new Date().toLocaleString()
+            // 准备订单数据
+            const orderData = {
+              senderName: this.formData.senderName,
+              senderPhone: this.formData.senderPhone,
+              senderAddress: this.formData.senderAddress,
+              receiverName: this.formData.receiverName,
+              receiverPhone: this.formData.receiverPhone,
+              receiverAddress: this.formData.receiverAddress,
+              packageType: this.formData.packageType,
+              weight: parseFloat(this.formData.weight),
+              insuranceValue: parseFloat(this.formData.insuranceValue) || 0,
+              note: this.formData.note,
+              isUrgent: this.formData.isUrgent,
+              needReceipt: this.formData.needReceipt,
+              paymentMethod: this.formData.paymentMethod,
+              deliveryFee: this.calcDeliveryFee(),
+              insuranceFee: this.calcInsuranceFee(),
+              totalFee: this.calcTotalFee()
+            };
+            
+            // 调用创建订单API
+            createOrder(orderData)
+              .then(res => {
+                if (res.code === 200 && res.data) {
+                  uni.hideLoading();
+                  
+                  // 跳转到支付页面
+                  uni.navigateTo({
+                    url: `/pages/payment/payment?orderId=${res.data.id}&amount=${this.calcTotalFee().toFixed(2)}&method=${this.formData.paymentMethod}`,
+                    success: (navRes) => {
+                      // 传递订单信息
+                      navRes.eventChannel.emit('orderData', {
+                        ...res.data,
+                        deliveryFee: this.calcDeliveryFee(),
+                        insuranceFee: this.calcInsuranceFee(),
+                        totalFee: this.calcTotalFee()
+                      });
+                    }
                   });
+                } else {
+                  throw new Error(res.message || '创建订单失败');
                 }
+              })
+              .catch(err => {
+                uni.hideLoading();
+                console.error('创建订单失败', err);
+                uni.showToast({
+                  title: err.message || '创建订单失败，请重试',
+                  icon: 'none'
+                });
               });
-            }, 1000);
           }
         }
       });

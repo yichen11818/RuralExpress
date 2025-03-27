@@ -17,7 +17,7 @@ spring:
     sql-script-encoding: UTF-8
   sql:
     init:
-      mode: always
+      mode: never
       schema-locations: classpath:db/init.sql
   
   # Redis配置

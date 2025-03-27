@@ -91,8 +91,9 @@
 </template>
 
 <script>
-import { isLoggedIn, getUserInfo } from '@/api/auth';
+import { isLoggedIn } from '@/api/auth';
 import { getUserOrders, cancelOrder, getOrderStatusText } from '@/api/order';
+import { getUserProfile } from '@/api/user';
 
 export default {
   data() {
@@ -120,7 +121,8 @@ export default {
       total: 0,
       
       // 加载状态
-      loading: false
+      loading: false,
+      userLoading: false
     };
   },
   
@@ -134,10 +136,7 @@ export default {
     }
     
     // 获取用户信息
-    this.userInfo = getUserInfo();
-    
-    // 加载订单数据
-    this.loadOrderData();
+    this.loadUserProfile();
   },
   
   onPullDownRefresh() {
@@ -150,6 +149,40 @@ export default {
   },
   
   methods: {
+    // 获取用户资料
+    loadUserProfile() {
+      this.userLoading = true;
+      
+      uni.showLoading({
+        title: '加载中...'
+      });
+      
+      getUserProfile()
+        .then(res => {
+          if (res.code === 200 && res.data) {
+            this.userInfo = res.data;
+            // 加载订单数据
+            this.loadOrderData();
+          } else {
+            uni.showToast({
+              title: '获取用户信息失败',
+              icon: 'none'
+            });
+          }
+        })
+        .catch(err => {
+          console.error('获取用户信息失败', err);
+          uni.showToast({
+            title: '获取用户信息失败',
+            icon: 'none'
+          });
+        })
+        .finally(() => {
+          uni.hideLoading();
+          this.userLoading = false;
+        });
+    },
+    
     // 切换标签页
     switchTab(index) {
       if (this.currentTab === index) return;

@@ -53,7 +53,7 @@
 </template>
 
 <script>
-import { getUserInfo, updateUserInfo } from '@/api/auth';
+import { getUserProfile, updateUserProfile } from '@/api/user';
 
 export default {
   data() {
@@ -61,7 +61,8 @@ export default {
       userInfo: {},
       genderArray: ['男', '女', '保密'],
       genderIndex: 2,
-      statusBarHeight: 20 // 默认值
+      statusBarHeight: 20, // 默认值
+      isLoading: false
     };
   },
   
@@ -70,12 +71,7 @@ export default {
     this.getStatusBarHeight();
     
     // 获取用户信息
-    this.userInfo = getUserInfo() || {};
-    
-    // 设置性别索引
-    if (this.userInfo.gender !== undefined) {
-      this.genderIndex = this.userInfo.gender;
-    }
+    this.fetchUserProfile();
   },
   
   methods: {
@@ -99,6 +95,43 @@ export default {
       return phone.substring(0, 3) + '****' + phone.substring(7);
     },
     
+    // 获取用户资料
+    fetchUserProfile() {
+      this.isLoading = true;
+      
+      uni.showLoading({
+        title: '加载中...'
+      });
+      
+      getUserProfile()
+        .then(res => {
+          if (res.code === 200 && res.data) {
+            this.userInfo = res.data;
+            
+            // 设置性别索引
+            if (this.userInfo.gender !== undefined) {
+              this.genderIndex = this.userInfo.gender;
+            }
+          } else {
+            uni.showToast({
+              title: '获取用户信息失败',
+              icon: 'none'
+            });
+          }
+        })
+        .catch(err => {
+          console.error('获取用户信息失败', err);
+          uni.showToast({
+            title: '获取用户信息失败',
+            icon: 'none'
+          });
+        })
+        .finally(() => {
+          uni.hideLoading();
+          this.isLoading = false;
+        });
+    },
+    
     // 选择头像
     chooseAvatar() {
       uni.chooseImage({
@@ -106,14 +139,65 @@ export default {
         sizeType: ['compressed'],
         sourceType: ['album', 'camera'],
         success: (res) => {
-          // 设置头像
-          this.userInfo.avatar = res.tempFilePaths[0];
+          const tempFilePath = res.tempFilePaths[0];
           
-          // 这里应该上传头像到服务器
+          // 设置临时头像显示
+          this.userInfo.avatar = tempFilePath;
+          
+          // 上传头像到服务器
+          this.uploadAvatar(tempFilePath);
+        }
+      });
+    },
+    
+    // 上传头像
+    uploadAvatar(filePath) {
+      uni.showLoading({
+        title: '上传中...'
+      });
+      
+      // 上传文件
+      uni.uploadFile({
+        url: 'http://localhost:8080/api/file/upload',
+        filePath: filePath,
+        name: 'file',
+        header: {
+          'Authorization': `Bearer ${uni.getStorageSync('token')}`
+        },
+        formData: {
+          'type': 'avatar'
+        },
+        success: (uploadRes) => {
+          try {
+            const response = JSON.parse(uploadRes.data);
+            if (response.code === 200 && response.data) {
+              // 更新头像URL
+              this.userInfo.avatar = response.data.url;
+              uni.showToast({
+                title: '上传成功',
+                icon: 'success'
+              });
+            } else {
+              uni.showToast({
+                title: response.message || '上传失败',
+                icon: 'none'
+              });
+            }
+          } catch (e) {
+            uni.showToast({
+              title: '上传失败',
+              icon: 'none'
+            });
+          }
+        },
+        fail: () => {
           uni.showToast({
-            title: '上传头像功能开发中',
+            title: '上传失败',
             icon: 'none'
           });
+        },
+        complete: () => {
+          uni.hideLoading();
         }
       });
     },
@@ -139,28 +223,44 @@ export default {
     
     // 保存资料
     saveProfile() {
-      // 这里应该调用API保存用户信息
-      // 简单模拟保存成功
+      if (this.isLoading) return;
+      
       uni.showLoading({
         title: '保存中...'
       });
       
-      setTimeout(() => {
-        uni.hideLoading();
-        
-        // 更新本地存储
-        updateUserInfo(this.userInfo);
-        
-        uni.showToast({
-          title: '保存成功',
-          icon: 'success'
+      this.isLoading = true;
+      
+      updateUserProfile(this.userInfo)
+        .then(res => {
+          if (res.code === 200) {
+            uni.showToast({
+              title: '保存成功',
+              icon: 'success'
+            });
+            
+            // 返回上一页
+            setTimeout(() => {
+              uni.navigateBack();
+            }, 1500);
+          } else {
+            uni.showToast({
+              title: res.message || '保存失败',
+              icon: 'none'
+            });
+          }
+        })
+        .catch(err => {
+          console.error('保存用户信息失败', err);
+          uni.showToast({
+            title: '保存失败',
+            icon: 'none'
+          });
+        })
+        .finally(() => {
+          uni.hideLoading();
+          this.isLoading = false;
         });
-        
-        // 返回上一页
-        setTimeout(() => {
-          uni.navigateBack();
-        }, 1500);
-      }, 1000);
     }
   }
 };

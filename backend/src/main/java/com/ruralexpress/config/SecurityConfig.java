@@ -48,7 +48,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             // 允许health检查
             .antMatchers("/actuator/**").permitAll()
             // 允许公开接口 - 确保完整的路径匹配
-            .antMatchers("/auth/**", "/auth/login", "/user/register").permitAll()
+            .antMatchers("/auth/**", "/auth/login", "/user/register", "/home/**").permitAll()
             // 其他请求需要认证
             .anyRequest().authenticated();
         

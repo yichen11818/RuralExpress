@@ -146,6 +146,7 @@
 
 <script>
 import { isLoggedIn } from '@/api/auth';
+import { getOrderDetail, cancelOrder } from '@/api/order';
 
 export default {
   data() {
@@ -194,50 +195,33 @@ export default {
   methods: {
     // 获取订单详情
     getOrderDetail() {
-      // 模拟获取订单详情数据
-      setTimeout(() => {
-        // 模拟订单数据
-        this.order = {
-          id: this.orderId,
-          orderNo: 'XD20230501001',
-          orderStatus: 2,
-          senderName: '张三',
-          senderPhone: '13800138001',
-          senderAddress: '江西省南昌市红谷滩区红角洲',
-          receiverName: '李四',
-          receiverPhone: '13900139001',
-          receiverAddress: '江西省南昌市青山湖区高新大道',
-          courierName: '王师傅',
-          courierPhone: '13700137001',
-          packageType: 0,
-          weight: 2.5,
-          note: '请轻拿轻放，谢谢',
-          deliveryFee: 15,
-          insuranceFee: 2,
-          totalFee: 17,
-          createdAt: '2023-05-01 10:30:00'
-        };
-        
-        // 模拟物流数据
-        this.logistics = [
-          {
-            content: '【南昌市】您的快递已由配送员【王师傅】取件',
-            time: '2023-05-01 15:30:22'
-          },
-          {
-            content: '【南昌市】快递已到达南昌红谷滩分发中心',
-            time: '2023-05-01 13:25:10'
-          },
-          {
-            content: '【南昌市】您的订单已接单，快递员【王师傅】即将取件',
-            time: '2023-05-01 11:05:35'
-          },
-          {
-            content: '【南昌市】您的订单已创建成功，等待配送员接单',
-            time: '2023-05-01 10:30:00'
+      // 调用API获取订单详情数据
+      uni.showLoading({
+        title: '加载中...'
+      });
+      
+      getOrderDetail(this.orderId)
+        .then(res => {
+          if (res.code === 200 && res.data) {
+            this.order = res.data.order || {};
+            this.logistics = res.data.logistics || [];
+          } else {
+            uni.showToast({
+              title: '获取订单详情失败',
+              icon: 'none'
+            });
           }
-        ];
-      }, 500);
+        })
+        .catch(err => {
+          console.error('获取订单详情失败', err);
+          uni.showToast({
+            title: '获取订单详情失败',
+            icon: 'none'
+          });
+        })
+        .finally(() => {
+          uni.hideLoading();
+        });
     },
     
     // 获取订单状态文本
@@ -294,13 +278,38 @@ export default {
         content: '确定要取消该订单吗？',
         success: (res) => {
           if (res.confirm) {
-            // 模拟取消成功
-            uni.showToast({
-              title: '取消成功',
-              icon: 'success'
+            // 调用取消订单API
+            uni.showLoading({
+              title: '取消中...'
             });
-            // 修改订单状态
-            this.order.orderStatus = 6;
+            
+            cancelOrder(id, '用户主动取消')
+              .then(res => {
+                if (res.code === 200) {
+                  uni.showToast({
+                    title: '取消成功',
+                    icon: 'success'
+                  });
+                  // 修改订单状态
+                  this.order.orderStatus = 6; // 或者重新获取订单详情
+                  // this.getOrderDetail();
+                } else {
+                  uni.showToast({
+                    title: res.message || '取消失败',
+                    icon: 'none'
+                  });
+                }
+              })
+              .catch(err => {
+                console.error('取消订单失败', err);
+                uni.showToast({
+                  title: '取消失败',
+                  icon: 'none'
+                });
+              })
+              .finally(() => {
+                uni.hideLoading();
+              });
           }
         }
       });

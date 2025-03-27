@@ -1,9 +1,10 @@
 /**
  * 网络请求工具
  */
+import { isLoggedIn } from './auth.js';
 
 // API基础URL
-const BASE_URL = 'http://localhost:8080';
+const BASE_URL = 'http://localhost:8080/api';
 
 // 不需要认证的API路径
 const NO_AUTH_PATHS = [

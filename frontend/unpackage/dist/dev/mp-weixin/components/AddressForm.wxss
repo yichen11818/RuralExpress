@@ -1,0 +1,64 @@
+.address-form {
+  padding: 20rpx;
+}
+.address-form .picker-view {
+  width: 100%;
+  height: 70rpx;
+  line-height: 70rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1rpx solid #eee;
+}
+.address-form .picker-view .placeholder {
+  color: #bbb;
+}
+.address-form .picker-view .arrow {
+  color: #ccc;
+  font-size: 32rpx;
+}
+.address-form .tag-group {
+  display: flex;
+  flex-wrap: wrap;
+}
+.address-form .tag-group .tag-item {
+  padding: 10rpx 30rpx;
+  background-color: #f5f5f5;
+  border-radius: 30rpx;
+  margin-right: 20rpx;
+  margin-bottom: 20rpx;
+  font-size: 26rpx;
+  color: #666;
+}
+.address-form .tag-group .tag-item.active {
+  background-color: #ff6600;
+  color: #fff;
+}
+.address-form .tag-group .tag-item.custom {
+  border: 1rpx dashed #ddd;
+  background-color: #fff;
+}
+.address-form .tag-group .tag-item.custom.active {
+  background-color: #ff6600;
+  border-color: #ff6600;
+  color: #fff;
+}
+.address-form .default-switch {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 80rpx;
+}
+.address-form .form-actions {
+  margin-top: 60rpx;
+  padding: 0 20rpx;
+}
+.address-form .form-actions .submit-btn {
+  width: 100%;
+  height: 80rpx;
+  line-height: 80rpx;
+  background-color: #ff6600;
+  color: #fff;
+  border-radius: 40rpx;
+  font-size: 30rpx;
+}

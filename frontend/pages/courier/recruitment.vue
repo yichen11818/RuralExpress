@@ -180,6 +180,8 @@
 <script>
 import uniIcons from '../../uni_modules/uni-icons/components/uni-icons/uni-icons.vue'
 import { isLoggedIn } from '@/api/auth';
+import { getUserProfile } from '@/api/user';
+import { applyCourier } from '@/api/courier';
 
 export default {
   components: {
@@ -188,6 +190,7 @@ export default {
   data() {
     return {
       submitting: false,
+      loading: false,
       vehicleOptions: ['电动车', '摩托车', '三轮车', '小汽车', '其他'],
       formData: {
         name: '',
@@ -216,13 +219,50 @@ export default {
           });
         }
       });
+      return;
     }
     
-    // 获取登录用户信息
-    // TODO: 从用户信息中预填表单
+    // 获取登录用户信息并预填表单
+    this.loadUserProfile();
   },
   
   methods: {
+    // 加载用户信息并预填表单
+    loadUserProfile() {
+      this.loading = true;
+      
+      uni.showLoading({
+        title: '加载中...'
+      });
+      
+      getUserProfile()
+        .then(res => {
+          if (res.code === 200 && res.data) {
+            // 预填表单数据
+            const userData = res.data;
+            this.formData.name = userData.name || userData.nickname || '';
+            this.formData.phone = userData.phone || '';
+            
+            // 如果有默认地址，设置地址信息
+            if (userData.defaultAddress) {
+              const address = userData.defaultAddress;
+              // 尝试解析地址的省市区
+              if (address.province && address.city && address.district) {
+                this.formData.region = [address.province, address.city, address.district];
+              }
+              this.formData.address = address.detailAddress || '';
+            }
+          }
+        })
+        .catch(err => {
+          console.error('获取用户信息失败', err);
+        })
+        .finally(() => {
+          uni.hideLoading();
+          this.loading = false;
+        });
+    },
+    
     // 选择服务区域
     regionChange(e) {
       this.formData.region = e.detail.value;
@@ -254,115 +294,243 @@ export default {
       this.formData.agreement = e.detail.value.length > 0;
     },
     
+    // 验证表单
+    validateForm() {
+      if (!this.formData.name) {
+        uni.showToast({
+          title: '请输入姓名',
+          icon: 'none'
+        });
+        return false;
+      }
+      
+      if (!this.formData.phone) {
+        uni.showToast({
+          title: '请输入手机号',
+          icon: 'none'
+        });
+        return false;
+      }
+      
+      if (!/^1\d{10}$/.test(this.formData.phone)) {
+        uni.showToast({
+          title: '手机号格式不正确',
+          icon: 'none'
+        });
+        return false;
+      }
+      
+      if (!this.formData.idCard) {
+        uni.showToast({
+          title: '请输入身份证号',
+          icon: 'none'
+        });
+        return false;
+      }
+      
+      // 身份证号验证 (简化版)
+      if (!/^\d{17}[\dXx]$/.test(this.formData.idCard)) {
+        uni.showToast({
+          title: '身份证号格式不正确',
+          icon: 'none'
+        });
+        return false;
+      }
+      
+      if (!this.formData.region) {
+        uni.showToast({
+          title: '请选择服务区域',
+          icon: 'none'
+        });
+        return false;
+      }
+      
+      if (!this.formData.address) {
+        uni.showToast({
+          title: '请输入详细地址',
+          icon: 'none'
+        });
+        return false;
+      }
+      
+      if (!this.formData.vehicle) {
+        uni.showToast({
+          title: '请选择交通工具',
+          icon: 'none'
+        });
+        return false;
+      }
+      
+      if (!this.formData.idCardFront) {
+        uni.showToast({
+          title: '请上传身份证正面照片',
+          icon: 'none'
+        });
+        return false;
+      }
+      
+      if (!this.formData.idCardBack) {
+        uni.showToast({
+          title: '请上传身份证反面照片',
+          icon: 'none'
+        });
+        return false;
+      }
+      
+      if (!this.formData.agreement) {
+        uni.showToast({
+          title: '请阅读并同意服务协议',
+          icon: 'none'
+        });
+        return false;
+      }
+      
+      return true;
+    },
+    
+    // 上传身份证图片
+    uploadIdCardImages() {
+      return new Promise((resolve, reject) => {
+        const uploadTasks = [];
+        
+        // 上传身份证正面
+        uploadTasks.push(
+          new Promise((innerResolve, innerReject) => {
+            uni.uploadFile({
+              url: 'http://localhost:8080/api/file/upload',
+              filePath: this.formData.idCardFront,
+              name: 'file',
+              header: {
+                'Authorization': `Bearer ${uni.getStorageSync('token')}`
+              },
+              formData: {
+                'type': 'idcard'
+              },
+              success: (uploadRes) => {
+                try {
+                  const response = JSON.parse(uploadRes.data);
+                  if (response.code === 200 && response.data) {
+                    innerResolve(response.data.url);
+                  } else {
+                    innerReject(new Error(response.message || '上传身份证正面失败'));
+                  }
+                } catch (e) {
+                  innerReject(new Error('上传身份证正面失败'));
+                }
+              },
+              fail: () => {
+                innerReject(new Error('上传身份证正面失败'));
+              }
+            });
+          })
+        );
+        
+        // 上传身份证反面
+        uploadTasks.push(
+          new Promise((innerResolve, innerReject) => {
+            uni.uploadFile({
+              url: 'http://localhost:8080/api/file/upload',
+              filePath: this.formData.idCardBack,
+              name: 'file',
+              header: {
+                'Authorization': `Bearer ${uni.getStorageSync('token')}`
+              },
+              formData: {
+                'type': 'idcard'
+              },
+              success: (uploadRes) => {
+                try {
+                  const response = JSON.parse(uploadRes.data);
+                  if (response.code === 200 && response.data) {
+                    innerResolve(response.data.url);
+                  } else {
+                    innerReject(new Error(response.message || '上传身份证反面失败'));
+                  }
+                } catch (e) {
+                  innerReject(new Error('上传身份证反面失败'));
+                }
+              },
+              fail: () => {
+                innerReject(new Error('上传身份证反面失败'));
+              }
+            });
+          })
+        );
+        
+        Promise.all(uploadTasks)
+          .then(results => {
+            resolve({
+              idCardFront: results[0],
+              idCardBack: results[1]
+            });
+          })
+          .catch(error => {
+            reject(error);
+          });
+      });
+    },
+    
     // 提交申请
     submitApplication() {
-      // 表单验证
-      if (!this.formData.name) {
-        return uni.showToast({ title: '请输入姓名', icon: 'none' });
-      }
-      if (!this.formData.phone) {
-        return uni.showToast({ title: '请输入手机号', icon: 'none' });
-      }
-      if (!/^1\d{10}$/.test(this.formData.phone)) {
-        return uni.showToast({ title: '手机号格式不正确', icon: 'none' });
-      }
-      if (!this.formData.idCard) {
-        return uni.showToast({ title: '请输入身份证号', icon: 'none' });
-      }
-      if (!/(^\d{15}$)|(^\d{18}$)|(^\d{17}(\d|X|x)$)/.test(this.formData.idCard)) {
-        return uni.showToast({ title: '身份证号格式不正确', icon: 'none' });
-      }
-      if (!this.formData.region) {
-        return uni.showToast({ title: '请选择服务区域', icon: 'none' });
-      }
-      if (!this.formData.address) {
-        return uni.showToast({ title: '请输入详细地址', icon: 'none' });
-      }
-      if (!this.formData.vehicle) {
-        return uni.showToast({ title: '请选择交通工具', icon: 'none' });
-      }
-      if (!this.formData.idCardFront) {
-        return uni.showToast({ title: '请上传身份证正面照片', icon: 'none' });
-      }
-      if (!this.formData.idCardBack) {
-        return uni.showToast({ title: '请上传身份证反面照片', icon: 'none' });
+      if (this.submitting) return;
+      
+      if (!this.validateForm()) {
+        return;
       }
       
-      // 设置提交状态
       this.submitting = true;
       
-      // 模拟提交
-      setTimeout(() => {
-        this.submitting = false;
-        uni.showModal({
-          title: '申请提交成功',
-          content: '我们会在1-3个工作日内审核您的申请，请保持电话畅通',
-          showCancel: false,
-          success: () => {
-            uni.navigateBack();
-          }
-        });
-      }, 1500);
-      
-      // 实际提交请替换为以下API调用
-      /*
-      // 上传身份证照片
-      uni.uploadFile({
-        url: 'https://api.example.com/upload',
-        filePath: this.formData.idCardFront,
-        name: 'file',
-        success: (uploadRes) => {
-          const frontUrl = JSON.parse(uploadRes.data).url;
-          
-          uni.uploadFile({
-            url: 'https://api.example.com/upload',
-            filePath: this.formData.idCardBack,
-            name: 'file',
-            success: (uploadRes) => {
-              const backUrl = JSON.parse(uploadRes.data).url;
-              
-              // 提交申请信息
-              uni.request({
-                url: 'https://api.example.com/courier/apply',
-                method: 'POST',
-                data: {
-                  ...this.formData,
-                  idCardFront: frontUrl,
-                  idCardBack: backUrl
-                },
-                success: (res) => {
-                  this.submitting = false;
-                  if (res.data.success) {
-                    uni.showModal({
-                      title: '申请提交成功',
-                      content: '我们会在1-3个工作日内审核您的申请，请保持电话畅通',
-                      showCancel: false,
-                      success: () => {
-                        uni.navigateBack();
-                      }
-                    });
-                  } else {
-                    uni.showModal({
-                      title: '申请提交失败',
-                      content: res.data.message || '请稍后重试',
-                      showCancel: false
-                    });
-                  }
-                },
-                fail: () => {
-                  this.submitting = false;
-                  uni.showModal({
-                    title: '申请提交失败',
-                    content: '网络异常，请稍后重试',
-                    showCancel: false
-                  });
-                }
-              });
-            }
-          });
-        }
+      uni.showLoading({
+        title: '提交中...',
+        mask: true
       });
-      */
+      
+      // 先上传身份证照片
+      this.uploadIdCardImages()
+        .then(idCardUrls => {
+          // 准备提交的数据
+          const courierData = {
+            name: this.formData.name,
+            phone: this.formData.phone,
+            idCard: this.formData.idCard,
+            province: this.formData.region[0],
+            city: this.formData.region[1],
+            district: this.formData.region[2],
+            address: this.formData.address,
+            vehicle: this.formData.vehicle,
+            idCardFrontUrl: idCardUrls.idCardFront,
+            idCardBackUrl: idCardUrls.idCardBack
+          };
+          
+          // 调用API提交申请
+          return applyCourier(courierData);
+        })
+        .then(res => {
+          if (res.code === 200) {
+            uni.hideLoading();
+            uni.showModal({
+              title: '申请提交成功',
+              content: '您的快递员申请已提交成功，我们将尽快审核，请留意短信或APP通知。',
+              showCancel: false,
+              success: () => {
+                uni.navigateBack();
+              }
+            });
+          } else {
+            throw new Error(res.message || '申请提交失败');
+          }
+        })
+        .catch(err => {
+          console.error('提交申请失败', err);
+          uni.hideLoading();
+          uni.showToast({
+            title: err.message || '提交失败，请重试',
+            icon: 'none'
+          });
+        })
+        .finally(() => {
+          this.submitting = false;
+        });
     }
   }
 };

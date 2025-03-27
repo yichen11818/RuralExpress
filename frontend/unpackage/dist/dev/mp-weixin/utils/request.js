@@ -1,6 +1,6 @@
 "use strict";
 const common_vendor = require("../common/vendor.js");
-const BASE_URL = "http://localhost:8080";
+const BASE_URL = "http://localhost:8080/api";
 const NO_AUTH_PATHS = [
   "/auth/login",
   "/user/register"

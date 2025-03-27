@@ -107,6 +107,7 @@
 <script>
 import uniIcons from '@/uni_modules/uni-icons/components/uni-icons/uni-icons.vue'
 import { isLoggedIn } from '@/api/auth';
+import { getLogisticsInfo } from '@/api/order';
 
 export default {
   components: {
@@ -115,48 +116,20 @@ export default {
   data() {
     return {
       trackingNo: '',
+      orderId: null,
+      loading: false,
       logistics: {
-        company: '顺丰速运',
-        logo: '/static/images/sf-logo.png',
-        trackingNo: 'SF1234567890',
-        status: 4, // 0-待揽收，1-已揽收，2-运输中，3-已到达，4-派送中，5-已签收
-        statusText: '派送中',
-        estimatedTime: '今天 18:00前',
-        address: '江西省南昌市青山湖区艾溪湖北路77号',
-        receiver: '张先生 (138****6677)',
+        company: '',
+        logo: '/static/images/package.png',
+        trackingNo: '',
+        status: 0,
+        statusText: '等待揽收',
+        estimatedTime: '',
+        address: '',
+        receiver: '',
         hasReviewed: false,
-        courier: {
-          name: '张师傅',
-          phone: '135****8888',
-          avatar: '/static/images/courier-avatar.png'
-        },
-        timeline: [
-          {
-            status: '派送中',
-            time: '2023-03-21 09:45:32',
-            detail: '【南昌市】您的快递正在派送中，快递员张师傅，电话135****8888'
-          },
-          {
-            status: '已到达',
-            time: '2023-03-21 07:30:15',
-            detail: '【南昌市】快件已到达南昌青山湖区公司'
-          },
-          {
-            status: '运输中',
-            time: '2023-03-20 23:15:48',
-            detail: '【赣州市】快件已从赣州发出，下一站南昌转运中心'
-          },
-          {
-            status: '已揽收',
-            time: '2023-03-20 17:22:10',
-            detail: '【赣州市】顺丰快递员已揽收，将送往赣州转运中心'
-          },
-          {
-            status: '待揽收',
-            time: '2023-03-20 15:30:25',
-            detail: '【赣州市】商家已发货，等待快递揽收'
-          }
-        ]
+        courier: null,
+        timeline: []
       },
       notifications: {
         statusUpdate: true,
@@ -171,9 +144,12 @@ export default {
     if (options.trackingNo) {
       this.trackingNo = options.trackingNo;
       this.loadTrackingInfo();
+    } else if (options.orderId) {
+      this.orderId = options.orderId;
+      this.loadTrackingInfo();
     } else {
       uni.showToast({
-        title: '缺少运单号',
+        title: '缺少运单号或订单ID',
         icon: 'none'
       });
       setTimeout(() => {
@@ -189,42 +165,75 @@ export default {
   methods: {
     // 加载物流信息
     loadTrackingInfo() {
-      // 实际应用中，这里应该调用API查询物流信息
-      // 示例：
-      /*
+      if (this.loading) return;
+      this.loading = true;
+      
       uni.showLoading({
         title: '加载中...'
       });
       
-      uni.request({
-        url: `https://api.example.com/logistics/track`,
-        method: 'GET',
-        data: {
-          trackingNo: this.trackingNo
-        },
-        success: (res) => {
-          uni.hideLoading();
-          if (res.data.success) {
-            this.logistics = res.data.data;
+      // 构建请求参数
+      const params = {};
+      if (this.trackingNo) {
+        params.trackingNo = this.trackingNo;
+      } else if (this.orderId) {
+        params.orderId = this.orderId;
+      }
+      
+      getLogisticsInfo(params)
+        .then(res => {
+          if (res.code === 200 && res.data) {
+            // 更新物流信息
+            const logisticsData = res.data;
+            
+            this.logistics = {
+              company: logisticsData.companyName || '未知快递公司',
+              logo: logisticsData.companyLogo || '/static/images/package.png',
+              trackingNo: logisticsData.trackingNo || this.trackingNo,
+              status: logisticsData.status || 0,
+              statusText: this.getStatusTextByCode(logisticsData.status),
+              estimatedTime: logisticsData.estimatedTime || '暂无信息',
+              address: logisticsData.address || '暂无信息',
+              receiver: logisticsData.receiver || '暂无信息',
+              hasReviewed: logisticsData.hasReviewed || false,
+              courier: logisticsData.courier || null,
+              timeline: logisticsData.timeline || []
+            };
+            
+            if (this.trackingNo === '') {
+              this.trackingNo = this.logistics.trackingNo;
+            }
           } else {
             uni.showToast({
-              title: res.data.message || '获取物流信息失败',
+              title: res.message || '获取物流信息失败',
               icon: 'none'
             });
           }
-        },
-        fail: () => {
-          uni.hideLoading();
+        })
+        .catch(err => {
+          console.error('获取物流信息失败', err);
           uni.showToast({
-            title: '网络异常，请稍后重试',
+            title: '获取物流信息失败',
             icon: 'none'
           });
-        }
-      });
-      */
-      
-      // 模拟API请求，设置物流信息
-      this.logistics.trackingNo = this.trackingNo;
+        })
+        .finally(() => {
+          uni.hideLoading();
+          this.loading = false;
+        });
+    },
+    
+    // 获取物流状态文本
+    getStatusTextByCode(status) {
+      const statusMap = {
+        0: '等待揽收',
+        1: '已揽收',
+        2: '运输中',
+        3: '已到达',
+        4: '派送中',
+        5: '已签收'
+      };
+      return statusMap[status] || '未知状态';
     },
     
     // 刷新物流时间线
@@ -236,55 +245,13 @@ export default {
         title: '刷新中...'
       });
       
-      // 模拟刷新
-      setTimeout(() => {
-        uni.hideLoading();
-        this.refreshing = false;
-        uni.showToast({
-          title: '物流信息已更新',
-          icon: 'success'
-        });
-        uni.stopPullDownRefresh();
-      }, 1500);
+      // 重新加载物流信息
+      this.loadTrackingInfo();
       
-      // 实际应用中，这里应该调用API刷新物流信息
-      /*
-      uni.request({
-        url: `https://api.example.com/logistics/refresh`,
-        method: 'GET',
-        data: {
-          trackingNo: this.trackingNo
-        },
-        success: (res) => {
-          uni.hideLoading();
-          this.refreshing = false;
-          uni.stopPullDownRefresh();
-          
-          if (res.data.success) {
-            this.logistics.timeline = res.data.data.timeline;
-            uni.showToast({
-              title: '物流信息已更新',
-              icon: 'success'
-            });
-          } else {
-            uni.showToast({
-              title: res.data.message || '刷新失败',
-              icon: 'none'
-            });
-          }
-        },
-        fail: () => {
-          uni.hideLoading();
-          this.refreshing = false;
-          uni.stopPullDownRefresh();
-          
-          uni.showToast({
-            title: '网络异常，请稍后重试',
-            icon: 'none'
-          });
-        }
-      });
-      */
+      setTimeout(() => {
+        this.refreshing = false;
+        uni.stopPullDownRefresh();
+      }, 500);
     },
     
     // 获取物流状态样式类
