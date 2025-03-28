@@ -143,6 +143,13 @@
         "navigationBarTitleText": "关于我们",
         "navigationStyle": "custom"
       }
+    },
+    {
+      "path": "pages/search/index",
+      "style": {
+        "navigationBarTitleText": "搜索",
+        "enablePullDownRefresh": true
+      }
     }
   ],
   "tabBar": {

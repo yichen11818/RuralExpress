@@ -42,7 +42,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       color: "#333"
     }),
     c: common_vendor.o((...args) => $options.goBack && $options.goBack(...args)),
-    d: common_assets._imports_0$4,
+    d: common_assets._imports_0$6,
     e: common_vendor.p({
       type: "phone",
       size: "18",

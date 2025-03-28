@@ -22,7 +22,8 @@
     "pages/order/list",
     "pages/help/help",
     "pages/feedback/feedback",
-    "pages/about/about"
+    "pages/about/about",
+    "pages/search/index"
   ],
   "window": {
     "navigationBarTextStyle": "black",

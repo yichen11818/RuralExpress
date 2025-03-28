@@ -36,7 +36,7 @@
       <!-- 头部搜索区域 -->
       <view class="header-container">
         <view class="search-container">
-          <view class="search-box" @click="navigateTo('/pages/search/search')">
+          <view class="search-box" @click="navigateTo('/pages/search/index')">
             <uni-icons type="search" size="18" color="#999"></uni-icons>
             <text class="search-placeholder">搜索订单/快递单号</text>
           </view>

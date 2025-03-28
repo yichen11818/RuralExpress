@@ -384,7 +384,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       size: "18",
       color: "#999"
     }),
-    f: common_vendor.o(($event) => $options.navigateTo("/pages/search/search")),
+    f: common_vendor.o(($event) => $options.navigateTo("/pages/search/index")),
     g: common_vendor.f($data.banners, (item, index, i0) => {
       return {
         a: item.imageUrl,

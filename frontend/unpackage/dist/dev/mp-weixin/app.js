@@ -22,7 +22,10 @@ if (!Math) {
   "./pages/user/verify.js";
   "./pages/courier/apply.js";
   "./pages/order/list.js";
+  "./pages/help/help.js";
+  "./pages/feedback/feedback.js";
   "./pages/about/about.js";
+  "./pages/search/index.js";
 }
 const _sfc_main = {
   globalData: {
