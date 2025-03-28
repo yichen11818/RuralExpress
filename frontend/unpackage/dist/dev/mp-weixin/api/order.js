@@ -4,7 +4,7 @@ function createOrder(data) {
   return utils_request.request.post("/order", data);
 }
 function getUserOrders(userId, params = {}) {
-  return utils_request.request.get(`/order/user/${userId}`, params);
+  return utils_request.request.get(`/order/user/${userId}`, { params });
 }
 function cancelOrder(orderId, reason) {
   return utils_request.request.put(`/order/${orderId}/cancel?reason=${encodeURIComponent(reason)}`);

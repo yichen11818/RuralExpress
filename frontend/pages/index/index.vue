@@ -457,39 +457,27 @@ export default {
           if (res && res.code === 200 && res.data) {
             // 处理快递员数据
             this.nearestCouriers = res.data.map(courier => {
-              // 由于后端数据模型变更，这里需要适配
-              // 快递员名称应该从用户表获取，这里使用模拟数据
-              const mockNames = {
-                '101': '张师傅',
-                '102': '李师傅',
-                '103': '王师傅',
-                '104': '刘师傅',
-                '105': '赵师傅'
+              // 根据快递员userId生成名称和头像
+              const courierNames = {
+                1: '张师傅',
+                2: '李师傅',
+                3: '王师傅',
+                4: '刘师傅',
+                5: '赵师傅'
               };
               
-              const mockAvatars = {
-                '101': '/static/images/courier-1.png',
-                '102': '/static/images/courier-2.png',
-                '103': '/static/images/courier-3.png',
-                '104': '/static/images/courier-4.png',
-                '105': '/static/images/courier-5.png'
+              const courierAvatars = {
+                1: '/static/images/courier-1.png',
+                2: '/static/images/courier-2.png',
+                3: '/static/images/courier-3.png',
+                4: '/static/images/courier-4.png',
+                5: '/static/images/courier-5.png'
               };
-              
-              // 获取快递员名称，优先使用后端返回的name，否则使用模拟数据或默认值
-              const name = courier.name || 
-                           mockNames[courier.userId] || 
-                           courier.userName || 
-                           '未知快递员';
-              
-              // 获取头像，优先使用后端返回的avatar，否则使用模拟数据或默认值
-              const avatar = courier.avatar || 
-                             mockAvatars[courier.userId] || 
-                             '/static/images/default-avatar.png';
               
               return {
                 id: courier.id,
-                name: name,
-                avatar: avatar,
+                name: courierNames[courier.userId] || `快递员${courier.userId}`, 
+                avatar: courierAvatars[courier.userId] || '/static/images/default-avatar.png',
                 rating: parseFloat(courier.rating) || 5.0,
                 completedOrders: courier.completedOrders || 0,
                 // 添加距离信息
@@ -527,38 +515,29 @@ export default {
             
             // 如果没有位置信息或获取附近快递员失败，使用推荐快递员
             if (!this.userLocation || this.nearestCouriers.length === 0) {
+              // 直接根据API返回数据结构映射快递员信息
               this.nearestCouriers = (data.nearestCouriers || []).map(courier => {
-                // 模拟数据映射
-                const mockNames = {
-                  '101': '张师傅',
-                  '102': '李师傅',
-                  '103': '王师傅',
-                  '104': '刘师傅',
-                  '105': '赵师傅'
+                // 根据userId映射到名称和头像
+                const courierNames = {
+                  1: '张师傅',
+                  2: '李师傅',
+                  3: '王师傅',
+                  4: '刘师傅',
+                  5: '赵师傅'
                 };
                 
-                const mockAvatars = {
-                  '101': '/static/images/courier-1.png',
-                  '102': '/static/images/courier-2.png',
-                  '103': '/static/images/courier-3.png',
-                  '104': '/static/images/courier-4.png',
-                  '105': '/static/images/courier-5.png'
+                const courierAvatars = {
+                  1: '/static/images/courier1.jpg',
+                  2: '/static/images/courier2.jpg',
+                  3: '/static/images/courier3.jpg',
+                  4: '/static/images/courier4.jpg',
+                  5: '/static/images/courier5.jpg'
                 };
-                
-                // 获取名称和头像
-                const name = courier.name || 
-                             mockNames[courier.userId] || 
-                             courier.userName || 
-                             '未知快递员';
-                
-                const avatar = courier.avatar || 
-                               mockAvatars[courier.userId] || 
-                               '/static/images/default-avatar.png';
                 
                 return {
                   id: courier.id,
-                  name: name,
-                  avatar: avatar,
+                  name: courierNames[courier.userId] || `快递员${courier.userId}`,
+                  avatar: courierAvatars[courier.userId] || '/static/images/default-avatar.png',
                   rating: parseFloat(courier.rating) || 5.0,
                   completedOrders: courier.completedOrders || 0
                 };

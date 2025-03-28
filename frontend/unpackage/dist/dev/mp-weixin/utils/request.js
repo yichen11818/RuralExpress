@@ -88,10 +88,28 @@ const request = (options) => {
 };
 const request$1 = {
   get: (url, params = {}) => {
+    const queryParams = params.params || params;
+    let queryString = "";
+    if (Object.keys(queryParams).length > 0) {
+      const parts = [];
+      for (const key in queryParams) {
+        if (queryParams[key] !== void 0 && queryParams[key] !== null) {
+          if (Array.isArray(queryParams[key])) {
+            queryParams[key].forEach((value) => {
+              parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(value)}`);
+            });
+          } else {
+            parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(queryParams[key])}`);
+          }
+        }
+      }
+      if (parts.length > 0) {
+        queryString = "?" + parts.join("&");
+      }
+    }
     return request({
-      url,
-      method: "GET",
-      data: params
+      url: url + queryString,
+      method: "GET"
     });
   },
   post: (url, data = {}) => {

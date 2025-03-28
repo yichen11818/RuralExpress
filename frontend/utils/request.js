@@ -125,10 +125,33 @@ const request = (options) => {
 // 导出请求方法
 export default {
   get: (url, params = {}) => {
+    // 对于GET请求，params可以是普通对象或{params}格式
+    const queryParams = params.params || params;
+    
+    // 构建URL查询参数字符串
+    let queryString = '';
+    if (Object.keys(queryParams).length > 0) {
+      const parts = [];
+      for (const key in queryParams) {
+        if (queryParams[key] !== undefined && queryParams[key] !== null) {
+          // 处理数组参数，将其转换为多个同名参数
+          if (Array.isArray(queryParams[key])) {
+            queryParams[key].forEach(value => {
+              parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(value)}`);
+            });
+          } else {
+            parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(queryParams[key])}`);
+          }
+        }
+      }
+      if (parts.length > 0) {
+        queryString = '?' + parts.join('&');
+      }
+    }
+    
     return request({
-      url,
-      method: 'GET',
-      data: params
+      url: url + queryString,
+      method: 'GET'
     });
   },
   post: (url, data = {}) => {

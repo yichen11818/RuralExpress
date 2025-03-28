@@ -17,6 +17,11 @@
     "pages/user/settings",
     "pages/user/profile",
     "pages/user/address",
+    "pages/user/verify",
+    "pages/courier/apply",
+    "pages/order/list",
+    "pages/help/help",
+    "pages/feedback/feedback",
     "pages/about/about"
   ],
   "window": {
@@ -50,6 +55,14 @@
         "text": "我的"
       }
     ]
+  },
+  "requiredPrivateInfos": [
+    "getLocation"
+  ],
+  "permission": {
+    "scope.userLocation": {
+      "desc": "您的位置信息将用于查找附近的快递员"
+    }
   },
   "usingComponents": {}
 }

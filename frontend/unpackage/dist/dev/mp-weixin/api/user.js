@@ -15,5 +15,9 @@ function updateUserProfile(data) {
   }
   return utils_request.request.put(`/user/${userInfo.id}`, data);
 }
+function verifyUser(id, data) {
+  return utils_request.request.post(`/user/${id}/verify`, data);
+}
 exports.getUserProfile = getUserProfile;
 exports.updateUserProfile = updateUserProfile;
+exports.verifyUser = verifyUser;

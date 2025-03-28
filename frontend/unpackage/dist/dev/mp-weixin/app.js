@@ -19,6 +19,9 @@ if (!Math) {
   "./pages/user/settings.js";
   "./pages/user/profile.js";
   "./pages/user/address.js";
+  "./pages/user/verify.js";
+  "./pages/courier/apply.js";
+  "./pages/order/list.js";
   "./pages/about/about.js";
 }
 const _sfc_main = {

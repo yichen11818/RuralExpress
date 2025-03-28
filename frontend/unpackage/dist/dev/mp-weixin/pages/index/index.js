@@ -186,26 +186,24 @@ const _sfc_main = {
         console.log("附近快递员响应:", res);
         if (res && res.code === 200 && res.data) {
           this.nearestCouriers = res.data.map((courier) => {
-            const mockNames = {
-              "101": "张师傅",
-              "102": "李师傅",
-              "103": "王师傅",
-              "104": "刘师傅",
-              "105": "赵师傅"
+            const courierNames = {
+              1: "张师傅",
+              2: "李师傅",
+              3: "王师傅",
+              4: "刘师傅",
+              5: "赵师傅"
             };
-            const mockAvatars = {
-              "101": "/static/images/courier-1.png",
-              "102": "/static/images/courier-2.png",
-              "103": "/static/images/courier-3.png",
-              "104": "/static/images/courier-4.png",
-              "105": "/static/images/courier-5.png"
+            const courierAvatars = {
+              1: "/static/images/courier-1.png",
+              2: "/static/images/courier-2.png",
+              3: "/static/images/courier-3.png",
+              4: "/static/images/courier-4.png",
+              5: "/static/images/courier-5.png"
             };
-            const name = courier.name || mockNames[courier.userId] || courier.userName || "未知快递员";
-            const avatar = courier.avatar || mockAvatars[courier.userId] || "/static/images/default-avatar.png";
             return {
               id: courier.id,
-              name,
-              avatar,
+              name: courierNames[courier.userId] || `快递员${courier.userId}`,
+              avatar: courierAvatars[courier.userId] || "/static/images/default-avatar.png",
               rating: parseFloat(courier.rating) || 5,
               completedOrders: courier.completedOrders || 0,
               // 添加距离信息
@@ -234,26 +232,24 @@ const _sfc_main = {
           this.notices = data.notices || [];
           if (!this.userLocation || this.nearestCouriers.length === 0) {
             this.nearestCouriers = (data.nearestCouriers || []).map((courier) => {
-              const mockNames = {
-                "101": "张师傅",
-                "102": "李师傅",
-                "103": "王师傅",
-                "104": "刘师傅",
-                "105": "赵师傅"
+              const courierNames = {
+                1: "张师傅",
+                2: "李师傅",
+                3: "王师傅",
+                4: "刘师傅",
+                5: "赵师傅"
               };
-              const mockAvatars = {
-                "101": "/static/images/courier-1.png",
-                "102": "/static/images/courier-2.png",
-                "103": "/static/images/courier-3.png",
-                "104": "/static/images/courier-4.png",
-                "105": "/static/images/courier-5.png"
+              const courierAvatars = {
+                1: "/static/images/courier1.jpg",
+                2: "/static/images/courier2.jpg",
+                3: "/static/images/courier3.jpg",
+                4: "/static/images/courier4.jpg",
+                5: "/static/images/courier5.jpg"
               };
-              const name = courier.name || mockNames[courier.userId] || courier.userName || "未知快递员";
-              const avatar = courier.avatar || mockAvatars[courier.userId] || "/static/images/default-avatar.png";
               return {
                 id: courier.id,
-                name,
-                avatar,
+                name: courierNames[courier.userId] || `快递员${courier.userId}`,
+                avatar: courierAvatars[courier.userId] || "/static/images/default-avatar.png",
                 rating: parseFloat(courier.rating) || 5,
                 completedOrders: courier.completedOrders || 0
               };
