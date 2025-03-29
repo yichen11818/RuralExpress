@@ -535,3 +535,65 @@
     opacity: 0.6;
 }
 }
+
+/* 物流追踪列表样式 */
+.tracking-list {
+  padding: 0;
+}
+.tracking-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 0;
+  border-bottom: 2rpx solid #f6f6f6;
+}
+.tracking-item:last-child {
+  border-bottom: none;
+}
+.tracking-company {
+  display: flex;
+  align-items: center;
+}
+.tracking-logo {
+  width: 60rpx;
+  height: 60rpx;
+  margin-right: 20rpx;
+  border-radius: 8rpx;
+}
+.tracking-info {
+  display: flex;
+  flex-direction: column;
+}
+.tracking-name {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 500;
+}
+.tracking-number {
+  font-size: 24rpx;
+  color: #999;
+  margin-top: 6rpx;
+}
+.tracking-status {
+  display: flex;
+  align-items: center;
+}
+.status-text {
+  font-size: 26rpx;
+  margin-right: 10rpx;
+}
+.status-0 {
+  color: #999;
+}
+.status-1, .status-2 {
+  color: #3cc51f;
+}
+.status-3 {
+  color: #ff9900;
+}
+.status-4 {
+  color: #ff5500;
+}
+.status-5 {
+  color: #999;
+}

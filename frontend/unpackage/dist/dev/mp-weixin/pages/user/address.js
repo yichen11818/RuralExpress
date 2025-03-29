@@ -87,34 +87,33 @@ const _sfc_main = {
     async handleAddressSubmit(addressData) {
       try {
         if (this.formType === "add") {
-          addressData.id = Date.now().toString();
-          this.addressList.push(addressData);
-          common_vendor.index.showToast({
-            title: "添加成功",
-            icon: "success"
-          });
-        } else {
-          const index = this.addressList.findIndex((item) => item.id === addressData.id);
-          if (index !== -1) {
-            this.addressList[index] = addressData;
+          const result = await api_user.addAddress(addressData);
+          if (result.code === 200) {
+            await this.loadAddressList();
+            common_vendor.index.showToast({
+              title: "添加成功",
+              icon: "success"
+            });
+          } else {
+            throw new Error(result.message || "添加失败");
           }
-          common_vendor.index.showToast({
-            title: "更新成功",
-            icon: "success"
-          });
-        }
-        if (addressData.isDefault) {
-          this.addressList.forEach((item) => {
-            if (item.id !== addressData.id) {
-              item.isDefault = false;
-            }
-          });
+        } else {
+          const result = await api_user.updateAddress(addressData.id, addressData);
+          if (result.code === 200) {
+            await this.loadAddressList();
+            common_vendor.index.showToast({
+              title: "更新成功",
+              icon: "success"
+            });
+          } else {
+            throw new Error(result.message || "更新失败");
+          }
         }
         this.hideAddressForm();
       } catch (error) {
         console.error("提交地址失败", error);
         common_vendor.index.showToast({
-          title: "提交失败，请重试",
+          title: error.message || "提交失败，请重试",
           icon: "none"
         });
       }
@@ -127,15 +126,20 @@ const _sfc_main = {
         success: async (res) => {
           if (res.confirm) {
             try {
-              this.addressList = this.addressList.filter((item) => item.id !== id);
-              common_vendor.index.showToast({
-                title: "删除成功",
-                icon: "success"
-              });
+              const result = await api_user.deleteAddress(id);
+              if (result.code === 200) {
+                await this.loadAddressList();
+                common_vendor.index.showToast({
+                  title: "删除成功",
+                  icon: "success"
+                });
+              } else {
+                throw new Error(result.message || "删除失败");
+              }
             } catch (error) {
               console.error("删除地址失败", error);
               common_vendor.index.showToast({
-                title: "删除失败，请重试",
+                title: error.message || "删除失败，请重试",
                 icon: "none"
               });
             }
@@ -146,17 +150,20 @@ const _sfc_main = {
     // 设置默认地址
     async setDefault(id) {
       try {
-        this.addressList.forEach((item) => {
-          item.isDefault = item.id === id;
-        });
-        common_vendor.index.showToast({
-          title: "设置成功",
-          icon: "success"
-        });
+        const result = await api_user.setDefaultAddress(id);
+        if (result.code === 200) {
+          await this.loadAddressList();
+          common_vendor.index.showToast({
+            title: "设置成功",
+            icon: "success"
+          });
+        } else {
+          throw new Error(result.message || "设置失败");
+        }
       } catch (error) {
         console.error("设置默认地址失败", error);
         common_vendor.index.showToast({
-          title: "设置失败，请重试",
+          title: error.message || "设置失败，请重试",
           icon: "none"
         });
       }
@@ -166,11 +173,50 @@ const _sfc_main = {
       const pages = getCurrentPages();
       const currentPage = pages[pages.length - 1];
       if (currentPage.options && currentPage.options.type === "select") {
-        const prevPage = pages[pages.length - 2];
-        if (prevPage && prevPage.$vm) {
-          prevPage.$vm.selectedAddress = item;
+        console.log("选择地址：", item);
+        const addressData = {
+          id: item.id,
+          name: item.name,
+          phone: item.phone,
+          // 完整地址字符串，用于显示
+          address: item.province + item.city + item.district + " " + item.detailAddress,
+          // 保留原始数据，以便需要时使用
+          province: item.province,
+          city: item.city,
+          district: item.district,
+          detailAddress: item.detailAddress,
+          addressType: item.addressType,
+          isDefault: item.isDefault
+        };
+        try {
+          const prevPage = pages[pages.length - 2];
+          if (prevPage && prevPage.$vm) {
+            prevPage.$vm.selectedAddress = addressData;
+          }
+          const eventChannel = this.getOpenerEventChannel();
+          if (eventChannel) {
+            console.log("发送地址数据通过eventChannel");
+            eventChannel.emit("selectAddress", addressData);
+          } else {
+            console.log("获取eventChannel失败");
+          }
+          common_vendor.index.$emit("addressSelected", addressData);
+          common_vendor.index.showToast({
+            title: "已选择地址",
+            icon: "success",
+            duration: 1500
+          });
+          setTimeout(() => {
+            common_vendor.index.navigateBack();
+          }, 300);
+        } catch (error) {
+          console.error("地址选择错误:", error);
+          common_vendor.index.showToast({
+            title: "选择地址失败",
+            icon: "none"
+          });
+          common_vendor.index.navigateBack();
         }
-        common_vendor.index.navigateBack();
       }
     },
     // 检查登录状态

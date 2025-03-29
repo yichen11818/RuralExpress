@@ -34,6 +34,7 @@ if (!Math) {
   "./pages/admin/orders/index.js";
   "./pages/admin/companies/index.js";
   "./pages/admin/system/index.js";
+  "./pages/activity/detail.js";
 }
 const _sfc_main = {
   globalData: {

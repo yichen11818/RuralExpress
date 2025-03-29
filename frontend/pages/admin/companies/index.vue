@@ -143,6 +143,8 @@
 </template>
 
 <script>
+import request from '@/utils/request.js';
+
 export default {
   data() {
     return {
@@ -184,7 +186,7 @@ export default {
       
       // 构建请求参数
       const params = {
-        page: this.currentPage,
+        pageNum: this.currentPage,
         pageSize: this.pageSize
       };
       
@@ -194,39 +196,43 @@ export default {
       }
       
       if (this.statusIndex > 0) {
-        params.status = this.statusIndex - 1;
+        // 修正状态值: 前端1-启用对应后端0-启用，前端2-禁用对应后端1-禁用
+        params.status = this.statusIndex === 1 ? 0 : 1;
       }
       
-      // 发起请求
-      uni.request({
-        url: '/api/admin/companies',
-        method: 'GET',
-        data: params,
-        success: (res) => {
+      console.log('正在请求快递公司列表:', params);
+      
+      // 使用封装的request方法
+      request.get('/api/admin/companies', params)
+        .then(res => {
           uni.hideLoading();
           this.loading = false;
           
-          if (res.data.code === 200) {
-            const data = res.data.data;
-            this.companies = data.list;
-            this.total = data.total;
-          } else {
-            uni.showToast({
-              title: res.data.message || '获取快递公司列表失败',
-              icon: 'none'
-            });
-          }
-        },
-        fail: () => {
+          console.log('快递公司列表请求成功:', res);
+          
+          const data = res.data;
+          this.companies = data.list;
+          this.total = data.total;
+        })
+        .catch(err => {
           uni.hideLoading();
           this.loading = false;
           
+          console.error('获取快递公司列表失败:', err);
+          console.error('请求URL:', '/admin/companies');
+          console.error('请求参数:', params);
+          
+          // 显示用户友好的错误提示
           uni.showToast({
-            title: '网络错误，请稍后再试',
-            icon: 'none'
+            title: `获取列表失败: ${err.message || '未知错误'}`,
+            icon: 'none',
+            duration: 3000
           });
-        }
-      });
+          
+          // 显示空数据状态
+          this.companies = [];
+          this.total = 0;
+        });
     },
     
     // 搜索快递公司
@@ -298,37 +304,40 @@ export default {
       const url = this.formType === 'add' ? '/api/admin/companies' : `/api/admin/companies/${this.companyForm.id}`;
       const method = this.formType === 'add' ? 'POST' : 'PUT';
       
+      console.log('提交快递公司表单:', {
+        url,
+        method,
+        data: this.companyForm
+      });
+      
       uni.showLoading({
         title: '提交中...'
       });
       
-      uni.request({
-        url,
-        method,
-        data: this.companyForm,
-        success: (res) => {
+      // 使用封装的request方法
+      const apiMethod = this.formType === 'add' ? request.post : request.put;
+      
+      apiMethod(url, this.companyForm)
+        .then(res => {
           uni.hideLoading();
-          if (res.data.code === 200) {
-            uni.showToast({
-              title: this.formType === 'add' ? '添加成功' : '更新成功'
-            });
-            this.closeCompanyForm();
-            this.loadCompanies();
-          } else {
-            uni.showToast({
-              title: res.data.message || (this.formType === 'add' ? '添加失败' : '更新失败'),
-              icon: 'none'
-            });
-          }
-        },
-        fail: () => {
-          uni.hideLoading();
+          console.log('提交快递公司表单响应:', res);
+          
           uni.showToast({
-            title: '网络错误，请稍后再试',
-            icon: 'none'
+            title: this.formType === 'add' ? '添加成功' : '更新成功'
           });
-        }
-      });
+          this.closeCompanyForm();
+          this.loadCompanies();
+        })
+        .catch(err => {
+          uni.hideLoading();
+          console.error('提交快递公司表单失败:', err);
+          
+          uni.showToast({
+            title: err.message || (this.formType === 'add' ? '添加失败' : '更新失败'),
+            icon: 'none',
+            duration: 3000
+          });
+        });
     },
     
     // 切换快递公司状态
@@ -343,34 +352,26 @@ export default {
               title: '处理中...'
             });
             
-            uni.request({
-              url: `/api/admin/companies/${company.id}/status`,
-              method: 'PUT',
-              data: {
-                status: company.status === 0 ? 1 : 0
-              },
-              success: (res) => {
-                uni.hideLoading();
-                if (res.data.code === 200) {
-                  uni.showToast({
-                    title: company.status === 0 ? '禁用成功' : '启用成功'
-                  });
-                  this.loadCompanies();
-                } else {
-                  uni.showToast({
-                    title: res.data.message || '操作失败',
-                    icon: 'none'
-                  });
-                }
-              },
-              fail: () => {
+            // 计算新状态值
+            const newStatus = company.status === 0 ? 1 : 0;
+            
+            // 使用封装的request方法
+            request.put(`/api/admin/companies/${company.id}/status?status=${newStatus}`)
+              .then(res => {
                 uni.hideLoading();
                 uni.showToast({
-                  title: '网络错误，请稍后再试',
+                  title: company.status === 0 ? '禁用成功' : '启用成功'
+                });
+                this.loadCompanies();
+              })
+              .catch(err => {
+                uni.hideLoading();
+                uni.showToast({
+                  title: err.message || '操作失败',
                   icon: 'none'
                 });
-              }
-            });
+                console.error('切换状态失败:', err);
+              });
           }
         }
       });
@@ -388,31 +389,23 @@ export default {
               title: '删除中...'
             });
             
-            uni.request({
-              url: `/api/admin/companies/${company.id}`,
-              method: 'DELETE',
-              success: (res) => {
-                uni.hideLoading();
-                if (res.data.code === 200) {
-                  uni.showToast({
-                    title: '删除成功'
-                  });
-                  this.loadCompanies();
-                } else {
-                  uni.showToast({
-                    title: res.data.message || '删除失败',
-                    icon: 'none'
-                  });
-                }
-              },
-              fail: () => {
+            // 使用封装的request方法
+            request.delete(`/api/admin/companies/${company.id}`)
+              .then(res => {
                 uni.hideLoading();
                 uni.showToast({
-                  title: '网络错误，请稍后再试',
+                  title: '删除成功'
+                });
+                this.loadCompanies();
+              })
+              .catch(err => {
+                uni.hideLoading();
+                uni.showToast({
+                  title: err.message || '删除失败',
                   icon: 'none'
                 });
-              }
-            });
+                console.error('删除失败:', err);
+              });
           }
         }
       });

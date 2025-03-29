@@ -183,4 +183,13 @@ export function uploadReviewImage(file) {
  */
 export function getLogisticsInfo(params) {
   return request.get('/api/order/logistics', { params });
+}
+
+/**
+ * 获取用户的物流追踪列表
+ * @param {Object} params 查询参数
+ * @returns {Promise} 物流追踪列表
+ */
+export function getTrackingList(params = {}) {
+  return request.get('/api/order/tracking/list', { params });
 } 

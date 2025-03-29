@@ -160,11 +160,6 @@ const request = (options) => {
 
 // 导出请求方法
 export default {
-  // 获取基础URL
-  getBaseUrl: () => {
-    return BASE_URL;
-  },
-  
   // 测试网络连接状态
   testConnection: () => {
     console.log('[请求工具] 开始测试服务器连接...');
@@ -174,35 +169,12 @@ export default {
         method: 'GET',
         timeout: 5000,
         success: (res) => {
-          console.log('[请求工具] 服务器连接测试响应:', res);
-          // 不仅检查请求成功，还要判断状态码是否为200
-          if (res.statusCode === 200) {
-            console.log('[请求工具] 服务器连接测试成功 (200 OK)');
-            resolve({
-              success: true,
-              statusCode: res.statusCode,
-              data: res.data
-            });
-          } else {
-            console.warn('[请求工具] 服务器连接返回非200状态码:', res.statusCode);
-            // 特殊处理403状态码，因为可能是权限问题而不是连接问题
-            if (res.statusCode === 403) {
-              console.log('[请求工具] 服务器连接有效，但返回403禁止访问，可能需要认证');
-              resolve({
-                success: true, // 仍视为连接成功，因为服务器正在响应
-                statusCode: res.statusCode,
-                data: res.data,
-                warning: '服务器返回403禁止访问，健康检查端点可能需要认证'
-              });
-            } else {
-              resolve({
-                success: false,
-                statusCode: res.statusCode,
-                data: res.data,
-                error: `服务器返回错误状态码: ${res.statusCode}`
-              });
-            }
-          }
+          console.log('[请求工具] 服务器连接测试成功:', res);
+          resolve({
+            success: true,
+            statusCode: res.statusCode,
+            data: res.data
+          });
         },
         fail: (error) => {
           console.error('[请求工具] 服务器连接测试失败:', error);

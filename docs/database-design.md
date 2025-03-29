@@ -195,4 +195,65 @@
 
 ### 服务点搜索 (searchStations)
 
-通过服务点名称(name)、位置信息(province, city, district, address)或联系电话(phone)进行模糊搜索，按评价数和评分排序。 
+通过服务点名称(name)、位置信息(province, city, district, address)或联系电话(phone)进行模糊搜索，按评价数和评分排序。
+
+## 表关系说明
+
+### 用户相关表关系
+1. `t_user` 和 `t_courier` 之间通过 `user_id` 字段关联，一个用户可以成为一名快递员
+2. `t_user` 和 `t_address` 之间通过 `user_id` 字段关联，一个用户可以有多个地址
+
+### 订单相关表关系
+1. `t_order` 和 `t_user` 通过 `user_id` 字段关联，表示下单用户
+2. `t_order` 和 `t_courier` 通过 `courier_id` 字段关联，表示接单快递员
+3. `t_order` 和 `t_evaluation` 通过 `order_id` 字段关联，一个订单可以有多条评价记录
+4. `t_order` 和 `t_payment` 通过 `order_id` 字段关联，一个订单对应一条支付记录
+
+### 服务点相关表关系
+1. `t_station` 和 `t_station_photo` 通过 `station_id` 字段关联，一个服务点可以有多张照片
+2. `t_station` 和 `t_station_company` 通过 `station_id` 字段关联，一个服务点可以支持多个快递公司
+
+## 开发注意事项
+
+### 快递员信息获取
+1. 快递员表(`t_courier`)不直接存储姓名等个人信息，这些信息存储在关联的用户表(`t_user`)中
+2. 获取快递员姓名时，需要通过 `t_courier.user_id` 关联到 `t_user` 表，并使用 `t_user.nickname` 或 `t_user.real_name`
+3. SQL查询示例:
+   ```sql
+   SELECT c.*, u.nickname, u.phone, u.avatar 
+   FROM t_courier c 
+   LEFT JOIN t_user u ON c.user_id = u.id 
+   WHERE c.id = #{courierId}
+   ```
+
+### 订单查询优化
+1. 订单查询时应使用表别名和列前缀，避免列名冲突
+2. 对于关联查询，推荐使用以下方式:
+   ```sql
+   SELECT 
+     o.id, o.order_no, /* 其他订单字段 */
+     u.nickname as user_username,
+     u2.nickname as courier_name
+   FROM t_order o
+   LEFT JOIN t_user u ON o.user_id = u.id
+   LEFT JOIN t_courier c ON o.courier_id = c.id
+   LEFT JOIN t_user u2 ON c.user_id = u2.id
+   ```
+
+### 数据索引建议
+以下字段建议添加索引以提高查询性能:
+1. `t_order.order_no`
+2. `t_order.user_id`
+3. `t_order.courier_id`
+4. `t_order.status`
+5. `t_order.created_at`
+6. `t_courier.user_id`
+7. `t_user.phone`
+
+### 数据安全处理
+1. 用户密码存储使用MD5+盐值加密
+2. 身份证号等敏感信息需要加密存储
+3. 支付信息需要符合金融安全要求
+
+### 数据库字符集与排序规则
+所有表使用 `utf8mb4` 字符集和 `utf8mb4_unicode_ci` 排序规则，以支持完整的Unicode字符集和Emoji 

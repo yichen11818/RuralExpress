@@ -168,6 +168,9 @@ export default {
     initFormData() {
       const address = this.address;
       
+      // 将数字类型的地址类型转换为文本显示
+      const addressType = this.getAddressTypeText(address.addressType);
+      
       this.formData = {
         id: address.id || '',
         name: address.name || '',
@@ -178,13 +181,13 @@ export default {
         region: address.province && address.city && address.district ? 
           [address.province, address.city, address.district] : [],
         detailAddress: address.detailAddress || '',
-        addressType: address.addressType || '家',
+        addressType: addressType,
         isDefault: !!address.isDefault
       };
       
       // 如果是自定义标签，设置 customTag
-      if (!['家', '公司', '学校'].includes(address.addressType)) {
-        this.customTag = address.addressType;
+      if (!['家', '公司', '学校'].includes(addressType)) {
+        this.customTag = addressType;
       }
     },
     
@@ -209,7 +212,9 @@ export default {
       this.$refs.addressForm.validate().then(res => {
         // 表单验证通过
         const addressData = {
-          ...this.formData
+          ...this.formData,
+          // 确保地址类型字段格式为数字
+          addressType: this.getAddressTypeValue(this.formData.addressType)
         };
         
         // 发送事件，将表单数据传递给父组件
@@ -217,6 +222,41 @@ export default {
       }).catch(err => {
         console.error('表单验证失败', err);
       });
+    },
+    
+    // 将地址类型文本转换为数值
+    getAddressTypeValue(type) {
+      // 根据后端API要求转换类型
+      // 假设后端需要的是：0-家庭，1-公司，2-学校，3-其他
+      const typeMap = {
+        '家': 0,
+        '公司': 1,
+        '学校': 2
+      };
+      return typeMap[type] !== undefined ? typeMap[type] : 3;
+    },
+    
+    // 将数字类型转换为显示文本
+    getAddressTypeText(type) {
+      // 数字类型转文字
+      const typeMap = {
+        0: '家',
+        1: '公司',
+        2: '学校'
+      };
+      
+      // 如果是数字类型
+      if (typeof type === 'number') {
+        return typeMap[type] || '其他';
+      }
+      
+      // 如果已经是字符串，且是有效值，则直接返回
+      if (typeof type === 'string' && ['家', '公司', '学校'].includes(type)) {
+        return type;
+      }
+      
+      // 其他情况返回默认值
+      return '家';
     }
   }
 }

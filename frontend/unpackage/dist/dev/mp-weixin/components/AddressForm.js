@@ -79,6 +79,7 @@ const _sfc_main = {
   methods: {
     initFormData() {
       const address = this.address;
+      const addressType = this.getAddressTypeText(address.addressType);
       this.formData = {
         id: address.id || "",
         name: address.name || "",
@@ -88,11 +89,11 @@ const _sfc_main = {
         district: address.district || "",
         region: address.province && address.city && address.district ? [address.province, address.city, address.district] : [],
         detailAddress: address.detailAddress || "",
-        addressType: address.addressType || "家",
+        addressType,
         isDefault: !!address.isDefault
       };
-      if (!["家", "公司", "学校"].includes(address.addressType)) {
-        this.customTag = address.addressType;
+      if (!["家", "公司", "学校"].includes(addressType)) {
+        this.customTag = addressType;
       }
     },
     handleRegionChange(e) {
@@ -112,12 +113,38 @@ const _sfc_main = {
     submitForm() {
       this.$refs.addressForm.validate().then((res) => {
         const addressData = {
-          ...this.formData
+          ...this.formData,
+          // 确保地址类型字段格式为数字
+          addressType: this.getAddressTypeValue(this.formData.addressType)
         };
         this.$emit("submit", addressData);
       }).catch((err) => {
         console.error("表单验证失败", err);
       });
+    },
+    // 将地址类型文本转换为数值
+    getAddressTypeValue(type) {
+      const typeMap = {
+        "家": 0,
+        "公司": 1,
+        "学校": 2
+      };
+      return typeMap[type] !== void 0 ? typeMap[type] : 3;
+    },
+    // 将数字类型转换为显示文本
+    getAddressTypeText(type) {
+      const typeMap = {
+        0: "家",
+        1: "公司",
+        2: "学校"
+      };
+      if (typeof type === "number") {
+        return typeMap[type] || "其他";
+      }
+      if (typeof type === "string" && ["家", "公司", "学校"].includes(type)) {
+        return type;
+      }
+      return "家";
     }
   }
 };

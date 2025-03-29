@@ -175,41 +175,34 @@ export default {
       try {
         if (this.formType === 'add') {
           // 添加地址
-          // 实际项目中应该调用 API
-          // await addAddress(addressData);
-          
-          // 模拟添加地址
-          addressData.id = Date.now().toString(); // 生成临时ID
-          this.addressList.push(addressData);
-          
-          uni.showToast({
-            title: '添加成功',
-            icon: 'success'
-          });
+          // 调用API添加地址
+          const result = await addAddress(addressData);
+          if (result.code === 200) {
+            // 重新加载地址列表以获取最新数据
+            await this.loadAddressList();
+            
+            uni.showToast({
+              title: '添加成功',
+              icon: 'success'
+            });
+          } else {
+            throw new Error(result.message || '添加失败');
+          }
         } else {
           // 编辑地址
-          // 实际项目中应该调用 API
-          // await updateAddress(addressData);
-          
-          // 模拟更新地址
-          const index = this.addressList.findIndex(item => item.id === addressData.id);
-          if (index !== -1) {
-            this.addressList[index] = addressData;
+          // 调用API更新地址
+          const result = await updateAddress(addressData.id, addressData);
+          if (result.code === 200) {
+            // 重新加载地址列表以获取最新数据
+            await this.loadAddressList();
+            
+            uni.showToast({
+              title: '更新成功',
+              icon: 'success'
+            });
+          } else {
+            throw new Error(result.message || '更新失败');
           }
-          
-          uni.showToast({
-            title: '更新成功',
-            icon: 'success'
-          });
-        }
-        
-        // 如果设置为默认地址，更新其他地址状态
-        if (addressData.isDefault) {
-          this.addressList.forEach(item => {
-            if (item.id !== addressData.id) {
-              item.isDefault = false;
-            }
-          });
         }
         
         // 关闭弹窗
@@ -217,7 +210,7 @@ export default {
       } catch (error) {
         console.error('提交地址失败', error);
         uni.showToast({
-          title: '提交失败，请重试',
+          title: error.message || '提交失败，请重试',
           icon: 'none'
         });
       }
@@ -231,20 +224,23 @@ export default {
         success: async (res) => {
           if (res.confirm) {
             try {
-              // 实际项目中应该调用 API
-              // await deleteAddress(id);
+              // 调用API删除地址
+              const result = await deleteAddress(id);
+              if (result.code === 200) {
+                // 重新加载地址列表
+                await this.loadAddressList();
               
-              // 模拟删除地址
-              this.addressList = this.addressList.filter(item => item.id !== id);
-              
-              uni.showToast({
-                title: '删除成功',
-                icon: 'success'
-              });
+                uni.showToast({
+                  title: '删除成功',
+                  icon: 'success'
+                });
+              } else {
+                throw new Error(result.message || '删除失败');
+              }
             } catch (error) {
               console.error('删除地址失败', error);
               uni.showToast({
-                title: '删除失败，请重试',
+                title: error.message || '删除失败，请重试',
                 icon: 'none'
               });
             }
@@ -256,22 +252,23 @@ export default {
     // 设置默认地址
     async setDefault(id) {
       try {
-        // 实际项目中应该调用 API
-        // await setDefaultAddress(id);
+        // 调用API设置默认地址
+        const result = await setDefaultAddress(id);
+        if (result.code === 200) {
+          // 重新加载地址列表
+          await this.loadAddressList();
         
-        // 模拟设置默认地址
-        this.addressList.forEach(item => {
-          item.isDefault = item.id === id;
-        });
-        
-        uni.showToast({
-          title: '设置成功',
-          icon: 'success'
-        });
+          uni.showToast({
+            title: '设置成功',
+            icon: 'success'
+          });
+        } else {
+          throw new Error(result.message || '设置失败');
+        }
       } catch (error) {
         console.error('设置默认地址失败', error);
         uni.showToast({
-          title: '设置失败，请重试',
+          title: error.message || '设置失败，请重试',
           icon: 'none'
         });
       }
@@ -284,15 +281,66 @@ export default {
       const currentPage = pages[pages.length - 1];
       
       if (currentPage.options && currentPage.options.type === 'select') {
-        // 将地址数据传递回上一页
-        const prevPage = pages[pages.length - 2];
+        console.log('选择地址：', item);
         
-        // 设置上一页的地址信息
-        if (prevPage && prevPage.$vm) {
-          prevPage.$vm.selectedAddress = item;
+        // 准备地址数据
+        const addressData = {
+          id: item.id,
+          name: item.name,
+          phone: item.phone,
+          // 完整地址字符串，用于显示
+          address: item.province + item.city + item.district + ' ' + item.detailAddress,
+          // 保留原始数据，以便需要时使用
+          province: item.province,
+          city: item.city,
+          district: item.district,
+          detailAddress: item.detailAddress,
+          addressType: item.addressType,
+          isDefault: item.isDefault
+        };
+        
+        try {
+          // 获取上一页
+          const prevPage = pages[pages.length - 2];
+          
+          // 方法1：通过页面实例直接传值
+          if (prevPage && prevPage.$vm) {
+            prevPage.$vm.selectedAddress = addressData;
+          }
+          
+          // 方法2：通过事件通道发送数据回上一页
+          const eventChannel = this.getOpenerEventChannel();
+          if (eventChannel) {
+            console.log('发送地址数据通过eventChannel');
+            eventChannel.emit('selectAddress', addressData);
+          } else {
+            console.log('获取eventChannel失败');
+          }
+          
+          // 方法3：通过uni.$emit全局事件
+          uni.$emit('addressSelected', addressData);
+          
+          // 显示提示
+          uni.showToast({
+            title: '已选择地址',
+            icon: 'success',
+            duration: 1500
+          });
+          
+          // 延迟返回，确保数据传递完成
+          setTimeout(() => {
+            uni.navigateBack();
+          }, 300);
+        } catch (error) {
+          console.error('地址选择错误:', error);
+          uni.showToast({
+            title: '选择地址失败',
+            icon: 'none'
+          });
+          
+          // 出错时也返回
+          uni.navigateBack();
         }
-        
-        uni.navigateBack();
       }
     },
     

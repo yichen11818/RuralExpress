@@ -60,8 +60,12 @@ const user = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty
   updateUserProfile,
   verifyUser
 }, Symbol.toStringTag, { value: "Module" }));
+exports.addAddress = addAddress;
+exports.deleteAddress = deleteAddress;
 exports.getAddressList = getAddressList;
 exports.getUserProfile = getUserProfile;
+exports.setDefaultAddress = setDefaultAddress;
+exports.updateAddress = updateAddress;
 exports.updateUserProfile = updateUserProfile;
 exports.user = user;
 exports.verifyUser = verifyUser;

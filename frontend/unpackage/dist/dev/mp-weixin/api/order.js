@@ -72,6 +72,9 @@ function uploadReviewImage(file) {
 function getLogisticsInfo(params) {
   return utils_request.request.get("/api/order/logistics", { params });
 }
+function getTrackingList(params = {}) {
+  return utils_request.request.get("/api/order/tracking/list", { params });
+}
 const order = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   acceptOrder,
@@ -85,6 +88,7 @@ const order = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.definePropert
   getOrderStatusText,
   getPackageTypeText,
   getPendingOrders,
+  getTrackingList,
   getUserOrders,
   submitOrderReview,
   updateOrder,
@@ -95,5 +99,6 @@ exports.cancelOrder = cancelOrder;
 exports.createOrder = createOrder;
 exports.getLogisticsInfo = getLogisticsInfo;
 exports.getOrderStatusText = getOrderStatusText;
+exports.getTrackingList = getTrackingList;
 exports.getUserOrders = getUserOrders;
 exports.order = order;

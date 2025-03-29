@@ -185,9 +185,10 @@ public class AddressServiceImpl implements AddressService {
             throw new BusinessException("详细地址不能为空");
         }
         
-        // 如果未设置地址类型，默认为"其他"
-        if (!StringUtils.hasText(address.getAddressType())) {
-            address.setAddressType("其他");
+        // 处理地址类型 - 设置默认值
+        if (address.getAddressType() == null) {
+            // 如果未设置地址类型，默认为"其他" (3)
+            address.setAddressType(3);
         }
         
         // 如果未设置是否默认，默认为非默认

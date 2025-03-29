@@ -377,10 +377,10 @@ export default {
       console.log('[订单页面] 请求参数:', params);
       
       // 发送API请求
-      this.$request.post('/admin/orders', params)
+      this.$request.post('/api/admin/orders', params)
         .then(response => {
           console.log('[订单页面] 订单数据加载成功:', response);
-          if (response && response.code === 0) {
+          if (response && response.code === 200) {
             this.orders = response.data.records || [];
             this.total = response.data.total || 0;
           } else {
@@ -399,10 +399,10 @@ export default {
     
     // 加载统计数据
     loadStatistics() {
-      this.$request.get('/admin/orders/statistics')
+      this.$request.get('/api/admin/orders/statistics')
         .then(response => {
           console.log('[订单页面] 统计数据加载成功:', response);
-          if (response && response.code === 0) {
+          if (response && response.code === 200) {
             this.statistics = response.data;
           } else {
             console.error('[订单页面] 加载统计数据失败:', response);
@@ -443,9 +443,9 @@ export default {
     openOrderDetail(order) {
       console.log('[订单页面] 查看订单详情:', order.id);
       // 先请求详细信息
-      this.$request.get(`/admin/orders/${order.id}`)
+      this.$request.get(`/api/admin/orders/${order.id}`)
         .then(response => {
-          if (response && response.code === 0) {
+          if (response && response.code === 200) {
             console.log('[订单页面] 订单详情加载成功:', response.data);
             this.currentOrder = response.data;
             this.$refs.orderDetailPopup.open();
@@ -498,11 +498,11 @@ export default {
           title: '更新中...'
         });
         
-        this.$request.put(`/admin/orders/${this.statusChangeOrderId}/status`, {
+        this.$request.put(`/api/admin/orders/${this.statusChangeOrderId}/status`, {
           status: parseInt(this.statusPickerIndex)
         })
           .then(response => {
-            if (response && response.code === 0) {
+            if (response && response.code === 200) {
               uni.showToast({
                 title: '状态更新成功',
                 icon: 'success'
@@ -538,9 +538,9 @@ export default {
         params.status = this.statusIndex - 1;
       }
       
-      this.$request.post('/admin/orders/export', params)
+      this.$request.post('/api/admin/orders/export', params)
         .then(response => {
-          if (response && response.code === 0) {
+          if (response && response.code === 200) {
             uni.showToast({
               title: '导出成功',
               icon: 'success'
@@ -579,11 +579,11 @@ export default {
           title: '删除中...'
         });
         
-        this.$request.delete(`/admin/orders/batch`, {
+        this.$request.delete(`/api/admin/orders/batch`, {
           ids: [this.deleteOrderId]
         })
           .then(response => {
-            if (response && response.code === 0) {
+            if (response && response.code === 200) {
               uni.showToast({
                 title: '删除成功',
                 icon: 'success'

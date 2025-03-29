@@ -10,6 +10,15 @@
         actual_delivery_time, remark, cancel_reason, created_at, updated_at
     </sql>
     
+    <!-- 带表前缀的基础查询列 -->
+    <sql id="Base_Column_List_With_Prefix">
+        ${prefix}.id, ${prefix}.order_no, ${prefix}.user_id, ${prefix}.courier_id, ${prefix}.sender_name, 
+        ${prefix}.sender_phone, ${prefix}.sender_address, ${prefix}.receiver_name, ${prefix}.receiver_phone, 
+        ${prefix}.receiver_address, ${prefix}.package_type, ${prefix}.weight, ${prefix}.price, ${prefix}.status, 
+        ${prefix}.expected_pickup_time, ${prefix}.actual_pickup_time, ${prefix}.expected_delivery_time, 
+        ${prefix}.actual_delivery_time, ${prefix}.remark, ${prefix}.cancel_reason, ${prefix}.created_at, ${prefix}.updated_at
+    </sql>
+    
     <!-- 查询用户订单列表 -->
     <select id="findUserOrders" resultType="com.ruralexpress.entity.Order">
         SELECT <include refid="Base_Column_List" />
@@ -146,12 +155,17 @@
     
     <!-- 管理员查询订单列表 -->
     <select id="findOrdersForAdmin" resultType="com.ruralexpress.entity.Order">
-        SELECT o.<include refid="Base_Column_List" />,
-               u.username as user_username,
-               c.name as courier_name
+        SELECT 
+        <include refid="Base_Column_List_With_Prefix">
+            <property name="prefix" value="o"/>
+        </include>,
+        u.nickname as user_username,
+        u.real_name as user_real_name,
+        u2.nickname as courier_name
         FROM t_order o
         LEFT JOIN t_user u ON o.user_id = u.id
         LEFT JOIN t_courier c ON o.courier_id = c.id
+        LEFT JOIN t_user u2 ON c.user_id = u2.id
         <where>
             <if test="filter.status != null">
                 AND o.status = #{filter.status}
@@ -172,8 +186,10 @@
                     OR o.sender_phone LIKE CONCAT('%', #{filter.keyword}, '%')
                     OR o.receiver_name LIKE CONCAT('%', #{filter.keyword}, '%')
                     OR o.receiver_phone LIKE CONCAT('%', #{filter.keyword}, '%')
-                    OR u.username LIKE CONCAT('%', #{filter.keyword}, '%')
-                    OR c.name LIKE CONCAT('%', #{filter.keyword}, '%')
+                    OR u.nickname LIKE CONCAT('%', #{filter.keyword}, '%')
+                    OR u.real_name LIKE CONCAT('%', #{filter.keyword}, '%')
+                    OR u2.nickname LIKE CONCAT('%', #{filter.keyword}, '%')
+                    OR u2.real_name LIKE CONCAT('%', #{filter.keyword}, '%')
                 )
             </if>
         </where>
@@ -198,6 +214,7 @@
         FROM t_order o
         LEFT JOIN t_user u ON o.user_id = u.id
         LEFT JOIN t_courier c ON o.courier_id = c.id
+        LEFT JOIN t_user u2 ON c.user_id = u2.id
         <where>
             <if test="filter.status != null">
                 AND o.status = #{filter.status}
@@ -218,8 +235,10 @@
                     OR o.sender_phone LIKE CONCAT('%', #{filter.keyword}, '%')
                     OR o.receiver_name LIKE CONCAT('%', #{filter.keyword}, '%')
                     OR o.receiver_phone LIKE CONCAT('%', #{filter.keyword}, '%')
-                    OR u.username LIKE CONCAT('%', #{filter.keyword}, '%')
-                    OR c.name LIKE CONCAT('%', #{filter.keyword}, '%')
+                    OR u.nickname LIKE CONCAT('%', #{filter.keyword}, '%')
+                    OR u.real_name LIKE CONCAT('%', #{filter.keyword}, '%')
+                    OR u2.nickname LIKE CONCAT('%', #{filter.keyword}, '%')
+                    OR u2.real_name LIKE CONCAT('%', #{filter.keyword}, '%')
                 )
             </if>
         </where>
@@ -227,25 +246,33 @@
     
     <!-- 查询订单详情 -->
     <select id="findOrderDetailById" resultType="com.ruralexpress.entity.Order">
-        SELECT o.<include refid="Base_Column_List" />,
-               u.username as user_username,
-               u.phone as user_phone,
-               c.name as courier_name,
-               c.phone as courier_phone
+        SELECT 
+        <include refid="Base_Column_List_With_Prefix">
+            <property name="prefix" value="o"/>
+        </include>,
+        u.nickname as user_username,
+        u.phone as user_phone,
+        u2.nickname as courier_name,
+        u2.phone as courier_phone
         FROM t_order o
         LEFT JOIN t_user u ON o.user_id = u.id
         LEFT JOIN t_courier c ON o.courier_id = c.id
+        LEFT JOIN t_user u2 ON c.user_id = u2.id
         WHERE o.id = #{id}
     </select>
     
     <!-- 查询符合条件的订单用于导出 -->
     <select id="findOrdersForExport" resultType="com.ruralexpress.entity.Order">
-        SELECT o.<include refid="Base_Column_List" />,
-               u.username as user_username,
-               c.name as courier_name
+        SELECT 
+        <include refid="Base_Column_List_With_Prefix">
+            <property name="prefix" value="o"/>
+        </include>,
+        u.nickname as user_username,
+        u2.nickname as courier_name
         FROM t_order o
         LEFT JOIN t_user u ON o.user_id = u.id
         LEFT JOIN t_courier c ON o.courier_id = c.id
+        LEFT JOIN t_user u2 ON c.user_id = u2.id
         <where>
             <if test="filter.status != null">
                 AND o.status = #{filter.status}

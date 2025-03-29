@@ -29,7 +29,8 @@
     "pages/admin/stations/index",
     "pages/admin/orders/index",
     "pages/admin/companies/index",
-    "pages/admin/system/index"
+    "pages/admin/system/index",
+    "pages/activity/detail"
   ],
   "window": {
     "navigationBarTextStyle": "black",

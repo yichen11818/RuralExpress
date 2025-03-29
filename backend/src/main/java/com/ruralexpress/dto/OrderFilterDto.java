@@ -24,6 +24,11 @@ public class OrderFilterDto {
     private Integer status;
     
     /**
+     * 包裹类型
+     */
+    private Integer packageType;
+    
+    /**
      * 经度
      */
     private Double longitude;

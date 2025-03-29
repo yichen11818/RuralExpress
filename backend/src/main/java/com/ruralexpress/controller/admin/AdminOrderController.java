@@ -16,7 +16,7 @@ import java.util.Map;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/admin/orders")
+@RequestMapping("/admin/orders")
 public class AdminOrderController {
 
     @Autowired
@@ -24,23 +24,21 @@ public class AdminOrderController {
 
     /**
      * 获取订单列表
-     * @param page 页码
-     * @param pageSize 每页数量
-     * @param keyword 搜索关键词
-     * @param status 状态
-     * @param type 订单类型
+     * @param requestBody 请求参数，包含页码、每页数量、关键词、状态、包裹类型等
      * @return 订单列表
      */
-    @GetMapping
-    public ApiResult<Map<String, Object>> getOrders(
-            @RequestParam(defaultValue = "1") Integer page,
-            @RequestParam(defaultValue = "10") Integer pageSize,
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) Integer status,
-            @RequestParam(required = false) Integer type) {
+    @PostMapping
+    public ApiResult<Map<String, Object>> getOrders(@RequestBody Map<String, Object> requestBody) {
         
-        log.info("管理员获取订单列表: page={}, pageSize={}, keyword={}, status={}, type={}", 
-                page, pageSize, keyword, status, type);
+        // 提取请求参数
+        Integer page = requestBody.containsKey("page") ? Integer.valueOf(requestBody.get("page").toString()) : 1;
+        Integer pageSize = requestBody.containsKey("size") ? Integer.valueOf(requestBody.get("size").toString()) : 10;
+        String keyword = (String) requestBody.get("keyword");
+        Integer status = requestBody.containsKey("status") ? Integer.valueOf(requestBody.get("status").toString()) : null;
+        Integer packageType = requestBody.containsKey("packageType") ? Integer.valueOf(requestBody.get("packageType").toString()) : null;
+        
+        log.info("管理员获取订单列表: page={}, pageSize={}, keyword={}, status={}, packageType={}", 
+                page, pageSize, keyword, status, packageType);
         
         try {
             OrderFilterDto filterDto = new OrderFilterDto();
@@ -48,7 +46,7 @@ public class AdminOrderController {
             filterDto.setSize(pageSize);
             filterDto.setKeyword(keyword);
             filterDto.setStatus(status);
-            filterDto.setType(type);
+            filterDto.setPackageType(packageType);
             
             Map<String, Object> result = orderService.findOrdersForAdmin(filterDto);
             return ApiResult.success(result);
@@ -126,16 +124,15 @@ public class AdminOrderController {
 
     /**
      * 导出订单数据
-     * @param startDate 开始日期
-     * @param endDate 结束日期
-     * @param status 状态
+     * @param requestBody 请求参数，包含开始日期、结束日期和状态
      * @return 导出结果
      */
-    @GetMapping("/export")
-    public ApiResult<String> exportOrders(
-            @RequestParam(required = false) String startDate,
-            @RequestParam(required = false) String endDate,
-            @RequestParam(required = false) Integer status) {
+    @PostMapping("/export")
+    public ApiResult<String> exportOrders(@RequestBody Map<String, Object> requestBody) {
+        
+        String startDate = (String) requestBody.get("startDate");
+        String endDate = (String) requestBody.get("endDate");
+        Integer status = requestBody.containsKey("status") ? Integer.valueOf(requestBody.get("status").toString()) : null;
         
         log.info("管理员导出订单数据: startDate={}, endDate={}, status={}", 
                 startDate, endDate, status);
@@ -143,9 +140,6 @@ public class AdminOrderController {
         try {
             // 导出订单数据逻辑
             String exportUrl = orderService.exportOrders(startDate, endDate, status);
-            
-            Map<String, String> result = new HashMap<>();
-            result.put("url", exportUrl);
             
             return ApiResult.success(exportUrl);
         } catch (Exception e) {

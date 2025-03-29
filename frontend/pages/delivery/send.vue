@@ -263,6 +263,12 @@ export default {
         paymentMethod: 'wxpay' // 默认微信支付
       },
       
+      // 从地址页面返回时可能包含的选中地址
+      selectedAddress: null,
+      
+      // 当前操作的地址类型(sender/receiver)
+      currentAddressType: 'sender',
+      
       // 包裹类型选项
       packageTypes: ['普通快递', '文件', '食品', '电子产品', '易碎品', '其他'],
       
@@ -306,6 +312,25 @@ export default {
         }
       });
     }
+    
+    // 注册全局地址选择事件监听
+    uni.$on('addressSelected', this.handleAddressSelected);
+  },
+  
+  onShow() {
+    // 检查是否有通过页面实例传递的selectedAddress
+    if (this.selectedAddress) {
+      console.log('发现页面实例传递的地址数据:', this.selectedAddress);
+      this.handleAddressData(this.currentAddressType, this.selectedAddress);
+      
+      // 使用后清除，避免重复使用
+      this.selectedAddress = null;
+    }
+  },
+  
+  onUnload() {
+    // 页面卸载时移除全局事件监听
+    uni.$off('addressSelected', this.handleAddressSelected);
   },
   
   methods: {
@@ -330,23 +355,45 @@ export default {
     
     // 显示地址簿
     showAddressBook(type) {
+      // 保存当前操作的地址类型
+      this.currentAddressType = type;
+      
       uni.navigateTo({
-        url: '/pages/user/address',
+        url: '/pages/user/address?type=select',
         success: (res) => {
+          console.log('跳转至地址页面');
           // 监听选择地址事件
           res.eventChannel.once('selectAddress', (data) => {
-            if (type === 'sender') {
-              this.formData.senderName = data.name;
-              this.formData.senderPhone = data.phone;
-              this.formData.senderAddress = data.address;
-            } else {
-              this.formData.receiverName = data.name;
-              this.formData.receiverPhone = data.phone;
-              this.formData.receiverAddress = data.address;
-            }
+            console.log('收到地址数据:', data);
+            this.handleAddressData(type, data);
           });
         }
       });
+    },
+    
+    // 处理接收到的地址数据
+    handleAddressSelected(data) {
+      console.log('接收到全局事件地址数据:', data);
+      this.handleAddressData(this.currentAddressType, data);
+    },
+    
+    // 处理地址数据，填充到表单
+    handleAddressData(type, data) {
+      if (!data) return;
+      
+      console.log(`处理${type}地址数据:`, data);
+      
+      if (type === 'sender') {
+        // 寄件人信息
+        this.formData.senderName = data.name;
+        this.formData.senderPhone = data.phone;
+        this.formData.senderAddress = data.address;
+      } else {
+        // 收件人信息
+        this.formData.receiverName = data.name;
+        this.formData.receiverPhone = data.phone;
+        this.formData.receiverAddress = data.address;
+      }
     },
     
     // 物品类型变更

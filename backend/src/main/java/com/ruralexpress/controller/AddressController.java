@@ -191,6 +191,23 @@ public class AddressController {
         // 转换Boolean类型
         addressDTO.setIsDefault(address.getIsDefault() != null && address.getIsDefault() == 1);
         
+        // 转换地址类型为字符串表示
+        if (address.getAddressType() != null) {
+            switch (address.getAddressType()) {
+                case 0:
+                    addressDTO.setAddressType("家");
+                    break;
+                case 1:
+                    addressDTO.setAddressType("公司");
+                    break;
+                case 2:
+                    addressDTO.setAddressType("学校");
+                    break;
+                default:
+                    addressDTO.setAddressType("其他");
+            }
+        }
+        
         return addressDTO;
     }
     
@@ -209,6 +226,25 @@ public class AddressController {
         
         // 转换Boolean类型
         address.setIsDefault(addressDTO.getIsDefault() != null && addressDTO.getIsDefault() ? 1 : 0);
+        
+        // 转换地址类型为数字表示
+        if (addressDTO.getAddressType() != null) {
+            switch (addressDTO.getAddressType()) {
+                case "家":
+                    address.setAddressType(0);
+                    break;
+                case "公司":
+                    address.setAddressType(1);
+                    break;
+                case "学校":
+                    address.setAddressType(2);
+                    break;
+                default:
+                    address.setAddressType(3); // 其他
+            }
+        } else {
+            address.setAddressType(3); // 默认为其他
+        }
         
         return address;
     }

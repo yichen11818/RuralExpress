@@ -24,7 +24,12 @@ const _sfc_main = {
   },
   onLoad() {
     this.getCurrentLocation();
-    this.loadCourierData();
+  },
+  // 添加onShow生命周期函数，确保每次页面显示时都能加载数据
+  onShow() {
+    if (this.courierList.length === 0 && !this.loading) {
+      this.loadCourierData();
+    }
   },
   methods: {
     // 获取当前位置
@@ -52,18 +57,29 @@ const _sfc_main = {
                 ];
                 this.loadCourierData();
               }
+            },
+            fail: () => {
+              this.loadCourierData();
             }
           });
         },
         fail: () => {
-          this.selectedRegion = ["江西省", "南昌市", "青山湖区"];
+          console.log("获取位置失败，使用赣州模拟位置");
+          this.latitude = 25.831829;
+          this.longitude = 114.935029;
+          this.selectedRegion = ["江西省", "赣州市", "章贡区"];
+          console.log("模拟位置信息：", {
+            latitude: this.latitude,
+            longitude: this.longitude,
+            region: this.selectedRegion
+          });
           this.loadCourierData();
         }
       });
     },
     // 加载快递员数据
     loadCourierData(append = false) {
-      if (this.loading && !this.refreshing)
+      if (this.loading && !this.refreshing && append)
         return;
       this.loading = true;
       api_search.searchCouriers("", this.page, 10).then((res) => {
@@ -162,6 +178,17 @@ const _sfc_main = {
       common_vendor.index.navigateTo({
         url: "/pages/search/search?type=courier"
       });
+    },
+    // 添加重新加载方法
+    retryLoad() {
+      this.page = 1;
+      common_vendor.index.showLoading({
+        title: "加载中"
+      });
+      this.loadCourierData();
+      setTimeout(() => {
+        common_vendor.index.hideLoading();
+      }, 1e3);
     }
   }
 };
@@ -204,7 +231,9 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     m: common_vendor.o(($event) => $options.setFilter("rating")),
     n: $data.currentFilter === "orders" ? 1 : "",
     o: common_vendor.o(($event) => $options.setFilter("orders")),
-    p: common_vendor.f($data.courierList, (item, index, i0) => {
+    p: $data.courierList.length === 0 && $data.loading
+  }, $data.courierList.length === 0 && $data.loading ? {} : {}, {
+    q: common_vendor.f($data.courierList, (item, index, i0) => {
       return {
         a: item.avatar || "/static/images/default-avatar.png",
         b: common_vendor.t(item.name),
@@ -226,24 +255,25 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         m: common_vendor.o(($event) => $options.navigateToDetail(item.id), index)
       };
     }),
-    q: common_vendor.p({
+    r: common_vendor.p({
       type: "star-filled",
       size: "14",
       color: "#ff9900"
     }),
-    r: common_vendor.p({
+    s: common_vendor.p({
       type: "location",
       size: "14",
       color: "#666"
     }),
-    s: $data.hasMore
+    t: $data.hasMore
   }, $data.hasMore ? {} : {}, {
-    t: common_vendor.o((...args) => $options.loadMore && $options.loadMore(...args)),
-    v: common_vendor.o((...args) => $options.refresh && $options.refresh(...args)),
-    w: $data.refreshing,
-    x: $data.courierList.length === 0 && !$data.loading
+    v: common_vendor.o((...args) => $options.loadMore && $options.loadMore(...args)),
+    w: common_vendor.o((...args) => $options.refresh && $options.refresh(...args)),
+    x: $data.refreshing,
+    y: $data.courierList.length === 0 && !$data.loading
   }, $data.courierList.length === 0 && !$data.loading ? {
-    y: common_assets._imports_0$2
+    z: common_assets._imports_0$2,
+    A: common_vendor.o((...args) => $options.retryLoad && $options.retryLoad(...args))
   } : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);

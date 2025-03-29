@@ -3,6 +3,32 @@
   background-color: #f8f8f8;
   min-height: 100vh;
 }
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 100rpx 50rpx;
+  background-color: #fff;
+  border-radius: 12rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+  min-height: 60vh;
+}
+.error-text {
+  font-size: 32rpx;
+  color: #666;
+  margin: 40rpx 0;
+  text-align: center;
+}
+.back-button {
+  background: linear-gradient(to right, #FF6B35, #FF9A5A);
+  color: #fff;
+  font-size: 30rpx;
+  padding: 20rpx 60rpx;
+  border-radius: 50rpx;
+  margin-top: 40rpx;
+  box-shadow: 0 4rpx 16rpx rgba(255, 107, 53, 0.2);
+}
 .notice-detail {
   background-color: #fff;
   border-radius: 12rpx;

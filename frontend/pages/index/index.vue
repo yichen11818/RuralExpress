@@ -64,7 +64,7 @@
           </view>
           <text class="nav-text">收件</text>
         </view>
-        <view class="nav-item" @click="navigateTo('/pages/order/track')">
+        <view class="nav-item" @click="navigateTo('/pages/order/tracking-list')">
           <view class="nav-icon-wrapper nav-track">
             <image src="/static/images/track.png" mode="aspectFit" class="nav-image"></image>
           </view>
@@ -88,6 +88,35 @@
             <text class="notice-text">{{ item.content }}</text>
           </swiper-item>
         </swiper>
+      </view>
+      
+      <!-- 物流追踪列表 -->
+      <view class="section-container" v-if="trackingList.length > 0">
+        <view class="section-header">
+          <view class="section-title-wrapper">
+            <view class="section-title-mark"></view>
+            <text class="section-title">物流追踪</text>
+          </view>
+          <view class="section-more" @click="navigateTo('/pages/order/tracking-list')">
+            <text>查看更多</text>
+            <uni-icons type="right" size="14" color="#999"></uni-icons>
+          </view>
+        </view>
+        <view class="tracking-list">
+          <view class="tracking-item" v-for="(item, index) in trackingList" :key="index" @click="navigateTo(`/pages/order/track?trackingNo=${item.trackingNo}`)">
+            <view class="tracking-company">
+              <image :src="item.logo || '/static/images/package.png'" mode="aspectFit" class="tracking-logo"></image>
+              <view class="tracking-info">
+                <text class="tracking-name">{{ item.company }}</text>
+                <text class="tracking-number">{{ item.trackingNo }}</text>
+              </view>
+            </view>
+            <view class="tracking-status">
+              <text class="status-text" :class="'status-' + item.status">{{ getTrackingStatusText(item.status) }}</text>
+              <uni-icons type="right" size="16" color="#C8C8C8"></uni-icons>
+            </view>
+          </view>
+        </view>
       </view>
       
       <!-- 推荐快递员 -->
@@ -219,6 +248,7 @@
 <script>
 import { isLoggedIn } from '@/api/auth';
 import { getHomeData, getNearestCouriers } from '@/api/home';
+import { getTrackingList } from '@/api/order';
 import uniIcons from '../../uni_modules/uni-icons/components/uni-icons/uni-icons.vue'
 
 export default {
@@ -234,6 +264,7 @@ export default {
       userLocation: null,
       locationFailed: false,
       recentOrders: [],
+      trackingList: [],
       packageTypes: ['小件', '中件', '大件'],
       selectedPackageType: 0,
       distance: 10,
@@ -505,6 +536,9 @@ export default {
         });
       }
       
+      // 加载物流追踪列表
+      this.loadTrackingList();
+      
       getHomeData()
         .then(res => {
           console.log('首页数据响应:', res);
@@ -581,6 +615,41 @@ export default {
         });
     },
     
+    // 加载物流追踪列表
+    loadTrackingList() {
+      getTrackingList()
+        .then(res => {
+          console.log('物流追踪列表响应:', res);
+          if (res && res.code === 200 && res.data) {
+            // 只显示最近的3个物流信息
+            this.trackingList = (res.data || []).slice(0, 3).map(item => {
+              return {
+                trackingNo: item.trackingNo,
+                company: item.companyName || '未知快递公司',
+                logo: item.companyLogo || '/static/images/package.png',
+                status: item.status || 0
+              };
+            });
+          }
+        })
+        .catch(err => {
+          console.error('获取物流追踪列表失败', err);
+        });
+    },
+    
+    // 获取物流状态文本
+    getTrackingStatusText(status) {
+      const statusMap = {
+        0: '等待揽收',
+        1: '已揽收',
+        2: '运输中',
+        3: '已到达',
+        4: '派送中',
+        5: '已签收'
+      };
+      return statusMap[status] || '未知状态';
+    },
+    
     // 清空数据
     clearData() {
       this.banners = [];
@@ -605,8 +674,9 @@ export default {
     
     // 处理公告点击
     handleNoticeClick(notice) {
-      if (notice.linkUrl) {
-        this.navigateTo(notice.linkUrl);
+      // 检查公告是否有ID，如果有则跳转到详情页
+      if (notice.id) {
+        this.navigateTo(`/pages/notice/detail?id=${notice.id}`);
       }
     },
     
@@ -1281,5 +1351,81 @@ export default {
   100% {
     opacity: 0.6;
   }
+}
+
+/* 物流追踪列表样式 */
+.tracking-list {
+  padding: 0;
+}
+
+.tracking-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 0;
+  border-bottom: 2rpx solid #f6f6f6;
+}
+
+.tracking-item:last-child {
+  border-bottom: none;
+}
+
+.tracking-company {
+  display: flex;
+  align-items: center;
+}
+
+.tracking-logo {
+  width: 60rpx;
+  height: 60rpx;
+  margin-right: 20rpx;
+  border-radius: 8rpx;
+}
+
+.tracking-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.tracking-name {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 500;
+}
+
+.tracking-number {
+  font-size: 24rpx;
+  color: #999;
+  margin-top: 6rpx;
+}
+
+.tracking-status {
+  display: flex;
+  align-items: center;
+}
+
+.status-text {
+  font-size: 26rpx;
+  margin-right: 10rpx;
+}
+
+.status-0 {
+  color: #999;
+}
+
+.status-1, .status-2 {
+  color: #3cc51f;
+}
+
+.status-3 {
+  color: #ff9900;
+}
+
+.status-4 {
+  color: #ff5500;
+}
+
+.status-5 {
+  color: #999;
 }
 </style> 

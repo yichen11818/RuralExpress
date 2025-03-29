@@ -50,9 +50,9 @@ public class Address {
     private String detailAddress;
     
     /**
-     * 地址类型（家、公司、学校等）
+     * 地址类型（0:家, 1:公司, 2:学校, 3:其他）
      */
-    private String addressType;
+    private Integer addressType;
     
     /**
      * 是否为默认地址（1:是，0:否）

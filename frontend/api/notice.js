@@ -13,11 +13,7 @@ const notice = {
    * @returns {Promise} - 请求Promise
    */
   list(params) {
-    return request({
-      url: `${baseUrl}/list`,
-      method: 'GET',
-      data: params
-    })
+    return request.get(`${baseUrl}/list`, params)
   },
 
   /**
@@ -26,11 +22,7 @@ const notice = {
    * @returns {Promise} - 请求Promise
    */
   detail(id) {
-    return request({
-      url: `${baseUrl}/detail`,
-      method: 'GET',
-      data: { id }
-    })
+    return request.get(`${baseUrl}/detail`, { id })
   },
 
   /**
@@ -41,11 +33,7 @@ const notice = {
    * @returns {Promise} - 请求Promise
    */
   related(params) {
-    return request({
-      url: `${baseUrl}/related`,
-      method: 'GET',
-      data: params
-    })
+    return request.get(`${baseUrl}/related`, params)
   },
 
   /**
@@ -54,11 +42,7 @@ const notice = {
    * @returns {Promise} - 请求Promise
    */
   latest(limit = 5) {
-    return request({
-      url: `${baseUrl}/latest`,
-      method: 'GET',
-      data: { limit }
-    })
+    return request.get(`${baseUrl}/latest`, { limit })
   }
 }
 

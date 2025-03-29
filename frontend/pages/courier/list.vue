@@ -31,6 +31,12 @@
     
     <!-- 快递员列表 -->
     <scroll-view scroll-y class="courier-scroll" @scrolltolower="loadMore" refresher-enabled @refresherrefresh="refresh" :refresher-triggered="refreshing">
+      <!-- 添加加载状态提示 -->
+      <view class="loading-state" v-if="courierList.length === 0 && loading">
+        <view class="loading-icon"></view>
+        <text class="loading-text">正在加载快递员数据...</text>
+      </view>
+      
       <view class="courier-item" v-for="(item, index) in courierList" :key="index" @click="navigateToDetail(item.id)">
         <image :src="item.avatar || '/static/images/default-avatar.png'" mode="aspectFill" class="courier-avatar"></image>
         <view class="courier-info">
@@ -73,6 +79,7 @@
       <image src="/static/images/empty.png" mode="aspectFit" class="empty-image"></image>
       <text class="empty-text">当前区域暂无快递员</text>
       <text class="empty-hint">可以尝试更换区域查找</text>
+      <button class="retry-btn" @click="retryLoad">重新加载</button>
     </view>
   </view>
 </template>
@@ -104,9 +111,14 @@ export default {
   onLoad() {
     // 获取当前位置
     this.getCurrentLocation();
-    
-    // 加载快递员数据
-    this.loadCourierData();
+  },
+  
+  // 添加onShow生命周期函数，确保每次页面显示时都能加载数据
+  onShow() {
+    // 当页面显示时，确保列表已加载
+    if (this.courierList.length === 0 && !this.loading) {
+      this.loadCourierData();
+    }
   },
   
   methods: {
@@ -139,12 +151,28 @@ export default {
                 // 加载附近快递员
                 this.loadCourierData();
               }
+            },
+            fail: () => {
+              // 即使地址解析失败也应该加载数据
+              this.loadCourierData();
             }
           });
         },
         fail: () => {
-          // 默认位置
-          this.selectedRegion = ['江西省', '南昌市', '青山湖区'];
+          // 位置获取失败，使用赣州的模拟位置
+          console.log('获取位置失败，使用赣州模拟位置');
+          // 赣州市中心经纬度（大致位置）
+          this.latitude = 25.831829;
+          this.longitude = 114.935029;
+          this.selectedRegion = ['江西省', '赣州市', '章贡区'];
+          
+          // 在控制台显示模拟位置信息，方便调试
+          console.log('模拟位置信息：', {
+            latitude: this.latitude,
+            longitude: this.longitude,
+            region: this.selectedRegion
+          });
+          
           this.loadCourierData();
         }
       });
@@ -152,7 +180,8 @@ export default {
     
     // 加载快递员数据
     loadCourierData(append = false) {
-      if (this.loading && !this.refreshing) return;
+      // 修改条件，确保首次加载能够正常进行
+      if (this.loading && !this.refreshing && append) return;
       this.loading = true;
       
       // 使用搜索接口获取列表
@@ -274,6 +303,18 @@ export default {
       uni.navigateTo({
         url: '/pages/search/search?type=courier'
       });
+    },
+    
+    // 添加重新加载方法
+    retryLoad() {
+      this.page = 1;
+      uni.showLoading({
+        title: '加载中'
+      });
+      this.loadCourierData();
+      setTimeout(() => {
+        uni.hideLoading();
+      }, 1000);
     }
   }
 };
@@ -505,5 +546,49 @@ export default {
 .empty-hint {
   font-size: 26rpx;
   color: #999;
+}
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 100rpx 0;
+}
+
+.loading-icon {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 50%;
+  border: 4rpx solid #3cc51f;
+  border-top-color: transparent;
+  animation: spin 0.75s linear infinite;
+  margin-bottom: 20rpx;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-text {
+  font-size: 26rpx;
+  color: #666;
+}
+
+.retry-btn {
+  min-width: 120rpx;
+  height: 60rpx;
+  line-height: 60rpx;
+  font-size: 26rpx;
+  background-color: #3cc51f;
+  color: #fff;
+  border-radius: 30rpx;
+  padding: 0 20rpx;
+  margin: 0;
 }
 </style> 
