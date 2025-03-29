@@ -1,5 +1,6 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
+require("../../utils/request.js");
 const api_order = require("../../api/order.js");
 const uniIcons = () => "../../uni_modules/uni-icons/components/uni-icons/uni-icons.js";
 const _sfc_main = {

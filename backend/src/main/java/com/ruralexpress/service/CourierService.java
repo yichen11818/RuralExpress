@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ruralexpress.entity.Courier;
 import com.ruralexpress.entity.CourierTag;
+import com.ruralexpress.dto.CourierDTO;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -130,4 +131,65 @@ public interface CourierService {
      * @return 快递员列表
      */
     List<Courier> getNearestCouriers(double latitude, double longitude, int limit);
+    
+    /**
+     * 根据关键词搜索快递员
+     * @param keyword 搜索关键词
+     * @param limit 限制返回数量
+     * @return 快递员列表
+     */
+    List<Map<String, Object>> searchCouriers(String keyword, Integer limit);
+    
+    /**
+     * 管理员功能：获取快递员列表，带分页
+     * @param page 当前页
+     * @param pageSize 每页大小
+     * @param keyword 搜索关键词（可以是手机号、姓名等）
+     * @param status 快递员状态
+     * @param rating 最低评分
+     * @return 包含快递员列表和统计数据的结果
+     */
+    Map<String, Object> getCouriersWithPagination(Integer page, Integer pageSize, String keyword, Integer status, Double rating);
+    
+    /**
+     * 管理员功能：根据ID查询快递员
+     * @param id 快递员ID
+     * @return 快递员信息
+     */
+    Courier findById(Long id);
+    
+    /**
+     * 管理员功能：创建快递员
+     * @param courier 快递员信息
+     * @return 创建后的快递员
+     */
+    Courier createCourier(Courier courier);
+    
+    /**
+     * 管理员功能：创建快递员(使用DTO)
+     * @param courierDTO 快递员DTO
+     * @return 创建后的快递员
+     */
+    Courier createCourierWithDTO(CourierDTO courierDTO);
+    
+    /**
+     * 管理员功能：更新快递员
+     * @param courier 快递员信息
+     * @return 更新后的快递员
+     */
+    Courier updateCourier(Courier courier);
+    
+    /**
+     * 管理员功能：更新快递员(使用DTO)
+     * @param courierDTO 快递员DTO
+     * @return 更新后的快递员
+     */
+    Courier updateCourierWithDTO(CourierDTO courierDTO);
+    
+    /**
+     * 管理员功能：删除快递员
+     * @param id 快递员ID
+     * @return 是否成功
+     */
+    boolean deleteCourier(Long id);
 } 

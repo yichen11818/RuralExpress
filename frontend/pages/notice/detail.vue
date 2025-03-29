@@ -56,28 +56,11 @@
 		methods: {
 			// 获取公告详情
 			getNoticeDetail() {
-				// 模拟数据，实际项目中应该从API获取
 				uni.showLoading({
 					title: '加载中'
 				});
 				
-				// 模拟网络请求延迟
-				setTimeout(() => {
-					// 模拟数据
-					this.noticeData = {
-						id: this.id,
-						title: '重要通知：乡递通服务升级公告',
-						content: '<div style="line-height: 1.8;">亲爱的乡递通用户：<br/><br/>为了提供更好的服务体验，我们将于2023年12月15日凌晨2:00-6:00进行系统升级维护。在此期间，您可能无法正常使用乡递通的部分功能。<br/><br/>此次升级将带来以下改进：<br/><ol><li>优化寄件流程，提高下单效率</li><li>增强物流追踪功能，物流信息更加透明</li><li>改进用户界面，带来更直观的操作体验</li><li>提升系统安全性，更好地保护用户信息</li></ol><br/>感谢您对乡递通的支持与理解！如有疑问，请联系客服热线：400-123-4567。<br/><br/>乡递通团队<br/>2023年12月10日</div>',
-						createTime: '2023-12-10 10:00:00',
-						source: '乡递通官方',
-						viewCount: 1243
-					};
-					
-					uni.hideLoading();
-				}, 500);
-				
 				// 实际项目中的API调用
-				/*
 				uni.request({
 					url: this.$api.notice.detail,
 					method: 'GET',
@@ -104,34 +87,11 @@
 						uni.hideLoading();
 					}
 				});
-				*/
 			},
 			
 			// 获取相关公告
 			getRelatedNotices() {
-				// 模拟数据
-				setTimeout(() => {
-					this.relatedNotices = [
-						{
-							id: '2',
-							title: '乡递通春节期间配送调整通知',
-							createTime: '2024-01-15 14:30:00'
-						},
-						{
-							id: '3',
-							title: '乡递通App新功能上线公告',
-							createTime: '2023-11-20 09:15:00'
-						},
-						{
-							id: '4',
-							title: '乡递通配送范围扩展通知',
-							createTime: '2023-10-05 16:45:00'
-						}
-					];
-				}, 800);
-				
 				// 实际项目中的API调用
-				/*
 				uni.request({
 					url: this.$api.notice.related,
 					method: 'GET',
@@ -145,7 +105,6 @@
 						}
 					}
 				});
-				*/
 			},
 			
 			// 格式化日期

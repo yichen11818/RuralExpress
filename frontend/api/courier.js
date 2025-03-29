@@ -9,8 +9,8 @@ import request from '@/utils/request';
  * @returns {Promise} 申请结果
  */
 export function applyCourier(data) {
-  return request.post('/courier/apply', data);
-}
+  return request.post('/api/courier/apply', data);
+}   
 
 /**
  * 获取快递员信息
@@ -18,7 +18,7 @@ export function applyCourier(data) {
  * @returns {Promise} 快递员信息
  */
 export function getCourierInfo(id) {
-  return request.get(`/courier/${id}`);
+  return request.get(`/api/courier/${id}`);
 }
 
 /**
@@ -27,7 +27,7 @@ export function getCourierInfo(id) {
  * @returns {Promise} 快递员信息
  */
 export function getCourierByUserId(userId) {
-  return request.get(`/courier/user/${userId}`);
+  return request.get(`/api/courier/user/${userId}`);
 }
 
 /**
@@ -37,7 +37,7 @@ export function getCourierByUserId(userId) {
  * @returns {Promise} 更新结果
  */
 export function updateCourier(id, data) {
-  return request.put(`/courier/${id}`, data);
+  return request.put(`/api/courier/${id}`, data);
 }
 
 /**
@@ -47,7 +47,7 @@ export function updateCourier(id, data) {
  * @returns {Promise} 更新结果
  */
 export function updateServiceStatus(id, status) {
-  return request.put(`/courier/${id}/status?status=${status}`);
+  return request.put(`/api/courier/${id}/status?status=${status}`);
 }
 
 /**
@@ -58,7 +58,16 @@ export function updateServiceStatus(id, status) {
  * @returns {Promise} 快递员列表
  */
 export function getNearby(longitude, latitude, distance = 5) {
-  return request.get(`/courier/nearby?longitude=${longitude}&latitude=${latitude}&distance=${distance}`);
+  return request.get(`/api/courier/nearby?longitude=${longitude}&latitude=${latitude}&distance=${distance}`);
+}
+
+/**
+ * 获取快递员列表
+ * @param {Object} params 查询参数
+ * @returns {Promise} 快递员列表
+ */
+export function list(params) {
+  return request.get('/api/courier/list', { params });
 }
 
 /**
@@ -81,7 +90,7 @@ export function formatRating(score, count = 0) {
  * @returns {Promise} 标签列表
  */
 export function getCourierTags(courierId) {
-  return request.get(`/courier/tags?courierId=${courierId}`);
+  return request.get(`/api/courier/tags?courierId=${courierId}`);
 }
 
 /**

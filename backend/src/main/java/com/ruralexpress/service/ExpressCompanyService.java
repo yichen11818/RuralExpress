@@ -43,6 +43,16 @@ public interface ExpressCompanyService {
      * @return 快递公司列表
      */
     IPage<ExpressCompany> getCompanyList(Page<ExpressCompany> page);
+    
+    /**
+     * 分页查询快递公司列表(带搜索条件)
+     *
+     * @param page 分页参数
+     * @param keyword 搜索关键词
+     * @param status 状态(0-正常,1-禁用)
+     * @return 快递公司列表
+     */
+    IPage<ExpressCompany> getCompanyList(Page<ExpressCompany> page, String keyword, Integer status);
 
     /**
      * 更新快递公司信息

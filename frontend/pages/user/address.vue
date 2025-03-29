@@ -133,38 +133,10 @@ export default {
       this.isLoading = true;
       
       try {
-        // 实际项目中应该调用 API 获取数据
-        // const res = await getAddressList();
-        // this.addressList = res.data;
-        
-        // 模拟数据，实际项目中应该替换为 API 调用
-        setTimeout(() => {
-          this.addressList = [
-            {
-              id: '1',
-              name: '张三',
-              phone: '13800138000',
-              province: '广东省',
-              city: '深圳市',
-              district: '南山区',
-              detailAddress: '科技园路1号',
-              addressType: '公司',
-              isDefault: true
-            },
-            {
-              id: '2',
-              name: '李四',
-              phone: '13900139000',
-              province: '广东省',
-              city: '深圳市',
-              district: '福田区',
-              detailAddress: '中心城区1号',
-              addressType: '家',
-              isDefault: false
-            }
-          ];
-          this.isLoading = false;
-        }, 500);
+        // 调用API获取数据
+        const res = await getAddressList();
+        this.addressList = res.data;
+        this.isLoading = false;
       } catch (error) {
         console.error('加载地址列表失败', error);
         uni.showToast({

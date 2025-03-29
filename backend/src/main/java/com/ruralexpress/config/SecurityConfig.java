@@ -9,6 +9,7 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
@@ -16,7 +17,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  */
 @Configuration
 @EnableWebSecurity
-public class SecurityConfig extends WebSecurityConfigurerAdapter {
+public class SecurityConfig {
     
     @Autowired
     private JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -29,8 +30,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         return new BCryptPasswordEncoder();
     }
     
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
+    /**
+     * 安全过滤链配置
+     */
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             // 禁用CSRF，因为我们使用JWT，不需要防止CSRF攻击
             .csrf().disable()
@@ -49,6 +53,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .antMatchers("/actuator/**").permitAll()
             // 允许公开接口 - 确保完整的路径匹配
             .antMatchers("/auth/**", "/auth/login", "/user/register", "/home/**").permitAll()
+            // 允许测试接口访问
+            .antMatchers("/test/**").permitAll()
+            // 所有管理员接口需要认证和管理员角色
+            .antMatchers("/api/admin/**").authenticated()
             // 其他请求需要认证
             .anyRequest().authenticated();
         
@@ -57,5 +65,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         
         // 禁用缓存
         http.headers().cacheControl();
+
+        System.out.println("SecurityConfig配置已加载");
+        
+        return http.build();
     }
 } 

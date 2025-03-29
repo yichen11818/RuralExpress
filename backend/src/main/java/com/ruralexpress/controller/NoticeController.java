@@ -14,7 +14,7 @@ import java.util.Map;
  * 公告控制器
  */
 @RestController
-@RequestMapping("/api/notice")
+@RequestMapping("/notice")
 public class NoticeController {
 
     @Autowired

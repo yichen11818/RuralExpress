@@ -8,6 +8,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -15,8 +16,9 @@ import java.util.stream.Collectors;
 /**
  * 地址管理控制器
  */
+@Slf4j
 @RestController
-@RequestMapping("/api/addresses")
+@RequestMapping("/addresses")
 public class AddressController {
 
     @Autowired

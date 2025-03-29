@@ -144,4 +144,120 @@
         WHERE status = 0
     </select>
     
+    <!-- 管理员查询订单列表 -->
+    <select id="findOrdersForAdmin" resultType="com.ruralexpress.entity.Order">
+        SELECT o.<include refid="Base_Column_List" />,
+               u.username as user_username,
+               c.name as courier_name
+        FROM t_order o
+        LEFT JOIN t_user u ON o.user_id = u.id
+        LEFT JOIN t_courier c ON o.courier_id = c.id
+        <where>
+            <if test="filter.status != null">
+                AND o.status = #{filter.status}
+            </if>
+            <if test="filter.packageType != null">
+                AND o.package_type = #{filter.packageType}
+            </if>
+            <if test="filter.startDate != null and filter.startDate != ''">
+                AND o.created_at &gt;= #{filter.startDate}
+            </if>
+            <if test="filter.endDate != null and filter.endDate != ''">
+                AND o.created_at &lt;= #{filter.endDate}
+            </if>
+            <if test="filter.keyword != null and filter.keyword != ''">
+                AND (
+                    o.order_no LIKE CONCAT('%', #{filter.keyword}, '%')
+                    OR o.sender_name LIKE CONCAT('%', #{filter.keyword}, '%')
+                    OR o.sender_phone LIKE CONCAT('%', #{filter.keyword}, '%')
+                    OR o.receiver_name LIKE CONCAT('%', #{filter.keyword}, '%')
+                    OR o.receiver_phone LIKE CONCAT('%', #{filter.keyword}, '%')
+                    OR u.username LIKE CONCAT('%', #{filter.keyword}, '%')
+                    OR c.name LIKE CONCAT('%', #{filter.keyword}, '%')
+                )
+            </if>
+        </where>
+        ORDER BY 
+        <choose>
+            <when test="filter.sortField != null and filter.sortField != ''">
+                o.${filter.sortField} 
+                <if test="filter.sortDirection != null and filter.sortDirection != ''">
+                    ${filter.sortDirection}
+                </if>
+            </when>
+            <otherwise>
+                o.created_at DESC
+            </otherwise>
+        </choose>
+        LIMIT #{filter.offset}, #{filter.size}
+    </select>
+    
+    <!-- 统计管理员查询订单数量 -->
+    <select id="countOrdersForAdmin" resultType="int">
+        SELECT COUNT(*)
+        FROM t_order o
+        LEFT JOIN t_user u ON o.user_id = u.id
+        LEFT JOIN t_courier c ON o.courier_id = c.id
+        <where>
+            <if test="filter.status != null">
+                AND o.status = #{filter.status}
+            </if>
+            <if test="filter.packageType != null">
+                AND o.package_type = #{filter.packageType}
+            </if>
+            <if test="filter.startDate != null and filter.startDate != ''">
+                AND o.created_at &gt;= #{filter.startDate}
+            </if>
+            <if test="filter.endDate != null and filter.endDate != ''">
+                AND o.created_at &lt;= #{filter.endDate}
+            </if>
+            <if test="filter.keyword != null and filter.keyword != ''">
+                AND (
+                    o.order_no LIKE CONCAT('%', #{filter.keyword}, '%')
+                    OR o.sender_name LIKE CONCAT('%', #{filter.keyword}, '%')
+                    OR o.sender_phone LIKE CONCAT('%', #{filter.keyword}, '%')
+                    OR o.receiver_name LIKE CONCAT('%', #{filter.keyword}, '%')
+                    OR o.receiver_phone LIKE CONCAT('%', #{filter.keyword}, '%')
+                    OR u.username LIKE CONCAT('%', #{filter.keyword}, '%')
+                    OR c.name LIKE CONCAT('%', #{filter.keyword}, '%')
+                )
+            </if>
+        </where>
+    </select>
+    
+    <!-- 查询订单详情 -->
+    <select id="findOrderDetailById" resultType="com.ruralexpress.entity.Order">
+        SELECT o.<include refid="Base_Column_List" />,
+               u.username as user_username,
+               u.phone as user_phone,
+               c.name as courier_name,
+               c.phone as courier_phone
+        FROM t_order o
+        LEFT JOIN t_user u ON o.user_id = u.id
+        LEFT JOIN t_courier c ON o.courier_id = c.id
+        WHERE o.id = #{id}
+    </select>
+    
+    <!-- 查询符合条件的订单用于导出 -->
+    <select id="findOrdersForExport" resultType="com.ruralexpress.entity.Order">
+        SELECT o.<include refid="Base_Column_List" />,
+               u.username as user_username,
+               c.name as courier_name
+        FROM t_order o
+        LEFT JOIN t_user u ON o.user_id = u.id
+        LEFT JOIN t_courier c ON o.courier_id = c.id
+        <where>
+            <if test="filter.status != null">
+                AND o.status = #{filter.status}
+            </if>
+            <if test="filter.startDate != null and filter.startDate != ''">
+                AND o.created_at &gt;= #{filter.startDate}
+            </if>
+            <if test="filter.endDate != null and filter.endDate != ''">
+                AND o.created_at &lt;= #{filter.endDate}
+            </if>
+        </where>
+        ORDER BY o.created_at DESC
+    </select>
+    
 </mapper> 

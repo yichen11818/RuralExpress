@@ -79,6 +79,9 @@
 
 <script>
 import uniIcons from '@/uni_modules/uni-icons/components/uni-icons/uni-icons.vue'
+import config from '@/utils/config' // 直接导入配置文件
+import api from '@/api' // 导入API模块
+import { searchCouriers } from '@/api/search' // 导入搜索快递员API
 
 export default {
   components: {
@@ -92,63 +95,9 @@ export default {
       page: 1,
       selectedRegion: null,
       currentFilter: 'nearest',
-      courierList: [
-        {
-          id: 1,
-          name: '张师傅',
-          avatar: '/static/images/courier1.jpg',
-          rating: 4.9,
-          completedOrders: 326,
-          serviceTime: 8,
-          serviceArea: '江西省 南昌市 青山湖区',
-          tags: ['准时送达', '服务好', '有礼貌'],
-          distance: 0.8
-        },
-        {
-          id: 2,
-          name: '李师傅',
-          avatar: '/static/images/courier2.jpg',
-          rating: 4.8,
-          completedOrders: 215,
-          serviceTime: 6,
-          serviceArea: '江西省 南昌市 青山湖区',
-          tags: ['送货快', '态度好'],
-          distance: 1.2
-        },
-        {
-          id: 3,
-          name: '王师傅',
-          avatar: '/static/images/courier3.jpg',
-          rating: 4.7,
-          completedOrders: 198,
-          serviceTime: 5,
-          serviceArea: '江西省 南昌市 青山湖区',
-          tags: ['认真负责', '服务周到'],
-          distance: 1.5
-        },
-        {
-          id: 4,
-          name: '赵师傅',
-          avatar: '/static/images/default-avatar.png',
-          rating: 4.6,
-          completedOrders: 156,
-          serviceTime: 4,
-          serviceArea: '江西省 南昌市 青山湖区',
-          tags: ['准时送达', '沟通顺畅'],
-          distance: 2.1
-        },
-        {
-          id: 5,
-          name: '钱师傅',
-          avatar: '/static/images/default-avatar.png',
-          rating: 4.5,
-          completedOrders: 132,
-          serviceTime: 3,
-          serviceArea: '江西省 南昌市 青山湖区',
-          tags: ['服务周到', '耐心'],
-          distance: 2.8
-        }
-      ]
+      courierList: [],
+      latitude: null,
+      longitude: null
     };
   },
   
@@ -156,24 +105,118 @@ export default {
     // 获取当前位置
     this.getCurrentLocation();
     
-    // 模拟加载数据
-    setTimeout(() => {
-      this.loading = false;
-    }, 500);
+    // 加载快递员数据
+    this.loadCourierData();
   },
   
   methods: {
     // 获取当前位置
     getCurrentLocation() {
       // 这里可以调用小程序的定位API
-      // 示例数据
-      this.selectedRegion = ['江西省', '南昌市', '青山湖区'];
+      uni.getLocation({
+        type: 'gcj02',
+        success: (res) => {
+          // 保存经纬度信息
+          this.latitude = res.latitude;
+          this.longitude = res.longitude;
+          
+          // 根据经纬度获取地理位置信息
+          uni.request({
+            url: 'https://apis.map.qq.com/ws/geocoder/v1/',
+            data: {
+              location: `${res.latitude},${res.longitude}`,
+              key: config.mapKey // 使用导入的config对象
+            },
+            success: (locationRes) => {
+              if (locationRes.data.status === 0) {
+                const result = locationRes.data.result;
+                const addressComponent = result.address_component;
+                this.selectedRegion = [
+                  addressComponent.province,
+                  addressComponent.city,
+                  addressComponent.district
+                ];
+                // 加载附近快递员
+                this.loadCourierData();
+              }
+            }
+          });
+        },
+        fail: () => {
+          // 默认位置
+          this.selectedRegion = ['江西省', '南昌市', '青山湖区'];
+          this.loadCourierData();
+        }
+      });
+    },
+    
+    // 加载快递员数据
+    loadCourierData(append = false) {
+      if (this.loading && !this.refreshing) return;
+      this.loading = true;
+      
+      // 使用搜索接口获取列表
+      searchCouriers('', this.page, 10)
+        .then(res => {
+          if (res.code === 200) {
+            const data = res.data;
+            
+            // 处理列表数据
+            let list = data.list || [];
+            
+            // 应用筛选条件
+            if (this.selectedRegion && this.selectedRegion[0]) {
+              list = list.filter(item => {
+                return (!this.selectedRegion[0] || item.province === this.selectedRegion[0]) &&
+                       (!this.selectedRegion[1] || item.city === this.selectedRegion[1]) &&
+                       (!this.selectedRegion[2] || item.district === this.selectedRegion[2]);
+              });
+            }
+            
+            // 排序处理
+            if (this.currentFilter === 'rating') {
+              list.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+            } else if (this.currentFilter === 'orders') {
+              list.sort((a, b) => (b.completedOrders || 0) - (a.completedOrders || 0));
+            }
+            
+            // 更新数据
+            if (append) {
+              this.courierList = [...this.courierList, ...list];
+            } else {
+              this.courierList = list;
+            }
+            
+            this.hasMore = data.page < data.totalPage;
+          } else {
+            uni.showToast({
+              title: res.message || '获取快递员列表失败',
+              icon: 'none'
+            });
+          }
+        })
+        .catch(() => {
+          uni.showToast({
+            title: '网络错误，请稍后重试',
+            icon: 'none'
+          });
+        })
+        .finally(() => {
+          this.loading = false;
+          if (this.refreshing) {
+            this.refreshing = false;
+            uni.stopPullDownRefresh();
+          }
+        });
     },
     
     // 地区选择变化
     regionChange(e) {
       this.selectedRegion = e.detail.value;
-      this.refreshCourierList();
+      this.page = 1;
+      this.courierList = [];
+      this.hasMore = true;
+      this.loadCourierData();
     },
     
     // 设置筛选条件
@@ -182,84 +225,27 @@ export default {
       
       this.currentFilter = filter;
       this.page = 1;
-      this.refreshCourierList();
+      this.courierList = [];
+      this.hasMore = true;
+      this.loadCourierData();
     },
     
     // 刷新列表
     refresh() {
       this.refreshing = true;
       this.page = 1;
-      
-      // 模拟网络请求
-      setTimeout(() => {
-        this.refreshCourierList();
-        this.refreshing = false;
-        uni.showToast({
-          title: '刷新成功',
-          icon: 'success'
-        });
-      }, 1000);
+      this.loadCourierData();
     },
     
     // 加载更多
     loadMore() {
       if (!this.hasMore || this.loading) return;
       
-      this.loading = true;
       this.page++;
-      
-      // 模拟网络请求
-      setTimeout(() => {
-        // 示例：当页数超过3时没有更多数据
-        if (this.page > 3) {
-          this.hasMore = false;
-          this.loading = false;
-          return;
-        }
-        
-        // 模拟加载更多数据
-        const newCouriers = [
-          {
-            id: 5 + this.page,
-            name: '新增师傅' + this.page,
-            avatar: '/static/images/default-avatar.png',
-            rating: 4.3,
-            completedOrders: 100,
-            serviceTime: 2,
-            serviceArea: '江西省 南昌市 青山湖区',
-            tags: ['服务好'],
-            distance: 3.0 + this.page
-          }
-        ];
-        
-        this.courierList = [...this.courierList, ...newCouriers];
-        this.loading = false;
-      }, 1000);
+      this.loadCourierData(true);
     },
     
-    // 刷新快递员列表
-    refreshCourierList() {
-      // 根据筛选条件对列表进行排序
-      if (this.currentFilter === 'nearest') {
-        this.courierList.sort((a, b) => a.distance - b.distance);
-      } else if (this.currentFilter === 'rating') {
-        this.courierList.sort((a, b) => b.rating - a.rating);
-      } else if (this.currentFilter === 'orders') {
-        this.courierList.sort((a, b) => b.completedOrders - a.completedOrders);
-      }
-      
-      // 实际应用中，这里应该调用API获取数据
-      this.hasMore = true;
-    },
-    
-    // 显示搜索页面
-    showSearch() {
-      uni.navigateTo({
-        url: '/pages/search/search?type=courier'
-      });
-    },
-    
-    // 导航到快递员详情页
+    // 跳转到快递员详情页
     navigateToDetail(id) {
       uni.navigateTo({
         url: `/pages/courier/detail?id=${id}`
@@ -271,33 +257,23 @@ export default {
       const id = e.currentTarget.dataset.id;
       const courier = this.courierList.find(item => item.id === id);
       
-      // 模拟联系快递员
-      uni.showActionSheet({
-        itemList: ['拨打电话', '发送消息'],
-        success: (res) => {
-          if (res.tapIndex === 0) {
-            // 拨打电话
-            uni.makePhoneCall({
-              phoneNumber: '10086', // 这里应该是快递员的电话
-              fail: () => {
-                uni.showToast({
-                  title: '拨打电话失败',
-                  icon: 'none'
-                });
-              }
-            });
-          } else if (res.tapIndex === 1) {
-            // 发送消息
-            uni.showToast({
-              title: '消息功能开发中',
-              icon: 'none'
-            });
-          }
-        }
+      if (courier && courier.phone) {
+        uni.makePhoneCall({
+          phoneNumber: courier.phone
+        });
+      } else {
+        uni.showToast({
+          title: '暂无联系方式',
+          icon: 'none'
+        });
+      }
+    },
+    
+    // 显示搜索页面
+    showSearch() {
+      uni.navigateTo({
+        url: '/pages/search/search?type=courier'
       });
-      
-      // 阻止事件冒泡
-      return false;
     }
   }
 };

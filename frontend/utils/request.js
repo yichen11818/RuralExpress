@@ -4,7 +4,17 @@
 import { isLoggedIn } from './auth.js';
 
 // API基础URL
-const BASE_URL = 'http://localhost:8080/api';
+const BASE_URL = 'http://localhost:8080';
+
+// 记录环境信息和API基础URL
+console.log('[请求工具] API基础URL:', BASE_URL);
+console.log('[请求工具] 当前环境:', process.env.NODE_ENV || 'development');
+console.log('[请求工具] 平台信息:', uni.getSystemInfoSync());
+
+// 添加日志函数
+const logRequest = (message, data) => {
+  console.log(`[请求日志] ${message}`, data);
+};
 
 // 不需要认证的API路径
 const NO_AUTH_PATHS = [
@@ -14,6 +24,9 @@ const NO_AUTH_PATHS = [
 
 // 请求拦截器
 const requestInterceptor = (config) => {
+  // 记录请求开始
+  logRequest('发起请求', { url: config.url, method: config.method });
+  
   // 提取请求路径
   const path = config.url.replace(BASE_URL, '');
   
@@ -31,11 +44,17 @@ const requestInterceptor = (config) => {
     };
   }
   
+  // 记录完整请求配置
+  logRequest('请求配置', config);
+  
   return config;
 };
 
 // 响应拦截器
 const responseInterceptor = (response) => {
+  // 记录原始响应
+  logRequest('收到响应', response);
+  
   // 请求成功
   if (response.statusCode === 200) {
     const responseData = response.data;
@@ -47,9 +66,11 @@ const responseInterceptor = (response) => {
       // 如果有code字段，按格式1处理
       if (responseData.hasOwnProperty('code')) {
         if (responseData.code === 200) {
+          logRequest('请求成功', responseData);
           return responseData;
         } else if (responseData.code === 401) {
           // 未授权，跳转到登录页
+          logRequest('授权失败', responseData);
           uni.showToast({
             title: '请先登录',
             icon: 'none'
@@ -60,6 +81,7 @@ const responseInterceptor = (response) => {
           return Promise.reject(responseData);
         } else {
           // 其他错误
+          logRequest('业务错误', responseData);
           uni.showToast({
             title: responseData.message || '请求失败',
             icon: 'none'
@@ -68,13 +90,18 @@ const responseInterceptor = (response) => {
         }
       } else {
         // 如果没有code字段，直接返回数据
-        return { data: responseData, code: 200 };
+        const result = { data: responseData, code: 200 };
+        logRequest('请求成功(直接数据)', result);
+        return result;
       }
     } else {
-      return { data: responseData, code: 200 };
+      const result = { data: responseData, code: 200 };
+      logRequest('请求成功(直接数据)', result);
+      return result;
     }
   } else {
     // 其他HTTP错误
+    logRequest('HTTP错误', { statusCode: response.statusCode, data: response.data });
     uni.showToast({
       title: '网络错误: ' + response.statusCode,
       icon: 'none'
@@ -101,6 +128,7 @@ const request = (options) => {
   
   // 发送请求
   return new Promise((resolve, reject) => {
+    logRequest('执行请求', finalOptions);
     uni.request({
       ...finalOptions,
       success: (response) => {
@@ -108,10 +136,18 @@ const request = (options) => {
           const result = responseInterceptor(response);
           resolve(result);
         } catch (error) {
+          logRequest('响应处理异常', error);
           reject(error);
         }
       },
       fail: (error) => {
+        logRequest('请求失败', error);
+        // 记录详细的连接错误信息
+        console.error('[网络请求详细错误]', {
+          url: finalOptions.url,
+          method: finalOptions.method,
+          error: error
+        });
         uni.showToast({
           title: '网络连接失败',
           icon: 'none'
@@ -124,6 +160,61 @@ const request = (options) => {
 
 // 导出请求方法
 export default {
+  // 获取基础URL
+  getBaseUrl: () => {
+    return BASE_URL;
+  },
+  
+  // 测试网络连接状态
+  testConnection: () => {
+    console.log('[请求工具] 开始测试服务器连接...');
+    return new Promise((resolve) => {
+      uni.request({
+        url: `${BASE_URL}/api/health`,
+        method: 'GET',
+        timeout: 5000,
+        success: (res) => {
+          console.log('[请求工具] 服务器连接测试响应:', res);
+          // 不仅检查请求成功，还要判断状态码是否为200
+          if (res.statusCode === 200) {
+            console.log('[请求工具] 服务器连接测试成功 (200 OK)');
+            resolve({
+              success: true,
+              statusCode: res.statusCode,
+              data: res.data
+            });
+          } else {
+            console.warn('[请求工具] 服务器连接返回非200状态码:', res.statusCode);
+            // 特殊处理403状态码，因为可能是权限问题而不是连接问题
+            if (res.statusCode === 403) {
+              console.log('[请求工具] 服务器连接有效，但返回403禁止访问，可能需要认证');
+              resolve({
+                success: true, // 仍视为连接成功，因为服务器正在响应
+                statusCode: res.statusCode,
+                data: res.data,
+                warning: '服务器返回403禁止访问，健康检查端点可能需要认证'
+              });
+            } else {
+              resolve({
+                success: false,
+                statusCode: res.statusCode,
+                data: res.data,
+                error: `服务器返回错误状态码: ${res.statusCode}`
+              });
+            }
+          }
+        },
+        fail: (error) => {
+          console.error('[请求工具] 服务器连接测试失败:', error);
+          resolve({
+            success: false,
+            error: error
+          });
+        }
+      });
+    });
+  },
+  
   get: (url, params = {}) => {
     // 对于GET请求，params可以是普通对象或{params}格式
     const queryParams = params.params || params;

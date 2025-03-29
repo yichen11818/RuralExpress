@@ -15,6 +15,9 @@ const _sfc_main = {
       return;
     }
     this.userInfo = api_auth.getUserInfo() || {};
+    console.log("当前用户信息:", this.userInfo);
+    console.log("用户类型 userType:", this.userInfo.userType);
+    console.log("管理员入口条件检查:", this.userInfo.userType === 2);
   },
   methods: {
     // 格式化手机号，中间4位显示*
@@ -25,6 +28,7 @@ const _sfc_main = {
     },
     // 页面导航
     navigateTo(url) {
+      console.log("导航到:", url);
       common_vendor.index.navigateTo({
         url
       });
@@ -60,86 +64,85 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   }, $data.userInfo.verified ? {} : {}, {
     e: $data.userInfo.userType === 1
   }, $data.userInfo.userType === 1 ? {} : {}, {
-    f: common_vendor.p({
+    f: $data.userInfo.userType === 2
+  }, $data.userInfo.userType === 2 ? {} : {}, {
+    g: common_vendor.p({
       type: "gear",
       size: "24",
       color: "#333"
     }),
-    g: common_vendor.o(($event) => $options.navigateTo("/pages/user/settings")),
-    h: common_vendor.p({
-      type: "person",
+    h: common_vendor.o(($event) => $options.navigateTo("/pages/user/settings")),
+    i: $data.userInfo.userType === 2
+  }, $data.userInfo.userType === 2 ? {
+    j: common_vendor.p({
+      type: "person-filled",
       size: "20",
-      color: "#3cc51f"
+      color: "#ff7043"
     }),
-    i: common_vendor.p({
-      type: "right",
-      size: "16",
-      color: "#ccc"
-    }),
-    j: common_vendor.o(($event) => $options.navigateTo("/pages/user/profile")),
     k: common_vendor.p({
-      type: "location",
-      size: "20",
-      color: "#3cc51f"
-    }),
-    l: common_vendor.p({
       type: "right",
       size: "16",
       color: "#ccc"
     }),
-    m: common_vendor.o(($event) => $options.navigateTo("/pages/user/address")),
-    n: !$data.userInfo.verified
-  }, !$data.userInfo.verified ? {
-    o: common_vendor.p({
-      type: "paperclip",
-      size: "20",
-      color: "#3cc51f"
-    }),
-    p: common_vendor.p({
-      type: "right",
-      size: "16",
-      color: "#ccc"
-    }),
-    q: common_vendor.o(($event) => $options.navigateTo("/pages/user/verify"))
-  } : {}, {
-    r: $data.userInfo.userType !== 1
-  }, $data.userInfo.userType !== 1 ? {
-    s: common_vendor.p({
+    l: common_vendor.o(($event) => $options.navigateTo("/pages/admin/users/index")),
+    m: common_vendor.p({
       type: "staff",
       size: "20",
-      color: "#3cc51f"
+      color: "#ff7043"
+    }),
+    n: common_vendor.p({
+      type: "right",
+      size: "16",
+      color: "#ccc"
+    }),
+    o: common_vendor.o(($event) => $options.navigateTo("/pages/admin/couriers/index")),
+    p: common_vendor.p({
+      type: "shop",
+      size: "20",
+      color: "#ff7043"
+    }),
+    q: common_vendor.p({
+      type: "right",
+      size: "16",
+      color: "#ccc"
+    }),
+    r: common_vendor.o(($event) => $options.navigateTo("/pages/admin/stations/index")),
+    s: common_vendor.p({
+      type: "list",
+      size: "20",
+      color: "#ff7043"
     }),
     t: common_vendor.p({
       type: "right",
       size: "16",
       color: "#ccc"
     }),
-    v: common_vendor.o(($event) => $options.navigateTo("/pages/courier/apply"))
-  } : {}, {
+    v: common_vendor.o(($event) => $options.navigateTo("/pages/admin/orders/index")),
     w: common_vendor.p({
-      type: "list",
+      type: "cloud",
       size: "20",
-      color: "#3cc51f"
+      color: "#ff7043"
     }),
     x: common_vendor.p({
       type: "right",
       size: "16",
       color: "#ccc"
     }),
-    y: common_vendor.o(($event) => $options.navigateTo("/pages/order/list?status=all")),
+    y: common_vendor.o(($event) => $options.navigateTo("/pages/admin/companies/index")),
     z: common_vendor.p({
-      type: "waiting",
+      type: "gear-filled",
       size: "20",
-      color: "#3cc51f"
+      color: "#ff7043"
     }),
     A: common_vendor.p({
       type: "right",
       size: "16",
       color: "#ccc"
     }),
-    B: common_vendor.o(($event) => $options.navigateTo("/pages/order/list?status=pending")),
+    B: common_vendor.o(($event) => $options.navigateTo("/pages/admin/system/index"))
+  } : {}, {
     C: common_vendor.p({
-      type: "checkmarkempty",
+      type: "person",
       size: "20",
       color: "#3cc51f"
     }),
@@ -148,9 +151,9 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       size: "16",
       color: "#ccc"
     }),
-    E: common_vendor.o(($event) => $options.navigateTo("/pages/order/list?status=completed")),
+    E: common_vendor.o(($event) => $options.navigateTo("/pages/user/profile")),
     F: common_vendor.p({
-      type: "help",
+      type: "location",
       size: "20",
       color: "#3cc51f"
     }),
@@ -159,30 +162,102 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       size: "16",
       color: "#ccc"
     }),
-    H: common_vendor.o(($event) => $options.navigateTo("/pages/help/help")),
-    I: common_vendor.p({
+    H: common_vendor.o(($event) => $options.navigateTo("/pages/user/address")),
+    I: !$data.userInfo.verified
+  }, !$data.userInfo.verified ? {
+    J: common_vendor.p({
+      type: "paperclip",
+      size: "20",
+      color: "#3cc51f"
+    }),
+    K: common_vendor.p({
+      type: "right",
+      size: "16",
+      color: "#ccc"
+    }),
+    L: common_vendor.o(($event) => $options.navigateTo("/pages/user/verify"))
+  } : {}, {
+    M: $data.userInfo.userType !== 1 && $data.userInfo.userType !== 2
+  }, $data.userInfo.userType !== 1 && $data.userInfo.userType !== 2 ? {
+    N: common_vendor.p({
+      type: "staff",
+      size: "20",
+      color: "#3cc51f"
+    }),
+    O: common_vendor.p({
+      type: "right",
+      size: "16",
+      color: "#ccc"
+    }),
+    P: common_vendor.o(($event) => $options.navigateTo("/pages/courier/apply"))
+  } : {}, {
+    Q: common_vendor.p({
+      type: "list",
+      size: "20",
+      color: "#3cc51f"
+    }),
+    R: common_vendor.p({
+      type: "right",
+      size: "16",
+      color: "#ccc"
+    }),
+    S: common_vendor.o(($event) => $options.navigateTo("/pages/order/list?status=all")),
+    T: common_vendor.p({
+      type: "waiting",
+      size: "20",
+      color: "#3cc51f"
+    }),
+    U: common_vendor.p({
+      type: "right",
+      size: "16",
+      color: "#ccc"
+    }),
+    V: common_vendor.o(($event) => $options.navigateTo("/pages/order/list?status=pending")),
+    W: common_vendor.p({
+      type: "checkmarkempty",
+      size: "20",
+      color: "#3cc51f"
+    }),
+    X: common_vendor.p({
+      type: "right",
+      size: "16",
+      color: "#ccc"
+    }),
+    Y: common_vendor.o(($event) => $options.navigateTo("/pages/order/list?status=completed")),
+    Z: common_vendor.p({
+      type: "help",
+      size: "20",
+      color: "#3cc51f"
+    }),
+    aa: common_vendor.p({
+      type: "right",
+      size: "16",
+      color: "#ccc"
+    }),
+    ab: common_vendor.o(($event) => $options.navigateTo("/pages/help/help")),
+    ac: common_vendor.p({
       type: "chat",
       size: "20",
       color: "#3cc51f"
     }),
-    J: common_vendor.p({
+    ad: common_vendor.p({
       type: "right",
       size: "16",
       color: "#ccc"
     }),
-    K: common_vendor.o(($event) => $options.navigateTo("/pages/feedback/feedback")),
-    L: common_vendor.p({
+    ae: common_vendor.o(($event) => $options.navigateTo("/pages/feedback/feedback")),
+    af: common_vendor.p({
       type: "info",
       size: "20",
       color: "#3cc51f"
     }),
-    M: common_vendor.p({
+    ag: common_vendor.p({
       type: "right",
       size: "16",
       color: "#ccc"
     }),
-    N: common_vendor.o(($event) => $options.navigateTo("/pages/about/about")),
-    O: common_vendor.o((...args) => $options.handleLogout && $options.handleLogout(...args))
+    ah: common_vendor.o(($event) => $options.navigateTo("/pages/about/about")),
+    ai: common_vendor.o((...args) => $options.handleLogout && $options.handleLogout(...args))
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);

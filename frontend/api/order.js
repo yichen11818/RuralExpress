@@ -9,7 +9,7 @@ import request from '@/utils/request';
  * @returns {Promise} 创建结果
  */
 export function createOrder(data) {
-  return request.post('/order', data);
+  return request.post('/api/order', data);
 }
 
 /**
@@ -18,7 +18,7 @@ export function createOrder(data) {
  * @returns {Promise} 订单详情
  */
 export function getOrderDetail(id) {
-  return request.get(`/order/${id}`);
+  return request.get(`/api/order/${id}`);
 }
 
 /**
@@ -28,7 +28,7 @@ export function getOrderDetail(id) {
  * @returns {Promise} 订单列表
  */
 export function getUserOrders(userId, params = {}) {
-  return request.get(`/order/user/${userId}`, { params });
+  return request.get(`/api/order/user/${userId}`, { params });
 }
 
 /**
@@ -38,7 +38,7 @@ export function getUserOrders(userId, params = {}) {
  * @returns {Promise} 订单列表
  */
 export function getCourierOrders(courierId, params = {}) {
-  return request.get(`/order/courier/${courierId}`, { params });
+  return request.get(`/api/order/courier/${courierId}`, { params });
 }
 
 /**
@@ -47,7 +47,7 @@ export function getCourierOrders(courierId, params = {}) {
  * @returns {Promise} 订单列表
  */
 export function getPendingOrders(params) {
-  return request.get('/order/pending', { params });
+  return request.get('/api/order/pending', { params });
 }
 
 /**
@@ -57,7 +57,7 @@ export function getPendingOrders(params) {
  * @returns {Promise} 接单结果
  */
 export function acceptOrder(orderId, courierId) {
-  return request.put(`/order/${orderId}/accept?courierId=${courierId}`);
+  return request.put(`/api/order/${orderId}/accept?courierId=${courierId}`);
 }
 
 /**
@@ -67,7 +67,7 @@ export function acceptOrder(orderId, courierId) {
  * @returns {Promise} 更新结果
  */
 export function updateOrderStatus(orderId, status) {
-  return request.put(`/order/${orderId}/status?status=${status}`);
+  return request.put(`/api/order/${orderId}/status?status=${status}`);
 }
 
 /**
@@ -77,7 +77,7 @@ export function updateOrderStatus(orderId, status) {
  * @returns {Promise} 取消结果
  */
 export function cancelOrder(orderId, reason) {
-  return request.put(`/order/${orderId}/cancel?reason=${encodeURIComponent(reason)}`);
+  return request.put(`/api/order/${orderId}/cancel?reason=${encodeURIComponent(reason)}`);
 }
 
 /**
@@ -87,7 +87,7 @@ export function cancelOrder(orderId, reason) {
  * @returns {Promise} 更新结果
  */
 export function updateOrder(orderId, data) {
-  return request.put(`/order/${orderId}`, data);
+  return request.put(`/api/order/${orderId}`, data);
 }
 
 /**
@@ -149,7 +149,7 @@ export function getPackageTypeText(type) {
  * @returns {Promise} 提交结果
  */
 export function submitOrderReview(data) {
-  return request.post('/order/review', data);
+  return request.post('/api/order/review', data);
 }
 
 /**
@@ -158,7 +158,7 @@ export function submitOrderReview(data) {
  * @returns {Promise} 评价详情
  */
 export function getOrderReview(orderId) {
-  return request.get(`/order/${orderId}/review`);
+  return request.get(`/api/order/${orderId}/review`);
 }
 
 /**
@@ -169,11 +169,11 @@ export function getOrderReview(orderId) {
 export function uploadReviewImage(file) {
   const formData = new FormData();
   formData.append('file', file);
-  return request.post('/order/review/upload', formData, {
+  return request.post('/api/order/review/upload', formData, {
     headers: {
       'Content-Type': 'multipart/form-data'
     }
-  });
+  }); 
 }
 
 /**
@@ -182,5 +182,5 @@ export function uploadReviewImage(file) {
  * @returns {Promise} 物流跟踪信息
  */
 export function getLogisticsInfo(params) {
-  return request.get('/order/logistics', { params });
+  return request.get('/api/order/logistics', { params });
 } 

@@ -12,7 +12,7 @@ export function uploadFile(file) {
   const formData = new FormData();
   formData.append('file', file);
   
-  return request.post('/file/upload', formData, {
+  return request.post('/api/file/upload', formData, {
     headers: {
       'Content-Type': 'multipart/form-data'
     }
@@ -28,7 +28,7 @@ export function uploadImage(file) {
   const formData = new FormData();
   formData.append('file', file);
   
-  return request.post('/file/upload/image', formData, {
+  return request.post('/api/file/upload/image', formData, {
     headers: {
       'Content-Type': 'multipart/form-data'
     }
@@ -41,7 +41,7 @@ export function uploadImage(file) {
  * @returns {Promise} 删除结果
  */
 export function deleteFile(fileUrl) {
-  return request.delete(`/file/delete?url=${encodeURIComponent(fileUrl)}`);
+  return request.delete(`/api/file/delete?url=${encodeURIComponent(fileUrl)}`);
 }
 
 /**
@@ -51,5 +51,5 @@ export function deleteFile(fileUrl) {
  */
 export function getPreviewUrl(fileUrl) {
   if (!fileUrl) return '';
-  return `${process.env.VUE_APP_BASE_API}/file/preview?url=${encodeURIComponent(fileUrl)}`;
+  return `${process.env.VUE_APP_BASE_API}/api/file/preview?url=${encodeURIComponent(fileUrl)}`;
 } 

@@ -28,39 +28,48 @@ const _sfc_main = {
       common_vendor.index.showLoading({
         title: "加载中"
       });
-      setTimeout(() => {
-        this.noticeData = {
-          id: this.id,
-          title: "重要通知：乡递通服务升级公告",
-          content: '<div style="line-height: 1.8;">亲爱的乡递通用户：<br/><br/>为了提供更好的服务体验，我们将于2023年12月15日凌晨2:00-6:00进行系统升级维护。在此期间，您可能无法正常使用乡递通的部分功能。<br/><br/>此次升级将带来以下改进：<br/><ol><li>优化寄件流程，提高下单效率</li><li>增强物流追踪功能，物流信息更加透明</li><li>改进用户界面，带来更直观的操作体验</li><li>提升系统安全性，更好地保护用户信息</li></ol><br/>感谢您对乡递通的支持与理解！如有疑问，请联系客服热线：400-123-4567。<br/><br/>乡递通团队<br/>2023年12月10日</div>',
-          createTime: "2023-12-10 10:00:00",
-          source: "乡递通官方",
-          viewCount: 1243
-        };
-        common_vendor.index.hideLoading();
-      }, 500);
+      common_vendor.index.request({
+        url: this.$api.notice.detail,
+        method: "GET",
+        data: {
+          id: this.id
+        },
+        success: (res) => {
+          if (res.data.code === 200) {
+            this.noticeData = res.data.data;
+          } else {
+            common_vendor.index.showToast({
+              title: res.data.message || "获取公告详情失败",
+              icon: "none"
+            });
+          }
+        },
+        fail: () => {
+          common_vendor.index.showToast({
+            title: "网络错误，请稍后重试",
+            icon: "none"
+          });
+        },
+        complete: () => {
+          common_vendor.index.hideLoading();
+        }
+      });
     },
     // 获取相关公告
     getRelatedNotices() {
-      setTimeout(() => {
-        this.relatedNotices = [
-          {
-            id: "2",
-            title: "乡递通春节期间配送调整通知",
-            createTime: "2024-01-15 14:30:00"
-          },
-          {
-            id: "3",
-            title: "乡递通App新功能上线公告",
-            createTime: "2023-11-20 09:15:00"
-          },
-          {
-            id: "4",
-            title: "乡递通配送范围扩展通知",
-            createTime: "2023-10-05 16:45:00"
+      common_vendor.index.request({
+        url: this.$api.notice.related,
+        method: "GET",
+        data: {
+          id: this.id,
+          limit: 5
+        },
+        success: (res) => {
+          if (res.data.code === 200) {
+            this.relatedNotices = res.data.data;
           }
-        ];
-      }, 800);
+        }
+      });
     },
     // 格式化日期
     formatDate(dateString) {

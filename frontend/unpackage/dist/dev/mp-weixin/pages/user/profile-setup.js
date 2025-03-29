@@ -1,6 +1,7 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
 const api_auth = require("../../api/auth.js");
+require("../../utils/request.js");
 const _sfc_main = {
   data() {
     return {

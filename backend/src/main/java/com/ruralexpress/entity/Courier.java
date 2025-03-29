@@ -43,6 +43,11 @@ public class Courier {
     private Integer auditStatus;
     
     /**
+     * 快递员状态(0-禁用,1-启用)
+     */
+    private Integer status;
+    
+    /**
      * 评分
      */
     private BigDecimal rating;

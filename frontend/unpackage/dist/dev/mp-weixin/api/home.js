@@ -1,7 +1,13 @@
 "use strict";
 const utils_request = require("../utils/request.js");
 function getHomeData() {
-  return utils_request.request.get("/home");
+  return utils_request.request.get("/api/home");
+}
+function getBanners() {
+  return utils_request.request.get("/api/home/banners");
+}
+function getNotices() {
+  return utils_request.request.get("/api/home/notices");
 }
 function getNearestCouriers(limit = 5, latitude, longitude) {
   const params = { limit };
@@ -9,7 +15,15 @@ function getNearestCouriers(limit = 5, latitude, longitude) {
     params.latitude = latitude;
     params.longitude = longitude;
   }
-  return utils_request.request.get("/home/couriers/nearest", params);
+  return utils_request.request.get("/api/home/couriers/nearest", params);
 }
+const home = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  getBanners,
+  getHomeData,
+  getNearestCouriers,
+  getNotices
+}, Symbol.toStringTag, { value: "Module" }));
 exports.getHomeData = getHomeData;
 exports.getNearestCouriers = getNearestCouriers;
+exports.home = home;

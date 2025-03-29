@@ -1,5 +1,6 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
+const api_user = require("../../api/user.js");
 const utils_auth = require("../../utils/auth.js");
 const common_assets = require("../../common/assets.js");
 const AddressForm = () => "../../components/AddressForm.js";
@@ -50,33 +51,9 @@ const _sfc_main = {
     async loadAddressList() {
       this.isLoading = true;
       try {
-        setTimeout(() => {
-          this.addressList = [
-            {
-              id: "1",
-              name: "张三",
-              phone: "13800138000",
-              province: "广东省",
-              city: "深圳市",
-              district: "南山区",
-              detailAddress: "科技园路1号",
-              addressType: "公司",
-              isDefault: true
-            },
-            {
-              id: "2",
-              name: "李四",
-              phone: "13900139000",
-              province: "广东省",
-              city: "深圳市",
-              district: "福田区",
-              detailAddress: "中心城区1号",
-              addressType: "家",
-              isDefault: false
-            }
-          ];
-          this.isLoading = false;
-        }, 500);
+        const res = await api_user.getAddressList();
+        this.addressList = res.data;
+        this.isLoading = false;
       } catch (error) {
         console.error("加载地址列表失败", error);
         common_vendor.index.showToast({

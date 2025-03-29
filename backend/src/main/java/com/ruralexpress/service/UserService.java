@@ -2,6 +2,8 @@ package com.ruralexpress.service;
 
 import com.ruralexpress.entity.User;
 
+import java.util.Map;
+
 /**
  * 用户服务接口
  */
@@ -63,4 +65,51 @@ public interface UserService {
      * @return 认证结果
      */
     boolean verify(Long id, String realName, String idCard, String frontImage, String backImage, String holdingImage);
+    
+    /**
+     * 管理员功能：获取用户列表，带分页
+     * @param page 当前页
+     * @param pageSize 每页大小
+     * @param keyword 搜索关键词（可以是手机号、姓名等）
+     * @param userType 用户类型（0普通用户、1快递员、2管理员）
+     * @param status 用户状态（0正常、1禁用）
+     * @return 包含用户列表和统计数据的结果
+     */
+    Map<String, Object> getUsersWithPagination(Integer page, Integer pageSize, String keyword, Integer userType, Integer status);
+    
+    /**
+     * 管理员功能：检查手机号是否已存在
+     * @param phone 手机号
+     * @return 是否存在
+     */
+    boolean isPhoneExists(String phone);
+    
+    /**
+     * 管理员功能：创建用户
+     * @param user 用户信息
+     * @return 创建后的用户
+     */
+    User createUser(User user);
+    
+    /**
+     * 管理员功能：更新用户
+     * @param user 用户信息
+     * @return 更新后的用户
+     */
+    User updateUser(User user);
+    
+    /**
+     * 管理员功能：删除用户
+     * @param id 用户ID
+     * @return 是否成功
+     */
+    boolean deleteUser(Long id);
+    
+    /**
+     * 按关键词搜索用户
+     * @param keyword 关键词
+     * @param limit 限制数量
+     * @return 用户列表
+     */
+    Map<String, Object> searchUsers(String keyword, Integer limit);
 } 

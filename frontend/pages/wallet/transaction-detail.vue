@@ -147,16 +147,6 @@ export default {
         title: '加载中...'
       });
       
-      // 模拟获取交易详情
-      setTimeout(() => {
-        // 构造模拟数据
-        this.generateMockTransactionDetail();
-        
-        uni.hideLoading();
-        this.loading = false;
-      }, 1000);
-      
-      /*
       // 调用API获取交易详情
       getTransactionDetail(this.id)
         .then(res => {
@@ -180,7 +170,6 @@ export default {
           uni.hideLoading();
           this.loading = false;
         });
-      */
     },
     
     // 获取交易类型名称
@@ -273,59 +262,6 @@ export default {
     // 返回上一页
     goBack() {
       uni.navigateBack();
-    },
-    
-    // 生成模拟交易详情
-    generateMockTransactionDetail() {
-      const types = ['RECHARGE', 'WITHDRAW', 'PAYMENT', 'REFUND', 'BONUS'];
-      const paymentMethods = ['WXPAY', 'ALIPAY', 'BALANCE', 'BANK'];
-      const statuses = ['SUCCESS', 'PENDING', 'FAILED'];
-      
-      // 随机选择类型和状态
-      const type = types[Math.floor(Math.random() * types.length)];
-      const status = statuses[Math.floor(Math.random() * statuses.length)];
-      
-      // 根据类型决定金额的正负
-      let amount = 0;
-      if (type === 'RECHARGE' || type === 'REFUND' || type === 'BONUS') {
-        amount = Math.floor(Math.random() * 500) + 10; // 正数
-      } else {
-        amount = -Math.floor(Math.random() * 200) - 10; // 负数
-      }
-      
-      // 生成日期
-      const date = new Date();
-      date.setHours(date.getHours() - Math.floor(Math.random() * 24));
-      
-      // 生成交易号
-      const tradeNo = `TX${Date.now().toString().substring(5)}${this.id.toString().padStart(4, '0')}`;
-      
-      // 生成订单号和订单ID（如果是支付或退款）
-      let orderNo = '';
-      let orderId = '';
-      if (type === 'PAYMENT' || type === 'REFUND') {
-        orderNo = `ORDER${Date.now().toString().substring(5)}${Math.floor(Math.random() * 1000)}`;
-        orderId = Math.floor(Math.random() * 1000) + 1;
-      }
-      
-      // 随机选择支付方式
-      const paymentMethod = type === 'RECHARGE' ? 
-        paymentMethods[Math.floor(Math.random() * (paymentMethods.length - 1))] :
-        (type === 'PAYMENT' ? 'BALANCE' : '');
-      
-      // 设置交易详情
-      this.transaction = {
-        id: this.id,
-        type: type,
-        amount: amount,
-        createTime: date.toISOString(),
-        status: status,
-        orderNo: orderNo,
-        orderId: orderId,
-        tradeNo: tradeNo,
-        paymentMethod: paymentMethod,
-        remark: type === 'BONUS' ? '活动奖励' : ''
-      };
     }
   }
 };

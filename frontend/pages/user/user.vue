@@ -11,11 +11,49 @@
             <text class="tag" v-if="userInfo.verified">已实名认证</text>
             <text class="tag tag-warn" v-else>未实名认证</text>
             <text class="tag tag-courier" v-if="userInfo.userType === 1">快递员</text>
+            <text class="tag tag-admin" v-if="userInfo.userType === 2">管理员</text>
           </view>
         </view>
       </view>
       <view class="setting-icon" @click="navigateTo('/pages/user/settings')">
         <uni-icons type="gear" size="24" color="#333"></uni-icons>
+      </view>
+    </view>
+    
+    <!-- 管理员功能菜单 - 仅对管理员显示 -->
+    <view class="menu-section" v-if="userInfo.userType === 2">
+      <view class="menu-title">管理员功能</view>
+      <view class="menu-list">
+        <view class="menu-item" @click="navigateTo('/pages/admin/users/index')">
+          <uni-icons type="person-filled" size="20" color="#ff7043"></uni-icons>
+          <text class="menu-name">用户管理</text>
+          <uni-icons type="right" size="16" color="#ccc"></uni-icons>
+        </view>
+        <view class="menu-item" @click="navigateTo('/pages/admin/couriers/index')">
+          <uni-icons type="staff" size="20" color="#ff7043"></uni-icons>
+          <text class="menu-name">快递员管理</text>
+          <uni-icons type="right" size="16" color="#ccc"></uni-icons>
+        </view>
+        <view class="menu-item" @click="navigateTo('/pages/admin/stations/index')">
+          <uni-icons type="shop" size="20" color="#ff7043"></uni-icons>
+          <text class="menu-name">服务点管理</text>
+          <uni-icons type="right" size="16" color="#ccc"></uni-icons>
+        </view>
+        <view class="menu-item" @click="navigateTo('/pages/admin/orders/index')">
+          <uni-icons type="list" size="20" color="#ff7043"></uni-icons>
+          <text class="menu-name">订单管理</text>
+          <uni-icons type="right" size="16" color="#ccc"></uni-icons>
+        </view>
+        <view class="menu-item" @click="navigateTo('/pages/admin/companies/index')">
+          <uni-icons type="cloud" size="20" color="#ff7043"></uni-icons>
+          <text class="menu-name">快递公司管理</text>
+          <uni-icons type="right" size="16" color="#ccc"></uni-icons>
+        </view>
+        <view class="menu-item" @click="navigateTo('/pages/admin/system/index')">
+          <uni-icons type="gear-filled" size="20" color="#ff7043"></uni-icons>
+          <text class="menu-name">系统设置</text>
+          <uni-icons type="right" size="16" color="#ccc"></uni-icons>
+        </view>
       </view>
     </view>
     
@@ -38,7 +76,7 @@
           <text class="menu-name">实名认证</text>
           <uni-icons type="right" size="16" color="#ccc"></uni-icons>
         </view>
-        <view class="menu-item" v-if="userInfo.userType !== 1" @click="navigateTo('/pages/courier/apply')">
+        <view class="menu-item" v-if="userInfo.userType !== 1 && userInfo.userType !== 2" @click="navigateTo('/pages/courier/apply')">
           <uni-icons type="staff" size="20" color="#3cc51f"></uni-icons>
           <text class="menu-name">申请成为快递员</text>
           <uni-icons type="right" size="16" color="#ccc"></uni-icons>
@@ -114,6 +152,15 @@ export default {
     
     // 获取用户信息
     this.userInfo = getUserInfo() || {};
+    
+    // 添加调试日志
+    console.log('当前用户信息:', this.userInfo);
+    console.log('用户类型 userType:', this.userInfo.userType);
+    console.log('管理员入口条件检查:', this.userInfo.userType === 2);
+    
+    // 临时将当前用户设置为管理员(仅开发测试用)
+    // this.userInfo.userType = 2;
+    // console.log('已临时设置为管理员，userType=', this.userInfo.userType);
   },
   
   methods: {
@@ -125,6 +172,7 @@ export default {
     
     // 页面导航
     navigateTo(url) {
+      console.log('导航到:', url);
       uni.navigateTo({
         url
       });
@@ -214,6 +262,11 @@ export default {
 .tag-courier {
   color: #007aff;
   background-color: rgba(0, 122, 255, 0.1);
+}
+
+.tag-admin {
+  color: #ff5722;
+  background-color: rgba(255, 87, 34, 0.1);
 }
 
 .menu-section {

@@ -1,6 +1,8 @@
 "use strict";
 Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
 const common_vendor = require("./common/vendor.js");
+const utils_config = require("./utils/config.js");
+const api_index = require("./api/index.js");
 if (!Math) {
   "./pages/index/index.js";
   "./pages/login/login.js";
@@ -26,6 +28,12 @@ if (!Math) {
   "./pages/feedback/feedback.js";
   "./pages/about/about.js";
   "./pages/search/index.js";
+  "./pages/admin/users/index.js";
+  "./pages/admin/couriers/index.js";
+  "./pages/admin/stations/index.js";
+  "./pages/admin/orders/index.js";
+  "./pages/admin/companies/index.js";
+  "./pages/admin/system/index.js";
 }
 const _sfc_main = {
   globalData: {
@@ -69,6 +77,8 @@ function createApp() {
   const app = common_vendor.createSSRApp(_sfc_main);
   const pinia = common_vendor.createPinia();
   app.use(pinia);
+  app.config.globalProperties.$config = utils_config.config;
+  app.config.globalProperties.$api = api_index.api;
   return {
     app
   };

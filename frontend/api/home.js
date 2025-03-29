@@ -5,7 +5,7 @@ import request from '@/utils/request';
  * @returns {Promise} 首页数据，包括轮播图、公告、周边快递员等
  */
 export function getHomeData() {
-  return request.get('/home');
+  return request.get('/api/home');
 }
 
 /**
@@ -13,7 +13,7 @@ export function getHomeData() {
  * @returns {Promise} 轮播图列表
  */
 export function getBanners() {
-  return request.get('/home/banners');
+  return request.get('/api/home/banners');
 }
 
 /**
@@ -21,7 +21,7 @@ export function getBanners() {
  * @returns {Promise} 公告列表
  */
 export function getNotices() {
-  return request.get('/home/notices');
+  return request.get('/api/home/notices');
 }
 
 /**
@@ -40,5 +40,5 @@ export function getNearestCouriers(limit = 5, latitude, longitude) {
     params.longitude = longitude;
   }
   
-  return request.get('/home/couriers/nearest', params);
+  return request.get('/api/home/couriers/nearest', params);
 } 

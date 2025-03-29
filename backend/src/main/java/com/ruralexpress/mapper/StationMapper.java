@@ -154,4 +154,37 @@ public interface StationMapper extends BaseMapper<Station> {
                                    @Param("distance") Integer distance,
                                    @Param("limit") Integer limit,
                                    @Param("excludeStationId") Long excludeStationId);
+    
+    /**
+     * 根据关键词搜索服务点
+     * @param keyword 搜索关键词
+     * @param limit 限制数量
+     * @return 服务点列表
+     */
+    @Select("SELECT * FROM t_station " +
+            "WHERE status = 0 " +
+            "AND (name LIKE CONCAT('%', #{keyword}, '%') " +
+            "OR province LIKE CONCAT('%', #{keyword}, '%') " +
+            "OR city LIKE CONCAT('%', #{keyword}, '%') " +
+            "OR district LIKE CONCAT('%', #{keyword}, '%') " +
+            "OR address LIKE CONCAT('%', #{keyword}, '%') " +
+            "OR phone LIKE CONCAT('%', #{keyword}, '%')) " +
+            "ORDER BY review_count DESC, rating DESC LIMIT #{limit}")
+    List<Station> searchStations(@Param("keyword") String keyword, @Param("limit") Integer limit);
+    
+    /**
+     * 删除服务点所有照片
+     * @param stationId 服务点ID
+     * @return 影响行数
+     */
+    @Delete("DELETE FROM t_station_photo WHERE station_id = #{stationId}")
+    int deleteStationPhotos(@Param("stationId") Long stationId);
+    
+    /**
+     * 删除服务点所有支持的快递公司关联
+     * @param stationId 服务点ID
+     * @return 影响行数
+     */
+    @Delete("DELETE FROM t_station_company WHERE station_id = #{stationId}")
+    int deleteStationCompanies(@Param("stationId") Long stationId);
 } 

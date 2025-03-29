@@ -123,30 +123,6 @@ export default {
         });
       }
       
-      // 模拟API获取交易记录
-      setTimeout(() => {
-        // 模拟数据
-        const mockData = this.generateMockTransactions(this.currentFilter);
-        
-        // 更新数据
-        if (append) {
-          this.transactions = [...this.transactions, ...mockData.records];
-        } else {
-          this.transactions = mockData.records;
-        }
-        
-        this.pageInfo.total = mockData.total;
-        this.hasMore = this.transactions.length < mockData.total;
-        
-        uni.hideLoading();
-        this.loading = false;
-        
-        if (this.refreshing) {
-          this.refreshing = false;
-        }
-      }, 1000);
-      
-      /*
       // 调用API获取交易记录
       getTransactions({
         page: this.pageInfo.page,
@@ -185,7 +161,6 @@ export default {
             this.refreshing = false;
           }
         });
-      */
     },
     
     // 切换筛选条件
@@ -264,52 +239,6 @@ export default {
     // 返回上一页
     goBack() {
       uni.navigateBack();
-    },
-    
-    // 生成模拟交易记录数据
-    generateMockTransactions(filterType) {
-      const records = [];
-      const total = 35;
-      const types = ['RECHARGE', 'WITHDRAW', 'PAYMENT', 'REFUND', 'BONUS'];
-      
-      // 计算应该生成的记录数量
-      const count = Math.min(this.pageInfo.size, total - (this.pageInfo.page - 1) * this.pageInfo.size);
-      
-      for (let i = 0; i < count; i++) {
-        const id = (this.pageInfo.page - 1) * this.pageInfo.size + i + 1;
-        // 如果筛选了特定类型，只生成该类型的记录
-        const type = filterType !== 'all' ? filterType : types[Math.floor(Math.random() * types.length)];
-        
-        // 根据类型决定金额的正负
-        let amount = 0;
-        if (type === 'RECHARGE' || type === 'REFUND' || type === 'BONUS') {
-          amount = Math.floor(Math.random() * 500) + 10; // 正数
-        } else {
-          amount = -Math.floor(Math.random() * 200) - 10; // 负数
-        }
-        
-        // 生成日期，越近的交易越新
-        const date = new Date();
-        date.setDate(date.getDate() - id);
-        
-        // 生成订单号
-        const orderNo = `TX${Date.now().toString().substring(5)}${id.toString().padStart(4, '0')}`;
-        
-        records.push({
-          id,
-          type,
-          amount,
-          createTime: date.toISOString(),
-          description: this.getDefaultDescription({ type }) + (type === 'PAYMENT' ? ` - 订单号: ${orderNo}` : ''),
-          orderNo: type === 'PAYMENT' || type === 'REFUND' ? orderNo : null,
-          status: 'SUCCESS'
-        });
-      }
-      
-      return {
-        records,
-        total
-      };
     }
   }
 };

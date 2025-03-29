@@ -9,7 +9,7 @@ import request from '@/utils/request';
  * @returns {Promise} 支付结果
  */
 export function payOrder(paymentParams) {
-  return request.post('/payment/pay', paymentParams);
+  return request.post('/api/payment/pay', paymentParams);
 }
 
 /**
@@ -18,7 +18,7 @@ export function payOrder(paymentParams) {
  * @returns {Promise} 支付状态
  */
 export function queryPaymentStatus(orderId) {
-  return request.get(`/payment/status/${orderId}`);
+  return request.get(`/api/payment/status/${orderId}`);
 }
 
 /**
@@ -27,7 +27,7 @@ export function queryPaymentStatus(orderId) {
  * @returns {Promise} 取消结果
  */
 export function cancelPayment(orderId) {
-  return request.put(`/payment/cancel/${orderId}`);
+  return request.put(`/api/payment/cancel/${orderId}`);
 }
 
 /**
@@ -35,7 +35,7 @@ export function cancelPayment(orderId) {
  * @returns {Promise} 钱包信息
  */
 export function getUserWallet() {
-  return request.get('/payment/wallet');
+  return request.get('/api/payment/wallet');
 }
 
 /**
@@ -43,5 +43,5 @@ export function getUserWallet() {
  * @returns {Promise} 支付渠道列表
  */
 export function getPaymentChannels() {
-  return request.get('/payment/channels');
+  return request.get('/api/payment/channels');
 } 

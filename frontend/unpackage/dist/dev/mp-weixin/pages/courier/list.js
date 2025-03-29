@@ -1,5 +1,8 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
+const utils_config = require("../../utils/config.js");
+require("../../utils/request.js");
+const api_search = require("../../api/search.js");
 const common_assets = require("../../common/assets.js");
 const uniIcons = () => "../../uni_modules/uni-icons/components/uni-icons/uni-icons.js";
 const _sfc_main = {
@@ -14,80 +17,101 @@ const _sfc_main = {
       page: 1,
       selectedRegion: null,
       currentFilter: "nearest",
-      courierList: [
-        {
-          id: 1,
-          name: "张师傅",
-          avatar: "/static/images/courier1.jpg",
-          rating: 4.9,
-          completedOrders: 326,
-          serviceTime: 8,
-          serviceArea: "江西省 南昌市 青山湖区",
-          tags: ["准时送达", "服务好", "有礼貌"],
-          distance: 0.8
-        },
-        {
-          id: 2,
-          name: "李师傅",
-          avatar: "/static/images/courier2.jpg",
-          rating: 4.8,
-          completedOrders: 215,
-          serviceTime: 6,
-          serviceArea: "江西省 南昌市 青山湖区",
-          tags: ["送货快", "态度好"],
-          distance: 1.2
-        },
-        {
-          id: 3,
-          name: "王师傅",
-          avatar: "/static/images/courier3.jpg",
-          rating: 4.7,
-          completedOrders: 198,
-          serviceTime: 5,
-          serviceArea: "江西省 南昌市 青山湖区",
-          tags: ["认真负责", "服务周到"],
-          distance: 1.5
-        },
-        {
-          id: 4,
-          name: "赵师傅",
-          avatar: "/static/images/default-avatar.png",
-          rating: 4.6,
-          completedOrders: 156,
-          serviceTime: 4,
-          serviceArea: "江西省 南昌市 青山湖区",
-          tags: ["准时送达", "沟通顺畅"],
-          distance: 2.1
-        },
-        {
-          id: 5,
-          name: "钱师傅",
-          avatar: "/static/images/default-avatar.png",
-          rating: 4.5,
-          completedOrders: 132,
-          serviceTime: 3,
-          serviceArea: "江西省 南昌市 青山湖区",
-          tags: ["服务周到", "耐心"],
-          distance: 2.8
-        }
-      ]
+      courierList: [],
+      latitude: null,
+      longitude: null
     };
   },
   onLoad() {
     this.getCurrentLocation();
-    setTimeout(() => {
-      this.loading = false;
-    }, 500);
+    this.loadCourierData();
   },
   methods: {
     // 获取当前位置
     getCurrentLocation() {
-      this.selectedRegion = ["江西省", "南昌市", "青山湖区"];
+      common_vendor.index.getLocation({
+        type: "gcj02",
+        success: (res) => {
+          this.latitude = res.latitude;
+          this.longitude = res.longitude;
+          common_vendor.index.request({
+            url: "https://apis.map.qq.com/ws/geocoder/v1/",
+            data: {
+              location: `${res.latitude},${res.longitude}`,
+              key: utils_config.config.mapKey
+              // 使用导入的config对象
+            },
+            success: (locationRes) => {
+              if (locationRes.data.status === 0) {
+                const result = locationRes.data.result;
+                const addressComponent = result.address_component;
+                this.selectedRegion = [
+                  addressComponent.province,
+                  addressComponent.city,
+                  addressComponent.district
+                ];
+                this.loadCourierData();
+              }
+            }
+          });
+        },
+        fail: () => {
+          this.selectedRegion = ["江西省", "南昌市", "青山湖区"];
+          this.loadCourierData();
+        }
+      });
+    },
+    // 加载快递员数据
+    loadCourierData(append = false) {
+      if (this.loading && !this.refreshing)
+        return;
+      this.loading = true;
+      api_search.searchCouriers("", this.page, 10).then((res) => {
+        if (res.code === 200) {
+          const data = res.data;
+          let list = data.list || [];
+          if (this.selectedRegion && this.selectedRegion[0]) {
+            list = list.filter((item) => {
+              return (!this.selectedRegion[0] || item.province === this.selectedRegion[0]) && (!this.selectedRegion[1] || item.city === this.selectedRegion[1]) && (!this.selectedRegion[2] || item.district === this.selectedRegion[2]);
+            });
+          }
+          if (this.currentFilter === "rating") {
+            list.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+          } else if (this.currentFilter === "orders") {
+            list.sort((a, b) => (b.completedOrders || 0) - (a.completedOrders || 0));
+          }
+          if (append) {
+            this.courierList = [...this.courierList, ...list];
+          } else {
+            this.courierList = list;
+          }
+          this.hasMore = data.page < data.totalPage;
+        } else {
+          common_vendor.index.showToast({
+            title: res.message || "获取快递员列表失败",
+            icon: "none"
+          });
+        }
+      }).catch(() => {
+        common_vendor.index.showToast({
+          title: "网络错误，请稍后重试",
+          icon: "none"
+        });
+      }).finally(() => {
+        this.loading = false;
+        if (this.refreshing) {
+          this.refreshing = false;
+          common_vendor.index.stopPullDownRefresh();
+        }
+      });
     },
     // 地区选择变化
     regionChange(e) {
       this.selectedRegion = e.detail.value;
-      this.refreshCourierList();
+      this.page = 1;
+      this.courierList = [];
+      this.hasMore = true;
+      this.loadCourierData();
     },
     // 设置筛选条件
     setFilter(filter) {
@@ -95,68 +119,24 @@ const _sfc_main = {
         return;
       this.currentFilter = filter;
       this.page = 1;
-      this.refreshCourierList();
+      this.courierList = [];
+      this.hasMore = true;
+      this.loadCourierData();
     },
     // 刷新列表
     refresh() {
       this.refreshing = true;
       this.page = 1;
-      setTimeout(() => {
-        this.refreshCourierList();
-        this.refreshing = false;
-        common_vendor.index.showToast({
-          title: "刷新成功",
-          icon: "success"
-        });
-      }, 1e3);
+      this.loadCourierData();
     },
     // 加载更多
     loadMore() {
       if (!this.hasMore || this.loading)
         return;
-      this.loading = true;
       this.page++;
-      setTimeout(() => {
-        if (this.page > 3) {
-          this.hasMore = false;
-          this.loading = false;
-          return;
-        }
-        const newCouriers = [
-          {
-            id: 5 + this.page,
-            name: "新增师傅" + this.page,
-            avatar: "/static/images/default-avatar.png",
-            rating: 4.3,
-            completedOrders: 100,
-            serviceTime: 2,
-            serviceArea: "江西省 南昌市 青山湖区",
-            tags: ["服务好"],
-            distance: 3 + this.page
-          }
-        ];
-        this.courierList = [...this.courierList, ...newCouriers];
-        this.loading = false;
-      }, 1e3);
+      this.loadCourierData(true);
     },
-    // 刷新快递员列表
-    refreshCourierList() {
-      if (this.currentFilter === "nearest") {
-        this.courierList.sort((a, b) => a.distance - b.distance);
-      } else if (this.currentFilter === "rating") {
-        this.courierList.sort((a, b) => b.rating - a.rating);
-      } else if (this.currentFilter === "orders") {
-        this.courierList.sort((a, b) => b.completedOrders - a.completedOrders);
-      }
-      this.hasMore = true;
-    },
-    // 显示搜索页面
-    showSearch() {
-      common_vendor.index.navigateTo({
-        url: "/pages/search/search?type=courier"
-      });
-    },
-    // 导航到快递员详情页
+    // 跳转到快递员详情页
     navigateToDetail(id) {
       common_vendor.index.navigateTo({
         url: `/pages/courier/detail?id=${id}`
@@ -165,30 +145,23 @@ const _sfc_main = {
     // 联系快递员
     contactCourier(e) {
       const id = e.currentTarget.dataset.id;
-      this.courierList.find((item) => item.id === id);
-      common_vendor.index.showActionSheet({
-        itemList: ["拨打电话", "发送消息"],
-        success: (res) => {
-          if (res.tapIndex === 0) {
-            common_vendor.index.makePhoneCall({
-              phoneNumber: "10086",
-              // 这里应该是快递员的电话
-              fail: () => {
-                common_vendor.index.showToast({
-                  title: "拨打电话失败",
-                  icon: "none"
-                });
-              }
-            });
-          } else if (res.tapIndex === 1) {
-            common_vendor.index.showToast({
-              title: "消息功能开发中",
-              icon: "none"
-            });
-          }
-        }
+      const courier = this.courierList.find((item) => item.id === id);
+      if (courier && courier.phone) {
+        common_vendor.index.makePhoneCall({
+          phoneNumber: courier.phone
+        });
+      } else {
+        common_vendor.index.showToast({
+          title: "暂无联系方式",
+          icon: "none"
+        });
+      }
+    },
+    // 显示搜索页面
+    showSearch() {
+      common_vendor.index.navigateTo({
+        url: "/pages/search/search?type=courier"
       });
-      return false;
     }
   }
 };

@@ -143,4 +143,52 @@ public interface StationService {
      * @return 是否成功
      */
     boolean deleteStationCompany(Long stationId, Long companyId);
+
+    /**
+     * 根据关键词搜索服务点
+     * @param keyword 搜索关键词
+     * @param limit 限制返回数量
+     * @return 服务点列表
+     */
+    List<Map<String, Object>> searchStations(String keyword, Integer limit);
+    
+    /**
+     * 管理员功能：获取服务点列表，带分页
+     * @param page 当前页
+     * @param pageSize 每页大小
+     * @param keyword 搜索关键词
+     * @param status 服务点状态
+     * @param area 区域（省市区）
+     * @return 包含服务点列表和统计数据的结果
+     */
+    Map<String, Object> getStationsWithPagination(Integer page, Integer pageSize, String keyword, Integer status, String area);
+    
+    /**
+     * 管理员功能：创建服务点
+     * @param stationData 服务点数据Map
+     * @return 创建的服务点
+     */
+    Station createStation(Map<String, Object> stationData);
+    
+    /**
+     * 管理员功能：更新服务点
+     * @param stationData 服务点数据Map
+     * @return 更新后的服务点
+     */
+    Station updateStation(Map<String, Object> stationData);
+    
+    /**
+     * 管理员功能：更新服务点状态
+     * @param stationId 服务点ID
+     * @param status 新状态
+     * @return 更新后的服务点
+     */
+    Station updateStationStatus(Long stationId, Integer status);
+    
+    /**
+     * 管理员功能：删除服务点
+     * @param stationId 服务点ID
+     * @return 是否成功
+     */
+    boolean deleteStation(Long stationId);
 } 

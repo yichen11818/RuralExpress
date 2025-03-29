@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.ruralexpress.dto.CourierDTO;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -191,33 +192,37 @@ public class CourierServiceImpl implements CourierService {
     @Override
     public IPage<Map<String, Object>> findCouriersByDistance(Page<Courier> page, BigDecimal longitude, BigDecimal latitude, Integer distance) {
         // 查询快递员列表
-        IPage<Courier> courierPage = courierMapper.findNearby(page, longitude, latitude, distance);
+        IPage<Courier> courierPage = courierMapper.findByDistance(page, longitude, latitude, distance);
         
         // 转换为Map列表
         List<Map<String, Object>> resultList = new ArrayList<>();
         for (Courier courier : courierPage.getRecords()) {
-            User user = userMapper.selectById(courier.getUserId());
-            if (user == null) continue;
-            
             Map<String, Object> map = new HashMap<>();
             map.put("id", courier.getId());
-            map.put("name", user.getRealName());
-            map.put("avatar", user.getAvatar());
+            
+            // 查询快递员关联的用户信息
+            User user = userMapper.selectById(courier.getUserId());
+            
+            if (user != null) {
+                map.put("name", user.getNickname() != null ? user.getNickname() : user.getPhone());
+                map.put("phone", user.getPhone());
+                map.put("avatar", user.getAvatar());
+            }
+            
+            map.put("serviceArea", courier.getServiceArea());
             map.put("rating", courier.getRating());
             map.put("completedOrders", courier.getCompletedOrders());
-            map.put("serviceTime", getServiceTime(courier.getCreatedAt()));
-            map.put("serviceArea", courier.getServiceArea());
-            
-            // 查询标签
-            List<CourierTag> tags = courierTagMapper.findByCourierId(courier.getId());
-            List<String> tagList = tags.stream()
-                    .limit(3) // 最多返回3个标签
-                    .map(CourierTag::getTagName)
-                    .collect(Collectors.toList());
-            map.put("tags", tagList);
             
             // 获取距离（查询时已计算好）
-            map.put("distance", courier.getResponseTime() / 100.0); // 这里使用responseTime暂存距离数据
+            // 注：CourierMapper.findByDistance 查询会计算距离并放入实体的某个未使用字段中
+            // 如果没有适当的字段，则使用模拟距离数据
+            try {
+                // 尝试获取responseTime字段用于距离
+                map.put("distance", courier.getResponseTime() / 60.0);
+            } catch (Exception e) {
+                // 如果没有适当的字段，使用模拟数据
+                map.put("distance", 2.0 + Math.random() * 3.0);
+            }
             
             resultList.add(map);
         }
@@ -404,82 +409,16 @@ public class CourierServiceImpl implements CourierService {
                     courier.setLongitude(baseLng + lngOffset);
                 }
             } else {
-                // 如果数据库没有数据，返回模拟的快递员数据
-                return createMockCouriers(limit);
+                // 如果数据库没有数据，返回空列表
+                return new ArrayList<>();
             }
             
             return couriers;
         } catch (Exception e) {
-            logger.error("获取推荐快递员失败，使用模拟数据", e);
-            // 出现异常时返回模拟数据
-            return createMockCouriers(limit);
+            logger.error("获取推荐快递员失败", e);
+            // 出现异常时返回空列表
+            return new ArrayList<>();
         }
-    }
-    
-    /**
-     * 创建模拟的快递员数据
-     */
-    private List<Courier> createMockCouriers(int limit) {
-        List<Courier> couriers = new ArrayList<>();
-        
-        // 模拟数据
-        Courier c1 = new Courier();
-        c1.setId(1L);
-        c1.setUserId(101L);
-        c1.setServiceArea("成都市武侯区");
-        c1.setRating(new BigDecimal("4.8"));
-        c1.setCompletedOrders(128);
-        c1.setLatitude(30.5866);
-        c1.setLongitude(104.0655);
-        c1.setServiceStatus(1);
-        
-        Courier c2 = new Courier();
-        c2.setId(2L);
-        c2.setUserId(102L);
-        c2.setServiceArea("成都市锦江区");
-        c2.setRating(new BigDecimal("4.9"));
-        c2.setCompletedOrders(156);
-        c2.setLatitude(30.5830);
-        c2.setLongitude(104.0682);
-        c2.setServiceStatus(1);
-        
-        Courier c3 = new Courier();
-        c3.setId(3L);
-        c3.setUserId(103L);
-        c3.setServiceArea("成都市青羊区");
-        c3.setRating(new BigDecimal("4.7"));
-        c3.setCompletedOrders(98);
-        c3.setLatitude(30.5920);
-        c3.setLongitude(104.0612);
-        c3.setServiceStatus(1);
-        
-        Courier c4 = new Courier();
-        c4.setId(4L);
-        c4.setUserId(104L);
-        c4.setServiceArea("成都市成华区");
-        c4.setRating(new BigDecimal("4.6"));
-        c4.setCompletedOrders(76);
-        c4.setLatitude(30.5890);
-        c4.setLongitude(104.0730);
-        c4.setServiceStatus(1);
-        
-        Courier c5 = new Courier();
-        c5.setId(5L);
-        c5.setUserId(105L);
-        c5.setServiceArea("成都市金牛区");
-        c5.setRating(new BigDecimal("4.5"));
-        c5.setCompletedOrders(64);
-        c5.setLatitude(30.5950);
-        c5.setLongitude(104.0580);
-        c5.setServiceStatus(1);
-        
-        couriers.add(c1);
-        couriers.add(c2);
-        couriers.add(c3);
-        couriers.add(c4);
-        couriers.add(c5);
-        
-        return couriers.subList(0, Math.min(limit, couriers.size()));
     }
 
     /**
@@ -503,22 +442,27 @@ public class CourierServiceImpl implements CourierService {
                 
                 for (int i = 0; i < couriers.size(); i++) {
                     Courier courier = couriers.get(i);
-                    // 随机生成在成都市中心附近的坐标
-                    double latOffset = (Math.random() - 0.5) * 0.1; // 约±5公里范围
-                    double lngOffset = (Math.random() - 0.5) * 0.1;
-                    
-                    courier.setLatitude(baseLat + latOffset);
-                    courier.setLongitude(baseLng + lngOffset);
+                    // 这里可以调用地图API获取真实坐标，暂时使用随机生成的坐标
+                    if (courier.getLatitude() == null || courier.getLongitude() == null) {
+                        // 随机生成在成都市中心附近的坐标
+                        double latOffset = (Math.random() - 0.5) * 0.1; // 约±5公里范围
+                        double lngOffset = (Math.random() - 0.5) * 0.1;
+                        
+                        courier.setLatitude(baseLat + latOffset);
+                        courier.setLongitude(baseLng + lngOffset);
+                    }
                 }
                 
                 return couriers;
             }
+            
+            // 如果数据库查询结果为空，返回空列表
+            return new ArrayList<>();
         } catch (Exception e) {
-            logger.error("从数据库获取快递员失败，使用模拟数据", e);
+            logger.error("从数据库获取快递员失败", e);
+            // 如果数据库查询失败，返回空列表
+            return new ArrayList<>();
         }
-        
-        // 如果数据库查询失败或无数据，返回模拟数据
-        return createMockCouriers(5);
     }
 
     /**
@@ -590,5 +534,368 @@ public class CourierServiceImpl implements CourierService {
         
         // 计算距离
         return R * c;
+    }
+
+    @Override
+    public List<Map<String, Object>> searchCouriers(String keyword, Integer limit) {
+        List<Courier> couriers = courierMapper.searchCouriers(keyword, limit);
+        
+        // 转换为Map列表
+        List<Map<String, Object>> resultList = new ArrayList<>();
+        for (Courier courier : couriers) {
+            Map<String, Object> map = new HashMap<>();
+            
+            // 获取用户信息
+            User user = userMapper.selectById(courier.getUserId());
+            
+            map.put("id", courier.getId());
+            map.put("userId", courier.getUserId());
+            map.put("name", user != null ? (user.getRealName() != null ? user.getRealName() : user.getNickname()) : "未知快递员");
+            map.put("phone", user != null ? user.getPhone() : "");
+            map.put("avatar", user != null ? user.getAvatar() : "");
+            map.put("serviceArea", courier.getServiceArea());
+            map.put("serviceStatus", courier.getServiceStatus());
+            map.put("serviceStatusText", courier.getServiceStatus() == 1 ? "接单中" : "休息中");
+            map.put("rating", courier.getRating());
+            map.put("deliveryCount", courier.getCompletedOrders());
+            map.put("company", "乡递通快递"); // 可根据实际情况从关联表查询
+            
+            resultList.add(map);
+        }
+        
+        return resultList;
+    }
+
+    /**
+     * 管理员功能：获取快递员列表
+     */
+    @Override
+    public Map<String, Object> getCouriersWithPagination(Integer page, Integer pageSize, String keyword, Integer status, Double rating) {
+        logger.info("分页查询快递员列表: page={}, pageSize={}, keyword={}, status={}, rating={}", 
+                page, pageSize, keyword, status, rating);
+                
+        // 构建查询条件
+        LambdaQueryWrapper<Courier> queryWrapper = new LambdaQueryWrapper<>();
+        
+        // 如果有关键字，查询相关字段
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            // 查询用户表中匹配的用户ID
+            List<Long> userIds = userMapper.findUserIdsByKeyword(keyword);
+            
+            // 如果找到匹配的用户，查询这些用户ID的快递员
+            if (!userIds.isEmpty()) {
+                queryWrapper.in(Courier::getUserId, userIds);
+            } else {
+                // 没找到匹配的用户，返回空结果
+                Map<String, Object> emptyResult = new HashMap<>();
+                emptyResult.put("total", 0);
+                emptyResult.put("list", new ArrayList<>());
+                return emptyResult;
+            }
+        }
+        
+        // 按状态筛选
+        if (status != null) {
+            queryWrapper.eq(Courier::getStatus, status);
+        }
+        
+        // 按评分筛选
+        if (rating != null && rating > 0) {
+            queryWrapper.ge(Courier::getRating, new BigDecimal(rating.toString()));
+        }
+        
+        // 创建分页对象
+        Page<Courier> courierPage = new Page<>(page, pageSize);
+        
+        // 执行查询
+        IPage<Courier> courierIPage = courierMapper.selectPage(courierPage, queryWrapper);
+        
+        // 转换为前端需要的格式
+        List<Map<String, Object>> resultList = new ArrayList<>();
+        for (Courier courier : courierIPage.getRecords()) {
+            // 查询对应的用户信息
+            User user = userMapper.selectById(courier.getUserId());
+            if (user == null) continue;
+            
+            Map<String, Object> courierMap = new HashMap<>();
+            courierMap.put("id", courier.getId());
+            courierMap.put("phone", user.getPhone());
+            courierMap.put("name", user.getRealName() != null ? user.getRealName() : user.getNickname());
+            courierMap.put("avatar", user.getAvatar());
+            courierMap.put("idCard", courier.getIdCardFront()); // 使用idCardFront字段代替idCard
+            courierMap.put("workNo", "WK" + courier.getId()); // 使用ID生成工号
+            courierMap.put("serviceArea", courier.getServiceArea());
+            courierMap.put("status", courier.getStatus());
+            courierMap.put("rating", courier.getRating());
+            courierMap.put("deliveryCount", courier.getCompletedOrders());
+            courierMap.put("registerTime", courier.getCreatedAt());
+            
+            resultList.add(courierMap);
+        }
+        
+        // 构建返回结果
+        Map<String, Object> result = new HashMap<>();
+        result.put("total", courierIPage.getTotal());
+        result.put("list", resultList);
+        
+        return result;
+    }
+    
+    /**
+     * 管理员功能：根据ID查询快递员
+     */
+    @Override
+    public Courier findById(Long id) {
+        logger.info("根据ID查询快递员: id={}", id);
+        
+        if (id == null) {
+            logger.warn("快递员ID为空");
+            return null;
+        }
+        
+        try {
+            return courierMapper.selectById(id);
+        } catch (Exception e) {
+            logger.error("查询快递员失败: id={}", id, e);
+            return null;
+        }
+    }
+    
+    /**
+     * 管理员功能：创建快递员(使用DTO)
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Courier createCourierWithDTO(CourierDTO courierDTO) {
+        logger.info("使用DTO创建快递员: {}", courierDTO);
+        
+        try {
+            // 检查手机号是否已注册
+            User existUser = findUserByPhone(courierDTO.getPhone());
+            Long userId;
+            
+            if (existUser == null) {
+                // 创建新用户
+                User user = new User();
+                user.setPhone(courierDTO.getPhone());
+                user.setPassword(courierDTO.getPassword());  // 应该是加密的密码
+                user.setNickname(courierDTO.getName());
+                user.setRealName(courierDTO.getName());
+                user.setUserType(1);  // 设置为快递员
+                user.setStatus(0);    // 正常状态
+                user.setCreatedAt(LocalDateTime.now());
+                user.setUpdatedAt(LocalDateTime.now());
+                
+                userMapper.insert(user);
+                userId = user.getId();
+            } else {
+                // 使用现有用户
+                userId = existUser.getId();
+                
+                // 更新用户类型为快递员
+                existUser.setUserType(1);
+                userMapper.updateById(existUser);
+            }
+            
+            // 创建快递员实体
+            Courier courier = new Courier();
+            courier.setUserId(userId);
+            courier.setStatus(courierDTO.getStatus() != null ? courierDTO.getStatus() : 0);
+            courier.setServiceArea(courierDTO.getServiceArea());
+            courier.setRating(new BigDecimal("5.0"));  // 默认评分为5
+            courier.setBalance(new BigDecimal("0"));   // 默认余额为0
+            courier.setCompletedOrders(0);  // 默认完成订单数为0
+            courier.setServiceStatus(0);    // 默认休息中
+            courier.setAuditStatus(1);      // 默认审核通过
+            courier.setCreatedAt(LocalDateTime.now());
+            courier.setUpdatedAt(LocalDateTime.now());
+            
+            // 保存快递员
+            courierMapper.insert(courier);
+            
+            return courier;
+        } catch (Exception e) {
+            logger.error("创建快递员失败", e);
+            throw new RuntimeException("创建快递员失败: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * 管理员功能：更新快递员(使用DTO)
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Courier updateCourierWithDTO(CourierDTO courierDTO) {
+        logger.info("使用DTO更新快递员: {}", courierDTO);
+        
+        try {
+            // 检查快递员是否存在
+            Courier existCourier = courierMapper.selectById(courierDTO.getId());
+            if (existCourier == null) {
+                throw new IllegalArgumentException("快递员不存在: id=" + courierDTO.getId());
+            }
+            
+            // 更新快递员信息
+            existCourier.setServiceArea(courierDTO.getServiceArea());
+            existCourier.setStatus(courierDTO.getStatus());
+            existCourier.setUpdatedAt(LocalDateTime.now());
+            
+            courierMapper.updateById(existCourier);
+            
+            // 如果需要更新用户名称，同时更新用户表
+            if (courierDTO.getName() != null) {
+                User user = userMapper.selectById(existCourier.getUserId());
+                if (user != null) {
+                    user.setRealName(courierDTO.getName());
+                    userMapper.updateById(user);
+                }
+            }
+            
+            return existCourier;
+        } catch (Exception e) {
+            logger.error("更新快递员失败", e);
+            throw new RuntimeException("更新快递员失败: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * 根据手机号查找用户
+     */
+    private User findUserByPhone(String phone) {
+        if (phone == null || phone.isEmpty()) {
+            return null;
+        }
+        
+        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(User::getPhone, phone);
+        return userMapper.selectOne(queryWrapper);
+    }
+
+    /**
+     * 管理员功能：删除快递员
+     * @param id 快递员ID
+     * @return 是否成功
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean deleteCourier(Long id) {
+        logger.info("删除快递员: id={}", id);
+        
+        // 检查快递员是否存在
+        Courier courier = courierMapper.selectById(id);
+        if (courier == null) {
+            logger.warn("快递员不存在: id={}", id);
+            return false;
+        }
+        
+        try {
+            // 检查是否有关联的订单
+            int orderCount = courierMapper.countCourierOrders(id);
+            if (orderCount > 0) {
+                logger.warn("快递员已有关联订单，无法删除: id={}, orderCount={}", id, orderCount);
+                throw new IllegalArgumentException("该快递员已有关联订单，无法删除");
+            }
+            
+            // 删除快递员标签
+            LambdaQueryWrapper<CourierTag> tagQueryWrapper = new LambdaQueryWrapper<>();
+            tagQueryWrapper.eq(CourierTag::getCourierId, id);
+            courierTagMapper.delete(tagQueryWrapper);
+            
+            // 获取用户ID
+            Long userId = courier.getUserId();
+            
+            // 删除快递员
+            int result = courierMapper.deleteById(id);
+            
+            // 更新用户类型
+            if (userId != null) {
+                User user = userMapper.selectById(userId);
+                if (user != null) {
+                    user.setUserType(0); // 设置为普通用户
+                    userMapper.updateById(user);
+                }
+            }
+            
+            return result > 0;
+        } catch (Exception e) {
+            logger.error("删除快递员失败: id={}", id, e);
+            throw new RuntimeException("删除快递员失败: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 管理员功能：创建快递员
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Courier createCourier(Courier courier) {
+        logger.info("创建快递员: {}", courier);
+        
+        try {
+            // 检查用户是否存在
+            User user = userMapper.selectById(courier.getUserId());
+            if (user == null) {
+                throw new IllegalArgumentException("用户不存在: userId=" + courier.getUserId());
+            }
+            
+            // 设置基本信息
+            if (courier.getStatus() == null) {
+                courier.setStatus(0);  // 默认为正常状态
+            }
+            
+            if (courier.getRating() == null) {
+                courier.setRating(new BigDecimal("5.0"));  // 默认评分5.0
+            }
+            
+            if (courier.getCompletedOrders() == null) {
+                courier.setCompletedOrders(0);  // 默认完成订单数为0
+            }
+            
+            courier.setCreatedAt(LocalDateTime.now());
+            courier.setUpdatedAt(LocalDateTime.now());
+            
+            // 保存快递员信息
+            courierMapper.insert(courier);
+            
+            // 更新用户类型为快递员
+            if (user.getUserType() == null || user.getUserType() != 1) {
+                user.setUserType(1);  // 设置为快递员
+                userMapper.updateById(user);
+            }
+            
+            return courier;
+        } catch (Exception e) {
+            logger.error("创建快递员失败", e);
+            throw new RuntimeException("创建快递员失败: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * 管理员功能：更新快递员
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Courier updateCourier(Courier courier) {
+        logger.info("更新快递员: {}", courier);
+        
+        try {
+            // 检查快递员是否存在
+            Courier existCourier = courierMapper.selectById(courier.getId());
+            if (existCourier == null) {
+                throw new IllegalArgumentException("快递员不存在: id=" + courier.getId());
+            }
+            
+            // 保留创建时间
+            courier.setCreatedAt(existCourier.getCreatedAt());
+            courier.setUpdatedAt(LocalDateTime.now());
+            
+            // 更新快递员信息
+            courierMapper.updateById(courier);
+            
+            return courier;
+        } catch (Exception e) {
+            logger.error("更新快递员失败", e);
+            throw new RuntimeException("更新快递员失败: " + e.getMessage(), e);
+        }
     }
 } 

@@ -8,6 +8,7 @@ import com.ruralexpress.mapper.ExpressCompanyMapper;
 import com.ruralexpress.service.ExpressCompanyService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -37,7 +38,7 @@ public class ExpressCompanyServiceImpl implements ExpressCompanyService {
         }
         
         // 设置初始状态
-        company.setStatus(1); // 启用状态
+        company.setStatus(0); // 正常状态
         company.setCreatedAt(LocalDateTime.now());
         company.setUpdatedAt(LocalDateTime.now());
         
@@ -72,6 +73,33 @@ public class ExpressCompanyServiceImpl implements ExpressCompanyService {
     public IPage<ExpressCompany> getCompanyList(Page<ExpressCompany> page) {
         LambdaQueryWrapper<ExpressCompany> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.orderByDesc(ExpressCompany::getUpdatedAt);
+        return expressCompanyMapper.selectPage(page, queryWrapper);
+    }
+    
+    /**
+     * 分页查询快递公司列表(带搜索条件)
+     */
+    @Override
+    public IPage<ExpressCompany> getCompanyList(Page<ExpressCompany> page, String keyword, Integer status) {
+        LambdaQueryWrapper<ExpressCompany> queryWrapper = new LambdaQueryWrapper<>();
+        
+        // 添加关键词搜索条件
+        if (StringUtils.hasText(keyword)) {
+            queryWrapper.and(wrapper -> 
+                wrapper.like(ExpressCompany::getName, keyword)
+                    .or()
+                    .like(ExpressCompany::getCode, keyword)
+            );
+        }
+        
+        // 添加状态条件
+        if (status != null) {
+            queryWrapper.eq(ExpressCompany::getStatus, status);
+        }
+        
+        // 按更新时间倒序排序
+        queryWrapper.orderByDesc(ExpressCompany::getUpdatedAt);
+        
         return expressCompanyMapper.selectPage(page, queryWrapper);
     }
 
@@ -151,7 +179,7 @@ public class ExpressCompanyServiceImpl implements ExpressCompanyService {
     @Override
     public List<Map<String, Object>> getAllEnabledCompanies() {
         LambdaQueryWrapper<ExpressCompany> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ExpressCompany::getStatus, 1);
+        queryWrapper.eq(ExpressCompany::getStatus, 0);
         queryWrapper.orderByAsc(ExpressCompany::getName);
         
         List<ExpressCompany> companies = expressCompanyMapper.selectList(queryWrapper);
@@ -177,7 +205,7 @@ public class ExpressCompanyServiceImpl implements ExpressCompanyService {
     public List<Map<String, Object>> searchCompanies(String keyword, Integer limit) {
         // 构建搜索条件
         LambdaQueryWrapper<ExpressCompany> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ExpressCompany::getStatus, 1);
+        queryWrapper.eq(ExpressCompany::getStatus, 0);
         queryWrapper.and(wrapper -> 
             wrapper.like(ExpressCompany::getName, keyword)
                 .or()

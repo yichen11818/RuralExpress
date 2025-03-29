@@ -9,7 +9,7 @@ import request from '@/utils/request';
  * @returns {Promise} 登录结果
  */
 export function login(data) {
-  return request.post('/auth/login', data);
+  return request.post('/api/auth/login', data);
 }
 
 /**
@@ -18,7 +18,7 @@ export function login(data) {
  * @returns {Promise} 注册结果
  */
 export function register(data) {
-  return request.post('/user/register', data);
+  return request.post('/api/user/register', data);
 }
 
 /**
@@ -70,6 +70,7 @@ export function updateUserInfo(userInfo) {
   // 保存更新后的用户信息到本地存储
   uni.setStorageSync('userInfo', userInfo);
   
+  // todo 
   // 这里可以添加向服务器发送请求更新用户信息的代码
   // 例如:
   // return request.put('/user/profile', userInfo);

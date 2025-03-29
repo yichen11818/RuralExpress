@@ -23,7 +23,13 @@
     "pages/help/help",
     "pages/feedback/feedback",
     "pages/about/about",
-    "pages/search/index"
+    "pages/search/index",
+    "pages/admin/users/index",
+    "pages/admin/couriers/index",
+    "pages/admin/stations/index",
+    "pages/admin/orders/index",
+    "pages/admin/companies/index",
+    "pages/admin/system/index"
   ],
   "window": {
     "navigationBarTextStyle": "black",

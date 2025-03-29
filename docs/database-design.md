@@ -49,6 +49,13 @@
 | completed_orders | INT | 已完成订单数 | 默认0 |
 | id_card_front | VARCHAR(255) | 身份证正面照片URL | 非空 |
 | id_card_back | VARCHAR(255) | 身份证背面照片URL | 非空 |
+| work_start_time | VARCHAR(20) | 工作开始时间 | 可空 |
+| work_end_time | VARCHAR(20) | 工作结束时间 | 可空 |
+| vehicle | VARCHAR(50) | 交通工具 | 可空 |
+| introduction | VARCHAR(500) | 简介 | 可空 |
+| response_time | INT | 平均响应时间(分钟) | 可空 |
+| longitude | DECIMAL(10,6) | 经度 | 可空 |
+| latitude | DECIMAL(10,6) | 纬度 | 可空 |
 | created_at | DATETIME | 创建时间 | 非空 |
 | updated_at | DATETIME | 更新时间 | 非空 |
 
@@ -63,9 +70,13 @@
 | sender_name | VARCHAR(50) | 寄件人姓名 | 非空 |
 | sender_phone | VARCHAR(20) | 寄件人手机号 | 非空 |
 | sender_address | VARCHAR(255) | 寄件地址 | 非空 |
+| sender_longitude | DOUBLE | 寄件地址经度 | 可空 |
+| sender_latitude | DOUBLE | 寄件地址纬度 | 可空 |
 | receiver_name | VARCHAR(50) | 收件人姓名 | 非空 |
 | receiver_phone | VARCHAR(20) | 收件人手机号 | 非空 |
 | receiver_address | VARCHAR(255) | 收件地址 | 非空 |
+| receiver_longitude | DOUBLE | 收件地址经度 | 可空 |
+| receiver_latitude | DOUBLE | 收件地址纬度 | 可空 |
 | package_type | TINYINT(1) | 包裹类型(0-小件,1-中件,2-大件) | 非空 |
 | weight | DECIMAL(10,2) | 重量(kg) | 可空 |
 | price | DECIMAL(10,2) | 配送费 | 非空 |
@@ -117,4 +128,71 @@
 | config_value | VARCHAR(255) | 配置值 | 非空 |
 | description | VARCHAR(255) | 配置描述 | 可空 |
 | created_at | DATETIME | 创建时间 | 非空 |
-| updated_at | DATETIME | 更新时间 | 非空 | 
+| updated_at | DATETIME | 更新时间 | 非空 |
+
+## 服务点表 (t_station)
+
+| 字段名 | 类型 | 描述 | 约束 |
+|--------|------|------|------|
+| id | BIGINT(20) | 服务点ID | 主键, 自增 |
+| name | VARCHAR(100) | 服务点名称 | 非空 |
+| logo | VARCHAR(255) | 服务点LOGO | 可空 |
+| phone | VARCHAR(20) | 联系电话 | 非空 |
+| wechat | VARCHAR(50) | 微信联系号 | 可空 |
+| province | VARCHAR(50) | 省份 | 非空 |
+| city | VARCHAR(50) | 城市 | 非空 |
+| district | VARCHAR(50) | 区县 | 非空 |
+| address | VARCHAR(255) | 详细地址 | 非空 |
+| longitude | DECIMAL(10,6) | 经度 | 可空 |
+| latitude | DECIMAL(10,6) | 纬度 | 可空 |
+| business_start_time | VARCHAR(20) | 营业开始时间 | 可空 |
+| business_end_time | VARCHAR(20) | 营业结束时间 | 可空 |
+| business_hours | VARCHAR(50) | 营业时间 | 可空 |
+| rating | DECIMAL(2,1) | 评分 | 默认5.0 |
+| review_count | INT | 评价数量 | 默认0 |
+| status | TINYINT(1) | 状态(0-正常,1-暂停营业,2-永久关闭) | 默认0 |
+| manager_name | VARCHAR(50) | 管理员姓名 | 可空 |
+| manager_phone | VARCHAR(20) | 管理员电话 | 可空 |
+| created_at | DATETIME | 创建时间 | 非空 |
+| updated_at | DATETIME | 更新时间 | 非空 |
+
+## 服务点照片表 (t_station_photo)
+
+| 字段名 | 类型 | 描述 | 约束 |
+|--------|------|------|------|
+| id | BIGINT(20) | 照片ID | 主键, 自增 |
+| station_id | BIGINT(20) | 服务点ID | 外键, 非空 |
+| photo_url | VARCHAR(255) | 照片URL | 非空 |
+| sort | INT | 排序 | 非空 |
+| created_at | DATETIME | 创建时间 | 非空 |
+| updated_at | DATETIME | 更新时间 | 非空 |
+
+## 服务点支持的快递公司表 (t_station_company)
+
+| 字段名 | 类型 | 描述 | 约束 |
+|--------|------|------|------|
+| id | BIGINT(20) | ID | 主键, 自增 |
+| station_id | BIGINT(20) | 服务点ID | 外键, 非空 |
+| company_id | BIGINT(20) | 快递公司ID | 外键, 非空 |
+| created_at | DATETIME | 创建时间 | 非空 |
+| updated_at | DATETIME | 更新时间 | 非空 |
+
+## 搜索功能说明
+
+系统提供了多种搜索接口，支持通过关键词搜索不同类型的数据：
+
+### 包裹搜索 (searchPackages)
+
+通过包裹编号、运单号、寄件人信息、收件人信息等关键词搜索包裹。
+
+### 订单搜索 (searchOrders)
+
+通过订单编号(order_no)、寄件人信息(sender_name, sender_phone, sender_address)、收件人信息(receiver_name, receiver_phone, receiver_address)进行模糊搜索订单。
+
+### 快递员搜索 (searchCouriers)
+
+通过快递员关联的用户信息(nickname, real_name, phone)或服务区域(service_area)进行模糊搜索，按评分和完成订单数排序。
+
+### 服务点搜索 (searchStations)
+
+通过服务点名称(name)、位置信息(province, city, district, address)或联系电话(phone)进行模糊搜索，按评价数和评分排序。 
