@@ -11,6 +11,7 @@
     "pages/delivery/send",
     "pages/delivery/receive",
     "pages/order/track",
+    "pages/order/tracking-list",
     "pages/courier/recruitment",
     "pages/courier/list",
     "pages/courier/detail",

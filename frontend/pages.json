@@ -69,6 +69,13 @@
       }
     },
     {
+      "path": "pages/order/tracking-list",
+      "style": {
+        "navigationBarTitleText": "物流追踪列表",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
       "path": "pages/courier/recruitment",
       "style": {
         "navigationBarTitleText": "骑手招募"

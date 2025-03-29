@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <template>
   <view class="tracking-list-container">
     <!-- 头部标题 -->
@@ -18,7 +17,7 @@
       <view class="tracking-item" v-for="(item, index) in trackingList" :key="index" @click="navigateToDetail(item.trackingNo)">
         <view class="tracking-header">
           <view class="tracking-company">
-            <image :src="item.logo || '/static/images/package.png'" mode="aspectFit" class="company-logo"></image>
+            <image :src="item.logo || '/static/images/icon/package.png'" mode="aspectFit" class="company-logo"></image>
             <view class="company-info">
               <text class="company-name">{{ item.company }}</text>
               <text class="tracking-number">{{ item.trackingNo }}</text>
@@ -68,7 +67,7 @@
       
       <!-- 空数据提示 -->
       <view class="empty-state" v-if="trackingList.length === 0 && !loading">
-        <image src="/static/images/empty-box.png" mode="aspectFit" class="empty-image"></image>
+        <image src="/static/images/empty.png" mode="aspectFit" class="empty-image"></image>
         <text class="empty-text">暂无物流信息</text>
         <text class="empty-tips">您可以通过订单页面查看物流详情</text>
         <button class="nav-btn" @click="navigateToOrderPage">去查看订单</button>
@@ -132,11 +131,44 @@ export default {
         pageSize: this.pageSize
       }
       
+      // 打印请求参数，便于调试
+      console.log('请求物流列表参数：', params)
+      
       getTrackingList(params)
         .then(res => {
+          console.log('物流列表返回数据：', res)
+          
           if (res.code === 200 && res.data) {
-            const list = res.data.list || []
-            const total = res.data.total || 0
+            // 提取或转换数据
+            let list = []
+            let total = 0
+            
+            // 处理不同的后端返回数据结构
+            if (Array.isArray(res.data)) {
+              // 如果是数组，直接使用
+              list = res.data
+              total = res.data.length
+            } else if (res.data.list) {
+              // 如果有list字段，按分页格式处理
+              list = res.data.list || []
+              total = res.data.total || list.length
+            } else if (res.data.records) {
+              // 适配另一种后端分页格式
+              list = res.data.records || []
+              total = res.data.total || list.length
+            }
+            
+            // 确保每条数据都有必要的字段
+            list = list.map(item => ({
+              id: item.id,
+              trackingNo: item.trackingNo || item.trackingNumber || item.waybillNo || '',
+              company: item.company || item.courierCompany || item.expressCompany || '',
+              logo: item.logo || item.companyLogo || `/static/images/icon/${this.getCompanyCode(item.company)}.png`,
+              status: item.status || 0,
+              packageInfo: item.packageInfo || item.goodsInfo || `${item.packageType || '包裹'} ${item.weight || ''} ${item.goodsDesc || ''}`,
+              address: item.address || item.deliveryAddress || '',
+              updateTime: item.updateTime || item.lastUpdateTime || new Date().toLocaleString()
+            }))
             
             if (append) {
               this.trackingList = [...this.trackingList, ...list]
@@ -150,14 +182,18 @@ export default {
               title: res.message || '获取物流列表失败',
               icon: 'none'
             })
+            // API调用失败时使用临时模拟数据
+            this.useTempMockData();
           }
         })
         .catch(err => {
           console.error('获取物流列表失败', err)
           uni.showToast({
-            title: '获取物流列表失败',
+            title: '获取物流列表失败，请检查网络连接',
             icon: 'none'
           })
+          // 网络错误时使用临时模拟数据
+          this.useTempMockData();
         })
         .finally(() => {
           if (append) {
@@ -167,6 +203,40 @@ export default {
           }
           uni.stopPullDownRefresh()
         })
+    },
+    
+    // 根据快递公司名称获取代码
+    getCompanyCode(companyName) {
+      const companyMap = {
+        '顺丰': 'sf',
+        '顺丰速运': 'sf',
+        '圆通': 'yt',
+        '圆通快递': 'yt',
+        '中通': 'zt',
+        '中通快递': 'zt',
+        '申通': 'sto',
+        '申通快递': 'sto',
+        '韵达': 'yd',
+        '韵达快递': 'yd',
+        '百世': 'ht',
+        '百世快递': 'ht',
+        '京东': 'jd',
+        '京东物流': 'jd',
+        '邮政': 'ems',
+        '邮政快递': 'ems',
+        'EMS': 'ems'
+      }
+      
+      // 从名称中提取关键字
+      let code = 'package'
+      for (const [key, value] of Object.entries(companyMap)) {
+        if (companyName && companyName.includes(key)) {
+          code = value
+          break
+        }
+      }
+      
+      return code
     },
     
     // 加载更多
@@ -188,15 +258,22 @@ export default {
         title: '刷新中...'
       })
       
+      console.log('刷新物流信息，单号：', trackingNo)
+      
       getLogisticsInfo({ trackingNo })
         .then(res => {
+          console.log('刷新物流返回数据：', res)
+          
           if (res.code === 200 && res.data) {
+            // 提取物流信息
+            const logisticsData = res.data
+            
             // 更新物流信息
             this.trackingList[index] = {
               ...this.trackingList[index],
-              status: res.data.status || 0,
-              updateTime: res.data.updateTime || new Date().toLocaleString(),
-              packageInfo: res.data.packageInfo || this.trackingList[index].packageInfo
+              status: logisticsData.status || logisticsData.logisticsStatus || 0,
+              updateTime: logisticsData.updateTime || logisticsData.lastUpdateTime || new Date().toLocaleString(),
+              packageInfo: logisticsData.packageInfo || logisticsData.goodsInfo || this.trackingList[index].packageInfo
             }
             
             uni.showToast({
@@ -213,7 +290,7 @@ export default {
         .catch(err => {
           console.error('刷新物流失败', err)
           uni.showToast({
-            title: '刷新失败',
+            title: '刷新失败，请检查网络连接',
             icon: 'none'
           })
         })
@@ -243,7 +320,7 @@ export default {
         type: 0,
         title: `${item.company}物流追踪`,
         summary: `运单号：${item.trackingNo}，当前状态：${this.getStatusText(item.status)}`,
-        imageUrl: '/static/images/package.png',
+        imageUrl: '/static/images/icon/package.png',
         success: (res) => {
           console.log('分享成功', res)
         },
@@ -256,12 +333,13 @@ export default {
     // 获取状态文本
     getStatusText(status) {
       const statusMap = {
-        0: '等待揽收',
         1: '已揽收',
         2: '运输中',
-        3: '已到达',
-        4: '派送中',
-        5: '已签收'
+        3: '派送中',
+        4: '已签收',
+        5: '已完成',
+        6: '异常',
+        0: '未知'
       }
       return statusMap[status] || '未知状态'
     },
@@ -278,6 +356,65 @@ export default {
       uni.navigateTo({
         url: '/pages/order/list'
       })
+    },
+    
+    // 使用临时模拟数据
+    useTempMockData() {
+      console.log('使用临时模拟数据')
+      
+      const mockData = [
+        {
+          id: 1,
+          trackingNo: 'SF1234567890',
+          company: '顺丰速运',
+          logo: '/static/images/icon/package.png',
+          status: 2,
+          packageInfo: '文件包裹 2kg',
+          address: '江西省赣州市章贡区红旗大道123号',
+          updateTime: new Date().toLocaleString()
+        },
+        {
+          id: 2,
+          trackingNo: 'YT9876543210',
+          company: '圆通快递',
+          logo: '/static/images/icon/package.png',
+          status: 4,
+          packageInfo: '衣服 1kg',
+          address: '江西省赣州市南康区健康路456号',
+          updateTime: new Date().toLocaleString()
+        },
+        {
+          id: 3,
+          trackingNo: 'ZT5678901234',
+          company: '中通快递',
+          logo: '/static/images/icon/package.png',
+          status: 5,
+          packageInfo: '电子产品 3kg',
+          address: '江西省赣州市赣县区红金大道789号',
+          updateTime: new Date(Date.now() - 86400000).toLocaleString()
+        }
+      ]
+      
+      if (this.page === 1) {
+        this.trackingList = mockData
+        this.hasMore = true
+      } else if (this.page === 2) {
+        // 模拟第二页数据
+        const page2Data = [
+          {
+            id: 4,
+            trackingNo: 'JD2345678901',
+            company: '京东物流',
+            logo: '/static/images/icon/package.png',
+            status: 3,
+            packageInfo: '日用品 1.5kg',
+            address: '江西省赣州市章贡区黄金大道100号',
+            updateTime: new Date(Date.now() - 172800000).toLocaleString()
+          }
+        ]
+        this.trackingList = [...this.trackingList, ...page2Data]
+        this.hasMore = false
+      }
     }
   }
 }

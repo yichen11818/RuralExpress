@@ -14,4 +14,14 @@ public interface LogisticsService {
      * @return 物流信息
      */
     Map<String, Object> getLogisticsInfo(String trackingNo);
+    
+    /**
+     * 获取用户的物流追踪列表
+     * 
+     * @param userId 用户ID
+     * @param page 页码
+     * @param pageSize 每页大小
+     * @return 物流追踪列表
+     */
+    Map<String, Object> getTrackingList(Long userId, Integer page, Integer pageSize);
 } 

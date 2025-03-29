@@ -15,6 +15,7 @@ if (!Math) {
   "./pages/delivery/send.js";
   "./pages/delivery/receive.js";
   "./pages/order/track.js";
+  "./pages/order/tracking-list.js";
   "./pages/courier/recruitment.js";
   "./pages/courier/list.js";
   "./pages/courier/detail.js";
