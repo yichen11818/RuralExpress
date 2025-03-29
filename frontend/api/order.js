@@ -192,4 +192,4 @@ export function getLogisticsInfo(params) {
  */
 export function getTrackingList(params = {}) {
   return request.get('/api/order/tracking/list', { params });
-} 
+}

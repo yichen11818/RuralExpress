@@ -1,5 +1,6 @@
 /**
  * 网络请求工具
+ * !!!! 非必要请勿修改  前端请改为 /api/ 同时注意后端控制器 已带/api/ 无需添加
  */
 import { isLoggedIn } from './auth.js';
 
