@@ -289,7 +289,8 @@ const _sfc_main = {
       api_order.getTrackingList().then((res) => {
         console.log("物流追踪列表响应:", res);
         if (res && res.code === 200 && res.data) {
-          this.trackingList = (res.data || []).slice(0, 3).map((item) => {
+          const trackingData = res.data.list || [];
+          this.trackingList = trackingData.slice(0, 3).map((item) => {
             return {
               trackingNo: item.trackingNo,
               company: item.companyName || "未知快递公司",

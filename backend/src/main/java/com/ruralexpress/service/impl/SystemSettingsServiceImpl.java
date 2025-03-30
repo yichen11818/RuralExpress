@@ -3,8 +3,8 @@ package com.ruralexpress.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ruralexpress.entity.SystemSetting;
-import com.ruralexpress.mapper.SystemSettingMapper;
+import com.ruralexpress.entity.SystemSettings;
+import com.ruralexpress.mapper.SystemSettingsMapper;
 import com.ruralexpress.service.SystemSettingsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +24,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SystemSettingsServiceImpl implements SystemSettingsService {
 
-    private final SystemSettingMapper systemSettingMapper;
+    private final SystemSettingsMapper systemSettingsMapper;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -32,11 +32,11 @@ public class SystemSettingsServiceImpl implements SystemSettingsService {
         log.info("获取所有系统设置");
         
         // 查询所有系统设置
-        List<SystemSetting> settings = systemSettingMapper.selectList(null);
+        List<SystemSettings> settings = systemSettingsMapper.selectList(null);
         
         // 转换为Map
         Map<String, Object> result = new HashMap<>();
-        for (SystemSetting setting : settings) {
+        for (SystemSettings setting : settings) {
             result.put(setting.getSettingKey(), deserializeValue(setting.getSettingValue()));
         }
         
@@ -48,10 +48,10 @@ public class SystemSettingsServiceImpl implements SystemSettingsService {
         log.info("获取系统设置: key={}", key);
         
         // 查询系统设置
-        LambdaQueryWrapper<SystemSetting> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(SystemSetting::getSettingKey, key);
+        LambdaQueryWrapper<SystemSettings> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SystemSettings::getSettingKey, key);
         
-        SystemSetting setting = systemSettingMapper.selectOne(queryWrapper);
+        SystemSettings setting = systemSettingsMapper.selectOne(queryWrapper);
         if (setting == null) {
             log.warn("系统设置不存在: key={}", key);
             return null;
@@ -90,32 +90,32 @@ public class SystemSettingsServiceImpl implements SystemSettingsService {
         String serializedValue = serializeValue(value);
         
         // 查询是否存在
-        LambdaQueryWrapper<SystemSetting> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(SystemSetting::getSettingKey, key);
+        LambdaQueryWrapper<SystemSettings> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SystemSettings::getSettingKey, key);
         
-        SystemSetting existingSetting = systemSettingMapper.selectOne(queryWrapper);
+        SystemSettings existingSetting = systemSettingsMapper.selectOne(queryWrapper);
         LocalDateTime now = LocalDateTime.now();
         
         if (existingSetting == null) {
             // 不存在，创建新的设置
             log.info("创建新的系统设置: key={}", key);
             
-            SystemSetting setting = new SystemSetting();
+            SystemSettings setting = new SystemSettings();
             setting.setSettingKey(key);
             setting.setSettingValue(serializedValue);
             setting.setDescription(key);
-            setting.setCreateTime(now);
-            setting.setUpdateTime(now);
+            setting.setCreatedAt(now);
+            setting.setUpdatedAt(now);
             
-            systemSettingMapper.insert(setting);
+            systemSettingsMapper.insert(setting);
         } else {
             // 存在，更新设置
             log.info("更新系统设置: key={}", key);
             
             existingSetting.setSettingValue(serializedValue);
-            existingSetting.setUpdateTime(now);
+            existingSetting.setUpdatedAt(now);
             
-            systemSettingMapper.updateById(existingSetting);
+            systemSettingsMapper.updateById(existingSetting);
         }
     }
 
@@ -125,17 +125,17 @@ public class SystemSettingsServiceImpl implements SystemSettingsService {
         log.info("删除系统设置: key={}", key);
         
         // 查询是否存在
-        LambdaQueryWrapper<SystemSetting> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(SystemSetting::getSettingKey, key);
+        LambdaQueryWrapper<SystemSettings> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SystemSettings::getSettingKey, key);
         
-        SystemSetting existingSetting = systemSettingMapper.selectOne(queryWrapper);
+        SystemSettings existingSetting = systemSettingsMapper.selectOne(queryWrapper);
         if (existingSetting == null) {
             log.warn("系统设置不存在: key={}", key);
             return false;
         }
         
         // 删除设置
-        systemSettingMapper.deleteById(existingSetting.getId());
+        systemSettingsMapper.deleteById(existingSetting.getId());
         
         return true;
     }

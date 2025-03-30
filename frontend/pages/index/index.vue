@@ -621,8 +621,10 @@ export default {
         .then(res => {
           console.log('物流追踪列表响应:', res);
           if (res && res.code === 200 && res.data) {
+            // 修复：正确访问data.list数组
+            const trackingData = res.data.list || [];
             // 只显示最近的3个物流信息
-            this.trackingList = (res.data || []).slice(0, 3).map(item => {
+            this.trackingList = trackingData.slice(0, 3).map(item => {
               return {
                 trackingNo: item.trackingNo,
                 company: item.companyName || '未知快递公司',

@@ -81,6 +81,16 @@
       <view class="submit-btn-wrapper">
         <button class="submit-btn" @click="saveSettings">保存设置</button>
       </view>
+      
+      <!-- 仅在开发环境显示的调试区域 -->
+      <view class="debug-area">
+        <view class="debug-title">调试区域</view>
+        <view class="debug-buttons">
+          <button class="debug-btn" @click="loadSettings">重新加载</button>
+          <button class="debug-btn" @click="checkConnection">检查网络</button>
+          <button class="debug-btn" @click="checkRequestStatus">检查请求</button>
+        </view>
+      </view>
     </view>
     
     <view class="loading-wrapper" v-else>
@@ -112,67 +122,110 @@ export default {
   },
   
   onLoad() {
+    console.log('系统设置页面加载 - onLoad');
     this.loadSettings();
   },
   
   methods: {
     // 加载系统设置
     loadSettings() {
+      console.log('开始加载系统设置');
       this.loading = true;
       
+      // 获取完整请求URL，帮助排查问题
+      const requestUrl = 'http://localhost:8080/api/admin/system/settings';
+      console.log('发送请求: URL=', requestUrl);
+      
       uni.request({
-        url: '/api/admin/system/settings',
+        url: requestUrl,
         method: 'GET',
+        header: {
+          'Content-Type': 'application/json',
+          'Authorization': uni.getStorageSync('token') ? `Bearer ${uni.getStorageSync('token')}` : ''
+        },
         success: (res) => {
+          console.log('请求成功，响应数据:', res);
           this.loading = false;
-          if (res.data.code === 200) {
+          
+          if (res.data && res.data.code === 200) {
+            console.log('成功获取系统设置数据:', res.data.data);
             this.systemSettings = { ...this.systemSettings, ...res.data.data };
+            console.log('合并后的系统设置数据:', this.systemSettings);
           } else {
+            console.error('接口返回错误:', res.data);
             uni.showToast({
               title: res.data.message || '获取系统设置失败',
               icon: 'none'
             });
           }
         },
-        fail: () => {
+        fail: (err) => {
+          console.error('请求失败:', err);
           this.loading = false;
           uni.showToast({
             title: '网络错误，请稍后再试',
             icon: 'none'
           });
+          
+          // 显示更多错误信息
+          if (err.errMsg) {
+            console.error('错误信息:', err.errMsg);
+          }
+        },
+        complete: () => {
+          console.log('请求完成，loading状态:', this.loading);
         }
       });
     },
     
     // 保存系统设置
     saveSettings() {
+      console.log('开始保存系统设置:', this.systemSettings);
+      
       uni.showLoading({
         title: '保存中...'
       });
       
+      // 获取完整请求URL
+      const requestUrl = 'http://localhost:8080/api/admin/system/settings';
+      console.log('发送保存请求: URL=', requestUrl);
+      
       uni.request({
-        url: '/api/admin/system/settings',
+        url: requestUrl,
         method: 'POST',
         data: this.systemSettings,
+        header: {
+          'Content-Type': 'application/json',
+          'Authorization': uni.getStorageSync('token') ? `Bearer ${uni.getStorageSync('token')}` : ''
+        },
         success: (res) => {
+          console.log('保存请求响应:', res);
           uni.hideLoading();
-          if (res.data.code === 200) {
+          
+          if (res.data && res.data.code === 200) {
+            console.log('保存成功');
             uni.showToast({
               title: '保存成功'
             });
           } else {
+            console.error('保存失败:', res.data);
             uni.showToast({
               title: res.data.message || '保存失败',
               icon: 'none'
             });
           }
         },
-        fail: () => {
+        fail: (err) => {
+          console.error('保存请求失败:', err);
           uni.hideLoading();
           uni.showToast({
             title: '网络错误，请稍后再试',
             icon: 'none'
           });
+          
+          if (err.errMsg) {
+            console.error('错误信息:', err.errMsg);
+          }
         }
       });
     },
@@ -192,6 +245,9 @@ export default {
             url: '/api/upload',
             filePath: tempFilePaths[0],
             name: 'file',
+            header: {
+              'Authorization': uni.getStorageSync('token') ? `Bearer ${uni.getStorageSync('token')}` : ''
+            },
             success: (uploadFileRes) => {
               uni.hideLoading();
               try {
@@ -227,6 +283,39 @@ export default {
     previewImage(url) {
       uni.previewImage({
         urls: [url]
+      });
+    },
+    
+    // 调试函数 - 检查网络连接
+    checkConnection() {
+      console.log('检查网络连接...');
+      uni.getNetworkType({
+        success: (res) => {
+          console.log('当前网络类型:', res.networkType);
+        }
+      });
+    },
+    
+    // 调试函数 - 检查请求状态
+    checkRequestStatus() {
+      console.log('请求状态检查...');
+      
+      const testUrl = 'http://localhost:8080/api/admin/system/settings';
+      console.log('测试请求URL:', testUrl);
+      
+      uni.request({
+        url: testUrl,
+        method: 'GET',
+        header: {
+          'Content-Type': 'application/json',
+          'Authorization': uni.getStorageSync('token') ? `Bearer ${uni.getStorageSync('token')}` : ''
+        },
+        success: (res) => {
+          console.log('测试请求成功:', res);
+        },
+        fail: (err) => {
+          console.error('测试请求失败:', err);
+        }
       });
     }
   }
@@ -373,5 +462,39 @@ export default {
   font-size: 28rpx;
   color: #999;
   margin-top: 20rpx;
+}
+
+.debug-area {
+  margin-top: 20rpx;
+  padding: 20rpx;
+  background-color: #fff;
+  border-radius: 12rpx;
+}
+
+.debug-title {
+  font-size: 30rpx;
+  font-weight: bold;
+  color: #333;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #f5f5f5;
+  margin-bottom: 20rpx;
+}
+
+.debug-buttons {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.debug-btn {
+  width: 30%;
+  height: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #007AFF;
+  color: #fff;
+  font-size: 30rpx;
+  border-radius: 40rpx;
 }
 </style> 

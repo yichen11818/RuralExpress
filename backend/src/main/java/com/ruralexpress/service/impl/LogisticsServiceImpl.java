@@ -180,10 +180,10 @@ public class LogisticsServiceImpl implements LogisticsService {
                 logger.error("SQL执行异常: {}", e.getMessage(), e);
             }
             
-            // 确保总是在开发环境中返回模拟数据
-            logger.info("生成模拟物流追踪数据用于测试");
-            trackingList = generateMockTrackingData();
-            logger.info("生成了{}条模拟数据", trackingList.size());
+            // 移除模拟数据的使用，直接使用数据库查询结果
+            if (trackingList.isEmpty()) {
+                logger.warn("未从数据库获取到物流数据，返回空列表");
+            }
             
             result.put("list", trackingList);
             result.put("total", trackingList.size());
@@ -195,13 +195,12 @@ public class LogisticsServiceImpl implements LogisticsService {
             
         } catch (Exception e) {
             logger.error("获取物流追踪列表失败", e);
-            // 异常情况下也返回模拟数据
-            logger.info("异常情况下使用模拟数据");
-            trackingList = generateMockTrackingData();
-            result.put("list", trackingList);
-            result.put("total", trackingList.size());
+            // 处理异常情况，但不再使用模拟数据
+            result.put("list", new ArrayList<>());
+            result.put("total", 0);
             result.put("page", page);
             result.put("pageSize", pageSize);
+            logger.warn("由于异常，返回空列表");
         }
         
         return result;
@@ -281,55 +280,6 @@ public class LogisticsServiceImpl implements LogisticsService {
         }
         
         return traces;
-    }
-    
-    /**
-     * 生成模拟的物流追踪列表数据 (仅用于开发测试)
-     */
-    private List<Map<String, Object>> generateMockTrackingData() {
-        List<Map<String, Object>> mockList = new ArrayList<>();
-        
-        // 顺丰速运
-        Map<String, Object> tracking1 = new HashMap<>();
-        tracking1.put("id", 1);
-        tracking1.put("trackingNo", "SF1234567890");
-        tracking1.put("company", "顺丰速运");
-        tracking1.put("logo", "/static/images/icon/sf.png");
-        tracking1.put("status", 2);
-        tracking1.put("packageInfo", "文件包裹 2kg");
-        tracking1.put("address", "江西省赣州市章贡区红旗大道123号");
-        tracking1.put("updateTime", formatDate(new Date()));
-        mockList.add(tracking1);
-        
-        // 圆通快递
-        Map<String, Object> tracking2 = new HashMap<>();
-        tracking2.put("id", 2);
-        tracking2.put("trackingNo", "YT9876543210");
-        tracking2.put("company", "圆通快递");
-        tracking2.put("logo", "/static/images/icon/yt.png");
-        tracking2.put("status", 4);
-        tracking2.put("packageInfo", "衣服 1kg");
-        tracking2.put("address", "江西省赣州市南康区健康路456号");
-        tracking2.put("updateTime", formatDate(new Date()));
-        mockList.add(tracking2);
-        
-        // 中通快递
-        Map<String, Object> tracking3 = new HashMap<>();
-        tracking3.put("id", 3);
-        tracking3.put("trackingNo", "ZT5678901234");
-        tracking3.put("company", "中通快递");
-        tracking3.put("logo", "/static/images/icon/zt.png");
-        tracking3.put("status", 5);
-        tracking3.put("packageInfo", "电子产品 3kg");
-        tracking3.put("address", "江西省赣州市赣县区红金大道789号");
-        
-        // 一天前的时间
-        Calendar oneDayAgo = Calendar.getInstance();
-        oneDayAgo.add(Calendar.DAY_OF_MONTH, -1);
-        tracking3.put("updateTime", formatDate(oneDayAgo.getTime()));
-        mockList.add(tracking3);
-        
-        return mockList;
     }
     
     /**
