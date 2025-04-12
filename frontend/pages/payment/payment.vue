@@ -281,7 +281,8 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 90rpx;
+  height: 100rpx;
+  padding-top: 80rpx;
   background-color: #fff;
   border-bottom: 1rpx solid #f0f0f0;
 }
@@ -289,6 +290,11 @@ export default {
 .back-btn {
   position: absolute;
   left: 30rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60rpx;
+  height: 60rpx;
 }
 
 .title {
