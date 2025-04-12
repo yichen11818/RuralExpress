@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ruralexpress.mapper.NoticeMapper">
+    
+    <!-- 基础字段映射 - 临时映射，适配现有数据库结构 -->
+    <resultMap id="BaseResultMap" type="com.ruralexpress.entity.Notice">
+        <id column="id" property="id"/>
+        <result column="content" property="title"/> <!-- 临时使用content作为title -->
+        <result column="content" property="content"/>
+        <result column="link_url" property="source"/> <!-- 临时使用link_url作为source -->
+        <result column="sort_order" property="category"/> <!-- 临时使用sort_order存储类别信息 -->
+        <result column="is_active" property="isTop"/> <!-- 临时使用is_active表示是否置顶 -->
+        <result column="is_active" property="status"/> <!-- 临时使用is_active表示状态 -->
+        <result column="id" property="viewCount"/> <!-- 临时使用，实际不会更新浏览次数 -->
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="id" property="createBy"/> <!-- 临时使用id -->
+        <result column="id" property="updateBy"/> <!-- 临时使用id -->
+    </resultMap>
+    
+    <!-- 公共字段 - 使用现有的数据库字段 -->
+    <sql id="Base_Column_List">
+        id, content, link_url as source, sort_order as category, is_active, 
+        create_time, update_time
+    </sql>
+    
+    <!-- 根据ID查询公告 -->
+    <select id="selectById" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM notice
+        WHERE id = #{id}
+    </select>
+    
+    <!-- 获取公告列表 -->
+    <select id="selectList" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM notice
+        WHERE is_active = true
+        <if test="keyword != null and keyword != ''">
+            AND content LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        <if test="category != null and category != ''">
+            AND sort_order = #{category}
+        </if>
+        ORDER BY sort_order ASC, create_time DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+    
+    <!-- 获取公告总数 -->
+    <select id="selectCount" resultType="int">
+        SELECT COUNT(*)
+        FROM notice
+        WHERE is_active = true
+        <if test="keyword != null and keyword != ''">
+            AND content LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        <if test="category != null and category != ''">
+            AND sort_order = #{category}
+        </if>
+    </select>
+    
+    <!-- 获取相关公告 -->
+    <select id="selectRelated" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM notice
+        WHERE is_active = true
+        AND id != #{id}
+        ORDER BY create_time DESC
+        LIMIT #{limit}
+    </select>
+    
+    <!-- 获取最新公告 -->
+    <select id="selectLatest" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM notice
+        WHERE is_active = true
+        ORDER BY create_time DESC
+        LIMIT #{limit}
+    </select>
+    
+    <!-- 增加浏览次数 - 临时版本，不实际增加 -->
+    <update id="incrementViewCount" parameterType="java.lang.Long">
+        UPDATE notice
+        SET update_time = NOW()
+        WHERE id = #{id}
+    </update>
+    
+    <!-- 新增公告 - 适配现有表结构 -->
+    <insert id="insert" parameterType="com.ruralexpress.entity.Notice">
+        INSERT INTO notice (
+            content, link_url, sort_order, is_active,
+            create_time, update_time
+        )
+        VALUES (
+            #{content}, #{source}, 0, true,
+            #{createTime}, #{updateTime}
+        )
+    </insert>
+    
+    <!-- 更新公告 - 适配现有表结构 -->
+    <update id="update" parameterType="com.ruralexpress.entity.Notice">
+        UPDATE notice
+        SET
+            content = #{content},
+            link_url = #{source},
+            update_time = #{updateTime}
+        WHERE id = #{id}
+    </update>
+    
+    <!-- 删除公告 -->
+    <delete id="deleteById" parameterType="java.lang.Long">
+        DELETE FROM notice
+        WHERE id = #{id}
+    </delete>
+</mapper> 
