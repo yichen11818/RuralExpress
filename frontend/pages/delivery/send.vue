@@ -144,28 +144,36 @@
       </view>
       
       <view class="form-content">
-        <view class="service-item" @click="formData.isUrgent = !formData.isUrgent">
-          <view class="service-left">
-            <view class="service-title">加急配送</view>
-            <view class="service-desc">最快2小时送达，仅限同城</view>
+        <view class="service-item">
+          <view class="service-content" @tap="toggleUrgent">
+            <view class="service-left">
+              <view class="service-title">加急配送</view>
+              <view class="service-desc">最快2小时送达，仅限同城</view>
+            </view>
           </view>
-          <switch 
-            :checked="formData.isUrgent" 
-            color="#3cc51f"
-            @change="e => formData.isUrgent = e.detail.value"
-          />
+          <view class="switch-container" @tap.stop>
+            <switch 
+              :checked="formData.isUrgent" 
+              color="#3cc51f"
+              @change="e => formData.isUrgent = e.detail.value"
+            />
+          </view>
         </view>
         
-        <view class="service-item" @click="formData.needReceipt = !formData.needReceipt">
-          <view class="service-left">
-            <view class="service-title">签收回执</view>
-            <view class="service-desc">配送员将拍照回传签收凭证</view>
+        <view class="service-item">
+          <view class="service-content" @tap="toggleReceipt">
+            <view class="service-left">
+              <view class="service-title">签收回执</view>
+              <view class="service-desc">配送员将拍照回传签收凭证</view>
+            </view>
           </view>
-          <switch 
-            :checked="formData.needReceipt" 
-            color="#3cc51f"
-            @change="e => formData.needReceipt = e.detail.value"
-          />
+          <view class="switch-container" @tap.stop>
+            <switch 
+              :checked="formData.needReceipt" 
+              color="#3cc51f"
+              @change="e => formData.needReceipt = e.detail.value"
+            />
+          </view>
         </view>
       </view>
     </view>
@@ -599,6 +607,16 @@ export default {
           }
         }
       });
+    },
+    
+    // 切换加急配送状态
+    toggleUrgent() {
+      this.formData.isUrgent = !this.formData.isUrgent;
+    },
+    
+    // 切换签收回执状态
+    toggleReceipt() {
+      this.formData.needReceipt = !this.formData.needReceipt;
     }
   }
 };
@@ -685,6 +703,17 @@ export default {
   align-items: center;
   padding: 30rpx 0;
   border-bottom: 1rpx solid #f5f5f5;
+}
+
+.service-content {
+  flex: 1;
+  display: flex;
+}
+
+.switch-container {
+  width: 100rpx;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .service-item:last-child {

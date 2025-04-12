@@ -300,6 +300,14 @@ const _sfc_main = {
           }
         }
       });
+    },
+    // 切换加急配送状态
+    toggleUrgent() {
+      this.formData.isUrgent = !this.formData.isUrgent;
+    },
+    // 切换签收回执状态
+    toggleReceipt() {
+      this.formData.needReceipt = !this.formData.needReceipt;
     }
   }
 };
@@ -342,23 +350,27 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     x: common_vendor.o(($event) => $data.formData.insuranceValue = $event.detail.value),
     y: $data.formData.note,
     z: common_vendor.o(($event) => $data.formData.note = $event.detail.value),
-    A: $data.formData.isUrgent,
-    B: common_vendor.o((e) => $data.formData.isUrgent = e.detail.value),
-    C: common_vendor.o(($event) => $data.formData.isUrgent = !$data.formData.isUrgent),
-    D: $data.formData.needReceipt,
-    E: common_vendor.o((e) => $data.formData.needReceipt = e.detail.value),
-    F: common_vendor.o(($event) => $data.formData.needReceipt = !$data.formData.needReceipt),
-    G: common_vendor.t($options.calcDeliveryFee().toFixed(2)),
-    H: $data.formData.isUrgent
+    A: common_vendor.o((...args) => $options.toggleUrgent && $options.toggleUrgent(...args)),
+    B: $data.formData.isUrgent,
+    C: common_vendor.o((e) => $data.formData.isUrgent = e.detail.value),
+    D: common_vendor.o(() => {
+    }),
+    E: common_vendor.o((...args) => $options.toggleReceipt && $options.toggleReceipt(...args)),
+    F: $data.formData.needReceipt,
+    G: common_vendor.o((e) => $data.formData.needReceipt = e.detail.value),
+    H: common_vendor.o(() => {
+    }),
+    I: common_vendor.t($options.calcDeliveryFee().toFixed(2)),
+    J: $data.formData.isUrgent
   }, $data.formData.isUrgent ? {
-    I: common_vendor.t($data.urgentFee.toFixed(2))
+    K: common_vendor.t($data.urgentFee.toFixed(2))
   } : {}, {
-    J: $data.formData.insuranceValue > 0
+    L: $data.formData.insuranceValue > 0
   }, $data.formData.insuranceValue > 0 ? {
-    K: common_vendor.t($options.calcInsuranceFee().toFixed(2))
+    M: common_vendor.t($options.calcInsuranceFee().toFixed(2))
   } : {}, {
-    L: common_vendor.t($options.calcTotalFee().toFixed(2)),
-    M: common_vendor.f($data.paymentMethods, (item, index, i0) => {
+    N: common_vendor.t($options.calcTotalFee().toFixed(2)),
+    O: common_vendor.f($data.paymentMethods, (item, index, i0) => {
       return {
         a: item.icon,
         b: common_vendor.t(item.name),
@@ -367,9 +379,9 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         e: index
       };
     }),
-    N: common_vendor.o((...args) => $options.handlePaymentChange && $options.handlePaymentChange(...args)),
-    O: common_vendor.t($options.calcTotalFee().toFixed(2)),
-    P: common_vendor.o((...args) => $options.submitOrder && $options.submitOrder(...args))
+    P: common_vendor.o((...args) => $options.handlePaymentChange && $options.handlePaymentChange(...args)),
+    Q: common_vendor.t($options.calcTotalFee().toFixed(2)),
+    R: common_vendor.o((...args) => $options.submitOrder && $options.submitOrder(...args))
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);
