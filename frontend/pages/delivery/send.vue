@@ -187,7 +187,7 @@
       <view class="form-content">
         <view class="fee-item">
           <text>基础运费</text>
-          <text>¥{{ calcDeliveryFee().toFixed(2) }}</text>
+          <text>¥{{ calcPrice().toFixed(2) }}</text>
         </view>
         
         <view class="fee-item" v-if="formData.isUrgent">
@@ -415,7 +415,7 @@ export default {
     },
     
     // 计算配送费
-    calcDeliveryFee() {
+    calcPrice() {
       // 基础运费计算，根据重量梯度计算
       const weight = parseFloat(this.formData.weight) || 0;
       
@@ -437,7 +437,7 @@ export default {
     
     // 计算总费用
     calcTotalFee() {
-      let total = this.calcDeliveryFee();
+      let total = this.calcPrice();
       
       // 加急费
       if (this.formData.isUrgent) {
@@ -568,9 +568,10 @@ export default {
               isUrgent: this.formData.isUrgent,
               needReceipt: this.formData.needReceipt,
               paymentMethod: this.formData.paymentMethod,
-              deliveryFee: this.calcDeliveryFee(),
+              price: this.calcPrice(),
               insuranceFee: this.calcInsuranceFee(),
-              totalFee: this.calcTotalFee()
+              totalFee: this.calcTotalFee(),
+              userId: uni.getStorageSync('userId') || 1
             };
             
             // 调用创建订单API
@@ -579,16 +580,36 @@ export default {
                 if (res.code === 200 && res.data) {
                   uni.hideLoading();
                   
+                  // 输出订单响应信息
+                  console.log('订单创建成功，准备跳转支付页面:', res.data);
+                  
                   // 跳转到支付页面
                   uni.navigateTo({
                     url: `/pages/payment/payment?orderId=${res.data.id}&amount=${this.calcTotalFee().toFixed(2)}&method=${this.formData.paymentMethod}`,
                     success: (navRes) => {
+                      console.log('导航到支付页面成功');
                       // 传递订单信息
                       navRes.eventChannel.emit('orderData', {
                         ...res.data,
-                        deliveryFee: this.calcDeliveryFee(),
+                        price: this.calcPrice(),
                         insuranceFee: this.calcInsuranceFee(),
                         totalFee: this.calcTotalFee()
+                      });
+                    },
+                    fail: (err) => {
+                      console.error('导航到支付页面失败:', err);
+                      // 导航失败时显示提示并提供订单查看选项
+                      uni.showModal({
+                        title: '跳转失败',
+                        content: '订单已创建成功，但无法跳转到支付页面，您可以在订单列表中查看此订单。',
+                        confirmText: '查看订单',
+                        success: (modalRes) => {
+                          if (modalRes.confirm) {
+                            uni.navigateTo({
+                              url: '/pages/user/order'
+                            });
+                          }
+                        }
                       });
                     }
                   });

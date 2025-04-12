@@ -3,6 +3,7 @@
     "pages/index/index",
     "pages/login/login",
     "pages/user/user",
+    "pages/payment/payment",
     "pages/order/order",
     "pages/user/profile-setup",
     "pages/agreement/privacy",

@@ -142,7 +142,7 @@ const _sfc_main = {
       this.formData.paymentMethod = e.detail.value;
     },
     // 计算配送费
-    calcDeliveryFee() {
+    calcPrice() {
       const weight = parseFloat(this.formData.weight) || 0;
       if (weight <= 1) {
         return 15;
@@ -159,7 +159,7 @@ const _sfc_main = {
     },
     // 计算总费用
     calcTotalFee() {
-      let total = this.calcDeliveryFee();
+      let total = this.calcPrice();
       if (this.formData.isUrgent) {
         total += this.urgentFee;
       }
@@ -268,21 +268,39 @@ const _sfc_main = {
               isUrgent: this.formData.isUrgent,
               needReceipt: this.formData.needReceipt,
               paymentMethod: this.formData.paymentMethod,
-              deliveryFee: this.calcDeliveryFee(),
+              price: this.calcPrice(),
               insuranceFee: this.calcInsuranceFee(),
-              totalFee: this.calcTotalFee()
+              totalFee: this.calcTotalFee(),
+              userId: common_vendor.index.getStorageSync("userId") || 1
             };
             api_order.createOrder(orderData).then((res2) => {
               if (res2.code === 200 && res2.data) {
                 common_vendor.index.hideLoading();
+                console.log("订单创建成功，准备跳转支付页面:", res2.data);
                 common_vendor.index.navigateTo({
                   url: `/pages/payment/payment?orderId=${res2.data.id}&amount=${this.calcTotalFee().toFixed(2)}&method=${this.formData.paymentMethod}`,
                   success: (navRes) => {
+                    console.log("导航到支付页面成功");
                     navRes.eventChannel.emit("orderData", {
                       ...res2.data,
-                      deliveryFee: this.calcDeliveryFee(),
+                      price: this.calcPrice(),
                       insuranceFee: this.calcInsuranceFee(),
                       totalFee: this.calcTotalFee()
+                    });
+                  },
+                  fail: (err) => {
+                    console.error("导航到支付页面失败:", err);
+                    common_vendor.index.showModal({
+                      title: "跳转失败",
+                      content: "订单已创建成功，但无法跳转到支付页面，您可以在订单列表中查看此订单。",
+                      confirmText: "查看订单",
+                      success: (modalRes) => {
+                        if (modalRes.confirm) {
+                          common_vendor.index.navigateTo({
+                            url: "/pages/user/order"
+                          });
+                        }
+                      }
                     });
                   }
                 });
@@ -360,7 +378,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     G: common_vendor.o((e) => $data.formData.needReceipt = e.detail.value),
     H: common_vendor.o(() => {
     }),
-    I: common_vendor.t($options.calcDeliveryFee().toFixed(2)),
+    I: common_vendor.t($options.calcPrice().toFixed(2)),
     J: $data.formData.isUrgent
   }, $data.formData.isUrgent ? {
     K: common_vendor.t($data.urgentFee.toFixed(2))

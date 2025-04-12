@@ -98,6 +98,7 @@ const order = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.definePropert
 exports.cancelOrder = cancelOrder;
 exports.createOrder = createOrder;
 exports.getLogisticsInfo = getLogisticsInfo;
+exports.getOrderDetail = getOrderDetail;
 exports.getOrderStatusText = getOrderStatusText;
 exports.getTrackingList = getTrackingList;
 exports.getUserOrders = getUserOrders;

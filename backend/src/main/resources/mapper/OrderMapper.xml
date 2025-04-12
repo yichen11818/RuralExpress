@@ -7,7 +7,8 @@
         id, order_no, user_id, courier_id, sender_name, sender_phone, sender_address, 
         receiver_name, receiver_phone, receiver_address, package_type, weight, price, 
         status, expected_pickup_time, actual_pickup_time, expected_delivery_time, 
-        actual_delivery_time, remark, cancel_reason, created_at, updated_at
+        actual_delivery_time, remark, cancel_reason, sender_longitude, sender_latitude, 
+        receiver_longitude, receiver_latitude, created_at, updated_at
     </sql>
     
     <!-- 带表前缀的基础查询列 -->
@@ -16,7 +17,9 @@
         ${prefix}.sender_phone, ${prefix}.sender_address, ${prefix}.receiver_name, ${prefix}.receiver_phone, 
         ${prefix}.receiver_address, ${prefix}.package_type, ${prefix}.weight, ${prefix}.price, ${prefix}.status, 
         ${prefix}.expected_pickup_time, ${prefix}.actual_pickup_time, ${prefix}.expected_delivery_time, 
-        ${prefix}.actual_delivery_time, ${prefix}.remark, ${prefix}.cancel_reason, ${prefix}.created_at, ${prefix}.updated_at
+        ${prefix}.actual_delivery_time, ${prefix}.remark, ${prefix}.cancel_reason, ${prefix}.sender_longitude, 
+        ${prefix}.sender_latitude, ${prefix}.receiver_longitude, ${prefix}.receiver_latitude, 
+        ${prefix}.created_at, ${prefix}.updated_at
     </sql>
     
     <!-- 查询用户订单列表 -->

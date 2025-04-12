@@ -7,6 +7,7 @@ if (!Math) {
   "./pages/index/index.js";
   "./pages/login/login.js";
   "./pages/user/user.js";
+  "./pages/payment/payment.js";
   "./pages/order/order.js";
   "./pages/user/profile-setup.js";
   "./pages/agreement/privacy.js";
