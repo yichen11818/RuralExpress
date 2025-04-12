@@ -228,23 +228,9 @@ RuralExpress/
   - 404: 资源不存在
   - 500: 服务器错误
 
-## 常见问题指南
+## 常见问题
 
-### Q: 项目报错"X is not defined"
-A: 检查是否导入了对应的模块或组件。在Vue文件中，确保在script标签中使用import导入了需要的依赖。
-
-### Q: 微信登录无法完成
-A: 检查微信开发者工具是否正确配置了AppID，并且确保后端的微信登录接口配置了正确的AppID和AppSecret。
-
-### Q: 订单状态无法更新
-A: 检查订单状态流转是否符合业务规则，在OrderServiceImpl.java中有isValidStatusTransition方法定义了状态转换的有效性。
-
-### Q: 前端显示"Network Error"
-A: 可能是API地址配置错误或后端服务未启动。检查frontend/utils/config.js中的baseUrl配置是否正确。
-
-### Q: 快递员详情页获取不到名称
-A: 快递员姓名存储在用户表中，查询时需要关联用户表。检查SQL查询是否正确关联了两个表。
-
-### Q: 数据库查询报"Column 'xxx' is ambiguous"
-A: 在多表关联查询中，需要使用表别名前缀明确指定列所属表，例如使用`o.user_id`而非`user_id`。
-
+模拟支付：
+会创建支付记录
+返回模拟的支付参数
+提供支付状态查询

@@ -1,15 +1,15 @@
 /**
  * 支付相关API
  */
-import request from '@/utils/request';
+import { post, get, put } from '@/utils/request';
 
 /**
  * 订单支付
- * @param {Object} paymentParams 支付参数
+ * @param {Object} data 支付参数
  * @returns {Promise} 支付结果
  */
-export function payOrder(paymentParams) {
-  return request.post('/api/payment/pay', paymentParams);
+export function payOrder(data) {
+  return post('/api/payment/pay', data);
 }
 
 /**
@@ -17,8 +17,8 @@ export function payOrder(paymentParams) {
  * @param {Number} orderId 订单ID
  * @returns {Promise} 支付状态
  */
-export function queryPaymentStatus(orderId) {
-  return request.get(`/api/payment/status/${orderId}`);
+export function getPaymentStatus(orderId) {
+  return get(`/api/payment/status/${orderId}`);
 }
 
 /**
@@ -27,7 +27,7 @@ export function queryPaymentStatus(orderId) {
  * @returns {Promise} 取消结果
  */
 export function cancelPayment(orderId) {
-  return request.put(`/api/payment/cancel/${orderId}`);
+  return put(`/api/payment/cancel/${orderId}`);
 }
 
 /**
@@ -35,7 +35,7 @@ export function cancelPayment(orderId) {
  * @returns {Promise} 钱包信息
  */
 export function getUserWallet() {
-  return request.get('/api/payment/wallet');
+  return get('/api/payment/wallet');
 }
 
 /**
@@ -43,5 +43,5 @@ export function getUserWallet() {
  * @returns {Promise} 支付渠道列表
  */
 export function getPaymentChannels() {
-  return request.get('/api/payment/channels');
+  return get('/api/payment/channels');
 } 

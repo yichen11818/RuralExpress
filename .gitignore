@@ -1,8 +1,3 @@
-frontend/unpackage/*
-frontend/unpackage/dist/*
-frontend/unpackage/dist/dev/*
-frontend/unpackage/dist/dev/mp-weixin/*
-frontend/unpackage/dist/dev/mp-weixin/api/*
-frontend/unpackage/dist/dev/mp-weixin/app.js
-frontend/unpackage/dist/dev/mp-weixin/app.js
+/frontend/unpackage/
+
 
