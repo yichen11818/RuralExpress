@@ -1,1 +1,0 @@
-{"version":3,"file":"user.js","sources":["../../../../../../Program Files/HBuilderX/plugins/uniapp-cli-vite/uniPage:/cGFnZXMvYWdyZWVtZW50L3VzZXIudnVl"],"sourcesContent":["import MiniProgramPage from 'C:/Users/11818/Documents/RuralExpress/RuralExpress/frontend/pages/agreement/user.vue'\nwx.createPage(MiniProgramPage)"],"names":[],"mappings":";;;;;;;;;;;;;;;AACA,GAAG,WAAW,eAAe;"}
