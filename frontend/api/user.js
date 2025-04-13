@@ -14,7 +14,7 @@ export function getUserProfile() {
     return Promise.reject(new Error('用户未登录或无法获取用户ID'));
   }
   // 使用实际的数字ID
-  return request.get(`/api/user/${userInfo.id}`);
+  return request.get(`/user/${userInfo.id}`);
 }
 
 /**
@@ -29,7 +29,7 @@ export function updateUserProfile(data) {
     return Promise.reject(new Error('用户未登录或无法获取用户ID'));
   }
   // 使用实际的数字ID
-  return request.put(`/api/user/${userInfo.id}`, data);
+  return request.put(`/user/${userInfo.id}`, data);
 }
 
 /**
@@ -38,7 +38,7 @@ export function updateUserProfile(data) {
  * @returns {Promise} 用户信息
  */
 export function getUserById(id) {
-  return request.get(`/api/user/${id}`);
+  return request.get(`/user/${id}`);
 }
 
 /**
@@ -48,7 +48,7 @@ export function getUserById(id) {
  * @returns {Promise} 更新结果
  */
 export function updateUser(id, data) {
-  return request.put(`/api/user/${id}`, data);
+  return request.put(`/user/${id}`, data);
 }
 
 /**
@@ -58,7 +58,7 @@ export function updateUser(id, data) {
  * @returns {Promise} 认证结果
  */
 export function verifyUser(id, data) {
-  return request.post(`/api/user/${id}/verify`, data);
+  return request.post(`/user/${id}/verify`, data);
 }
 
 /**
@@ -66,7 +66,7 @@ export function verifyUser(id, data) {
  * @returns {Promise} 地址列表
  */
 export function getAddressList() {
-  return request.get('/api/addresses');
+  return request.get('/addresses');
 }
 
 /**
@@ -75,7 +75,7 @@ export function getAddressList() {
  * @returns {Promise} 地址详情
  */
 export function getAddressById(id) {
-  return request.get(`/api/addresses/${id}`);
+  return request.get(`/addresses/${id}`);
 }
 
 /**
@@ -83,7 +83,7 @@ export function getAddressById(id) {
  * @returns {Promise} 默认地址
  */
 export function getDefaultAddress() {
-  return request.get('/api/addresses/default');
+  return request.get('/addresses/default');
 }
 
 /**
@@ -92,7 +92,7 @@ export function getDefaultAddress() {
  * @returns {Promise} 添加后的地址
  */
 export function addAddress(data) {
-  return request.post('/api/addresses', data);
+  return request.post('/addresses', data);
 }
 
 /**
@@ -102,7 +102,7 @@ export function addAddress(data) {
  * @returns {Promise} 更新结果
  */
 export function updateAddress(id, data) {
-  return request.put(`/api/addresses/${id}`, data);
+  return request.put(`/addresses/${id}`, data);
 }
 
 /**
@@ -111,7 +111,7 @@ export function updateAddress(id, data) {
  * @returns {Promise} 删除结果
  */
 export function deleteAddress(id) {
-  return request.delete(`/api/addresses/${id}`);
+  return request.delete(`/addresses/${id}`);
 }
 
 /**
@@ -120,7 +120,7 @@ export function deleteAddress(id) {
  * @returns {Promise} 设置结果
  */
 export function setDefaultAddress(id) {
-  return request.put(`/api/addresses/${id}/default`);
+  return request.put(`/addresses/${id}/default`);
 }
 
 /**

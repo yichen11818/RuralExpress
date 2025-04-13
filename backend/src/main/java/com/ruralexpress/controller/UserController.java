@@ -117,7 +117,7 @@ public class UserController {
             
             if (result) {
                 log.info("用户{}密码修改成功", id);
-                return ApiResult.success(null, "密码修改成功");
+                return ApiResult.success("密码修改成功");
             } else {
                 log.warn("用户{}密码修改失败", id);
                 return ApiResult.error(500, "密码修改失败");
