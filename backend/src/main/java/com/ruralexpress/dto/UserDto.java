@@ -48,6 +48,18 @@ public class UserDto {
     private Integer gender;
     
     /**
+     * 生日
+     */
+    @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2}$", message = "生日格式不正确，应为yyyy-MM-dd")
+    private String birthday;
+    
+    /**
+     * 个性签名
+     */
+    @Size(max = 100, message = "个性签名不能超过100个字符")
+    private String bio;
+    
+    /**
      * 真实姓名
      */
     private String realName;

@@ -55,6 +55,15 @@ public interface UserService {
     boolean changePassword(Long userId, String oldPassword, String newPassword);
     
     /**
+     * 更换手机号
+     * @param userId 用户ID
+     * @param newPhone 新手机号
+     * @param verifyCode 验证码
+     * @return 是否更换成功
+     */
+    boolean changePhone(Long userId, String newPhone, String verifyCode);
+    
+    /**
      * 实名认证
      * @param id 用户ID
      * @param realName 真实姓名

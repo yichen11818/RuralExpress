@@ -8,6 +8,7 @@ import com.ruralexpress.entity.UserVerification;
 import com.ruralexpress.exception.BusinessException;
 import com.ruralexpress.mapper.UserMapper;
 import com.ruralexpress.mapper.UserVerificationMapper;
+import com.ruralexpress.service.SmsService;
 import com.ruralexpress.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,6 +49,9 @@ public class UserServiceImpl implements UserService {
     
     @Autowired
     private RestTemplate restTemplate;
+    
+    @Autowired
+    private SmsService smsService;
     
     @Override
     @Transactional
@@ -686,6 +690,60 @@ public class UserServiceImpl implements UserService {
         } catch (Exception e) {
             log.error("修改密码过程中发生错误: {}", e.getMessage(), e);
             throw new BusinessException("修改密码失败: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 更换手机号
+     */
+    @Override
+    @Transactional
+    public boolean changePhone(Long userId, String newPhone, String verifyCode) {
+        try {
+            log.info("开始处理用户{}的手机号更换", userId);
+            
+            // 查询用户
+            User user = this.findById(userId);
+            if (user == null) {
+                log.warn("更换手机号失败: 用户{}不存在", userId);
+                throw new BusinessException("用户不存在");
+            }
+            
+            // 检查新手机号是否已被使用
+            User existingUser = findByPhone(newPhone);
+            if (existingUser != null) {
+                log.warn("更换手机号失败: 手机号{}已被其他用户使用", newPhone);
+                throw new BusinessException("该手机号已被其他用户使用");
+            }
+            
+            // 验证验证码
+            boolean validCode = smsService.verifyCode(newPhone, verifyCode, "changePhone");
+            if (!validCode) {
+                log.warn("更换手机号失败: 用户{}的验证码错误", userId);
+                throw new BusinessException("验证码错误或已过期");
+            }
+            
+            // 保存旧手机号(可用于记录历史)
+            String oldPhone = user.getPhone();
+            
+            // 更新手机号
+            user.setPhone(newPhone);
+            user.setUpdatedAt(LocalDateTime.now());
+            
+            int result = userMapper.updateById(user);
+            
+            if (result > 0) {
+                log.info("用户{}手机号更换成功, 旧号码: {}, 新号码: {}", userId, oldPhone, newPhone);
+                return true;
+            } else {
+                log.warn("用户{}手机号更换失败: 数据库更新异常", userId);
+                throw new BusinessException("手机号更换失败");
+            }
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("更换手机号过程中发生错误: {}", e.getMessage(), e);
+            throw new BusinessException("更换手机号失败: " + e.getMessage());
         }
     }
 } 

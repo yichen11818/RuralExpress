@@ -46,6 +46,11 @@ public class User {
     private Integer gender;
     
     /**
+     * 个性签名
+     */
+    private String bio;
+    
+    /**
      * 真实姓名
      */
     private String realName;

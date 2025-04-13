@@ -13,7 +13,7 @@ export function getUserProfile() {
   if (!userInfo || !userInfo.id) {
     return Promise.reject(new Error('用户未登录或无法获取用户ID'));
   }
-  // 使用实际的数字ID
+  // 使用实际的数字ID，去掉/api前缀
   return request.get(`/user/${userInfo.id}`);
 }
 
@@ -146,4 +146,23 @@ export function changePassword(userId, oldPassword, newPassword) {
  */
 export function updatePassword(userId, data) {
   return request.post(`/user/${userId}/password`, data);
+}
+
+/**
+ * 发送手机号变更验证码
+ * @param {String} phone 手机号
+ * @returns {Promise} 发送结果
+ */
+export function sendPhoneVerifyCode(phone) {
+  return request.post(`/user/verifyCode/phone?phone=${encodeURIComponent(phone)}`);
+}
+
+/**
+ * 更换手机号
+ * @param {Number} userId 用户ID
+ * @param {Object} data 包含newPhone和verifyCode的对象
+ * @returns {Promise} 更换结果
+ */
+export function changePhone(userId, data) {
+  return request.post(`/user/${userId}/phone`, data);
 } 

@@ -1,9 +1,11 @@
 package com.ruralexpress.controller;
 
 import com.ruralexpress.dto.PasswordChangeDto;
+import com.ruralexpress.dto.PhoneChangeDto;
 import com.ruralexpress.dto.UserDto;
 import com.ruralexpress.entity.User;
 import com.ruralexpress.exception.BusinessException;
+import com.ruralexpress.service.SmsService;
 import com.ruralexpress.service.UserService;
 import com.ruralexpress.utils.ApiResult;
 import lombok.extern.slf4j.Slf4j;
@@ -11,6 +13,9 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * 用户控制器
@@ -22,6 +27,9 @@ public class UserController {
     
     @Autowired
     private UserService userService;
+    
+    @Autowired
+    private SmsService smsService;
     
     /**
      * 用户注册
@@ -130,6 +138,85 @@ public class UserController {
             // 未预期的异常，返回详细错误信息
             log.error("用户{}密码修改过程中发生未知异常: {}", id, e.getMessage(), e);
             return ApiResult.serverError("密码修改失败: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 发送手机号更换验证码
+     * @param phone 新手机号
+     * @return 发送结果
+     */
+    @PostMapping("/verifyCode/phone")
+    public ApiResult<Void> sendPhoneVerifyCode(@RequestParam String phone) {
+        log.info("接收到发送手机号验证码请求: {}", phone);
+        
+        try {
+            // 检查手机号格式
+            if (!phone.matches("^1[3-9]\\d{9}$")) {
+                return ApiResult.error(400, "手机号格式不正确");
+            }
+            
+            // 调用服务发送验证码
+            boolean result = smsService.sendVerifyCode(phone, "changePhone");
+            
+            if (result) {
+                log.info("验证码发送成功: {}", phone);
+                return ApiResult.success("验证码发送成功");
+            } else {
+                log.warn("验证码发送失败: {}", phone);
+                return ApiResult.error(500, "验证码发送失败");
+            }
+        } catch (Exception e) {
+            log.error("发送验证码过程中发生未知异常: {}", e.getMessage(), e);
+            return ApiResult.serverError("验证码发送失败: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 更换手机号
+     * @param id 用户ID
+     * @param phoneChangeDto 手机号更换信息
+     * @return 更换结果
+     */
+    @PostMapping("/{id}/phone")
+    public ApiResult<Map<String, Object>> changePhone(@PathVariable Long id, @Validated @RequestBody PhoneChangeDto phoneChangeDto) {
+        log.info("接收到用户{}的手机号更换请求", id);
+        
+        try {
+            // 设置用户ID，防止篡改
+            phoneChangeDto.setUserId(id);
+            
+            // 调用服务更换手机号
+            boolean result = userService.changePhone(
+                phoneChangeDto.getUserId(),
+                phoneChangeDto.getNewPhone(),
+                phoneChangeDto.getVerifyCode()
+            );
+            
+            if (result) {
+                log.info("用户{}手机号更换成功", id);
+                
+                // 查询更新后的用户信息
+                User user = userService.findById(id);
+                user.setPassword(null); // 清空敏感信息
+                
+                // 构建返回结果
+                Map<String, Object> data = new HashMap<>();
+                data.put("phone", user.getPhone());
+                
+                return ApiResult.success(data);
+            } else {
+                log.warn("用户{}手机号更换失败", id);
+                return ApiResult.error(500, "手机号更换失败");
+            }
+        } catch (BusinessException e) {
+            // 业务异常，返回具体错误信息
+            log.warn("用户{}手机号更换业务异常: {}", id, e.getMessage());
+            return ApiResult.error(e.getCode(), e.getMessage());
+        } catch (Exception e) {
+            // 未预期的异常，返回详细错误信息
+            log.error("用户{}手机号更换过程中发生未知异常: {}", id, e.getMessage(), e);
+            return ApiResult.serverError("手机号更换失败: " + e.getMessage());
         }
     }
     
