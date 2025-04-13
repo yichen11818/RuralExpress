@@ -48,9 +48,9 @@ export function getPaymentChannels() {
 
 /**
  * 模拟支付成功回调（开发环境使用）
- * @param {Number} paymentId 支付记录ID
+ * @param {Number} orderId 订单ID
  * @returns {Promise} 模拟支付成功结果
  */
-export function mockPaymentSuccess(paymentId) {
-  return request.post(`/api/payment/mock-success/${paymentId}`);
+export function mockPaymentSuccess(orderId) {
+  return request.post(`/api/payment/mock/success/${orderId}`);
 } 

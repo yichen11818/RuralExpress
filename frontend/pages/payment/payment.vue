@@ -75,17 +75,17 @@ export default {
         { 
           name: '微信支付', 
           value: 'wxpay', 
-          icon: '/static/images/wxpay.png'
+          icon: '/static/images/tabbar/my-active.png'  // 临时使用已有图标
         },
         { 
           name: '支付宝', 
           value: 'alipay', 
-          icon: '/static/images/alipay.png'
+          icon: '/static/images/tabbar/order-active.png'  // 临时使用已有图标
         },
         { 
           name: '余额支付', 
           value: 'balance', 
-          icon: '/static/images/balance.png'
+          icon: '/static/images/tabbar/home-active.png'  // 临时使用已有图标
         }
       ]
     };
@@ -181,12 +181,29 @@ export default {
         title: '处理支付请求...'
       });
       
+      // 检查订单ID
+      if (!this.orderId && this.orderData && this.orderData.id) {
+        this.orderId = this.orderData.id;
+      }
+      
+      if (!this.orderId) {
+        uni.hideLoading();
+        uni.showToast({
+          title: '订单ID不存在',
+          icon: 'none'
+        });
+        this.processing = false;
+        return;
+      }
+      
       // 构建支付参数
       const paymentParams = {
-        orderId: this.orderData.id,
+        orderId: this.orderId,
         paymentMethod: this.selectedMethod,
         amount: parseFloat(this.amount)
       };
+      
+      console.log('支付参数:', paymentParams);
       
       try {
         // 调用支付API
@@ -200,57 +217,51 @@ export default {
           
           // 根据支付方式处理
           if (this.selectedMethod === 'wxpay') {
-            try {
-              // 尝试调用微信支付
-              console.log('调用微信支付参数:', resp.data);
-              await this.callWxPay(resp.data);
-              this.handlePaymentSuccess();
-            } catch (error) {
-              console.error('微信支付失败', error);
-              
-              // 开发环境下提供模拟支付选项
-              if (process.env.NODE_ENV === 'development') {
-                uni.showModal({
-                  title: '支付失败',
-                  content: '检测到开发环境，是否模拟支付成功？',
-                  confirmText: '模拟支付',
-                  cancelText: '取消支付',
-                  success: async (res) => {
-                    if (res.confirm) {
-                      // 调用模拟支付成功API
-                      uni.showLoading({ title: '模拟支付中...' });
-                      try {
-                        await mockPaymentSuccess(this.paymentId);
-                        uni.hideLoading();
-                        this.handlePaymentSuccess();
-                      } catch (e) {
-                        uni.hideLoading();
-                        uni.showToast({
-                          title: '模拟支付失败',
-                          icon: 'none'
-                        });
-                      }
-                    } else {
-                      this.handlePaymentFail();
-                    }
-                  }
+            // 检查是否是开发环境
+            if (process.env.NODE_ENV === 'development') {
+              // 开发环境直接使用模拟支付
+              console.log('开发环境，直接使用模拟支付');
+              uni.showLoading({ title: '模拟支付中...' });
+              try {
+                await mockPaymentSuccess(this.orderId);
+                uni.hideLoading();
+                this.handlePaymentSuccess();
+              } catch (e) {
+                uni.hideLoading();
+                uni.showToast({
+                  title: '模拟支付失败',
+                  icon: 'none'
                 });
-              } else {
+                this.processing = false;
+              }
+            } else {
+              // 生产环境才调用真实微信支付
+              try {
+                console.log('调用微信支付参数:', resp.data);
+                await this.callWxPay(resp.data);
+                this.handlePaymentSuccess();
+              } catch (error) {
+                console.error('微信支付失败', error);
                 this.handlePaymentFail();
               }
             }
           } else if (this.selectedMethod === 'alipay') {
             if (process.env.NODE_ENV === 'development') {
-              // 开发环境下模拟支付成功
-              console.log('开发环境，模拟支付宝支付成功');
-              uni.showModal({
-                title: '模拟支付',
-                content: '当前为开发环境，已模拟支付宝支付成功',
-                showCancel: false,
-                success: () => {
-                  this.handlePaymentSuccess();
-                }
-              });
+              // 开发环境直接使用模拟支付，不显示弹窗
+              console.log('开发环境，直接模拟支付宝支付成功');
+              uni.showLoading({ title: '模拟支付中...' });
+              try {
+                await mockPaymentSuccess(this.orderId);
+                uni.hideLoading();
+                this.handlePaymentSuccess();
+              } catch (e) {
+                uni.hideLoading();
+                uni.showToast({
+                  title: '模拟支付失败',
+                  icon: 'none'
+                });
+                this.processing = false;
+              }
             } else {
               // 生产环境调用支付宝支付
               uni.requestPayment({
@@ -266,15 +277,29 @@ export default {
               });
             }
           } else if (this.selectedMethod === 'balance') {
-            // 余额支付，直接处理成功
-            this.handlePaymentSuccess();
+            // 余额支付，也使用模拟支付
+            uni.showLoading({ title: '余额支付中...' });
+            try {
+              await mockPaymentSuccess(this.orderId);
+              uni.hideLoading();
+              this.handlePaymentSuccess();
+            } catch (e) {
+              uni.hideLoading();
+              uni.showToast({
+                title: '支付失败',
+                icon: 'none'
+              });
+              this.processing = false;
+            }
           }
         } else {
           throw new Error(resp.message || '支付申请失败');
         }
       } catch (error) {
         console.error('支付失败', error);
-        uni.hideLoading();
+        if (uni.hideLoading) {
+          uni.hideLoading();
+        }
         uni.showToast({
           title: error.message || '支付申请失败',
           icon: 'none'
@@ -309,15 +334,49 @@ export default {
       });
       
       setTimeout(() => {
-        // 跳转到订单详情页
-        uni.redirectTo({
-          url: `/pages/order/detail?id=${this.orderId}`
-        });
+        // 确保使用有效的订单ID
+        const orderId = this.orderId || (this.orderData ? this.orderData.id : null);
+        if (!orderId) {
+          console.error('跳转失败：订单ID不存在');
+          uni.navigateBack();
+          return;
+        }
+        
+        // 查看有哪些页面可以跳转
+        const pages = getCurrentPages();
+        console.log('当前页面栈:', pages);
+        
+        // 尝试跳转到订单列表页面
+        try {
+          uni.redirectTo({
+            url: '/pages/order/index',
+            fail: (err) => {
+              console.error('跳转到订单列表失败:', err);
+              // 如果跳转失败，尝试返回上一页
+              uni.navigateBack({
+                delta: 1,
+                fail: () => {
+                  // 如果返回上一页也失败，跳转到首页
+                  uni.switchTab({
+                    url: '/pages/index/index'
+                  });
+                }
+              });
+            }
+          });
+        } catch (error) {
+          console.error('跳转错误:', error);
+          // 如果发生错误，尝试返回上一页
+          uni.navigateBack();
+        }
       }, 1500);
     },
     
     // 处理支付失败
     handlePaymentFail() {
+      if (uni.hideLoading) {
+        uni.hideLoading();
+      }
       uni.showToast({
         title: '支付已取消',
         icon: 'none'

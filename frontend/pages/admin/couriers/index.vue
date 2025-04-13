@@ -174,6 +174,38 @@
               </view>
             </picker>
           </view>
+          <view class="form-item">
+            <text class="form-label">身份证正面照</text>
+            <view class="upload-box">
+              <image 
+                v-if="courierForm.idCardFront" 
+                :src="courierForm.idCardFront" 
+                mode="aspectFit" 
+                class="id-card-image"
+                @click="previewImage(courierForm.idCardFront)"
+              ></image>
+              <view v-else class="upload-btn" @click="chooseImage('front')">
+                <uni-icons type="camera" size="24" color="#999"></uni-icons>
+                <text>上传正面照</text>
+              </view>
+            </view>
+          </view>
+          <view class="form-item">
+            <text class="form-label">身份证背面照</text>
+            <view class="upload-box">
+              <image 
+                v-if="courierForm.idCardBack" 
+                :src="courierForm.idCardBack" 
+                mode="aspectFit" 
+                class="id-card-image"
+                @click="previewImage(courierForm.idCardBack)"
+              ></image>
+              <view v-else class="upload-btn" @click="chooseImage('back')">
+                <uni-icons type="camera" size="24" color="#999"></uni-icons>
+                <text>上传背面照</text>
+              </view>
+            </view>
+          </view>
         </view>
         <view class="form-footer">
           <button class="cancel-btn" @click="closeCourierForm">取消</button>
@@ -209,7 +241,9 @@ export default {
         idCard: '',
         workNo: '',
         serviceArea: '',
-        status: 0
+        status: 0,
+        idCardFront: '',
+        idCardBack: ''
       },
       originalCourier: null
     };
@@ -405,7 +439,9 @@ export default {
           idCard: '',
           workNo: '',
           serviceArea: '',
-          status: 0
+          status: 0,
+          idCardFront: '',
+          idCardBack: ''
         };
         this.formStatusIndex = 1; // 默认为"正常"
       } else {
@@ -416,7 +452,9 @@ export default {
           idCard: courier.idCard,
           workNo: courier.workNo,
           serviceArea: courier.serviceArea,
-          status: courier.status
+          status: courier.status,
+          idCardFront: courier.idCardFront,
+          idCardBack: courier.idCardBack
         };
         this.originalCourier = { ...courier };
         this.formStatusIndex = courier.status + 1;
@@ -466,6 +504,23 @@ export default {
       if (!this.courierForm.idCard) {
         uni.showToast({
           title: '请输入身份证号',
+          icon: 'none'
+        });
+        return;
+      }
+      
+      // 检查身份证照片是否上传
+      if (!this.courierForm.idCardFront) {
+        uni.showToast({
+          title: '请上传身份证正面照',
+          icon: 'none'
+        });
+        return;
+      }
+      
+      if (!this.courierForm.idCardBack) {
+        uni.showToast({
+          title: '请上传身份证背面照',
           icon: 'none'
         });
         return;
@@ -541,6 +596,75 @@ export default {
               });
           }
         }
+      });
+    },
+    
+    // 选择图片并上传
+    chooseImage(type) {
+      uni.chooseImage({
+        count: 1,
+        sizeType: ['compressed'],
+        sourceType: ['album', 'camera'],
+        success: (res) => {
+          const tempFilePath = res.tempFilePaths[0];
+          
+          // 显示上传中
+          uni.showLoading({
+            title: '上传中...',
+            mask: true
+          });
+          
+          // 上传图片到服务器
+          uni.uploadFile({
+            url: 'http://localhost:8080/api/upload/image',
+            filePath: tempFilePath,
+            name: 'file',
+            header: {
+              'Authorization': uni.getStorageSync('token')
+            },
+            success: (uploadRes) => {
+              // 解析返回结果
+              const result = JSON.parse(uploadRes.data);
+              
+              if (result.code === 200 && result.data) {
+                // 根据上传类型设置不同的表单字段
+                if (type === 'front') {
+                  this.courierForm.idCardFront = result.data.url;
+                } else if (type === 'back') {
+                  this.courierForm.idCardBack = result.data.url;
+                }
+                
+                uni.showToast({
+                  title: '上传成功'
+                });
+              } else {
+                uni.showToast({
+                  title: result.message || '上传失败',
+                  icon: 'none'
+                });
+              }
+            },
+            fail: () => {
+              uni.showToast({
+                title: '上传失败，请重试',
+                icon: 'none'
+              });
+            },
+            complete: () => {
+              uni.hideLoading();
+            }
+          });
+        }
+      });
+    },
+    
+    // 预览图片
+    previewImage(url) {
+      if (!url) return;
+      
+      uni.previewImage({
+        urls: [url],
+        current: url
       });
     }
   }
@@ -850,5 +974,37 @@ export default {
 
 .submit-btn {
   color: #3cc51f;
+}
+
+.upload-box {
+  display: flex;
+  align-items: center;
+  margin-top: 10rpx;
+}
+
+.upload-btn {
+  width: 200rpx;
+  height: 120rpx;
+  background-color: #f5f5f5;
+  border-radius: 8rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed #ddd;
+}
+
+.upload-btn text {
+  font-size: 24rpx;
+  color: #999;
+  margin-top: 10rpx;
+}
+
+.id-card-image {
+  width: 200rpx;
+  height: 120rpx;
+  border-radius: 8rpx;
+  object-fit: cover;
+  border: 1px solid #eee;
 }
 </style> 
