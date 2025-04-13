@@ -1,5 +1,6 @@
 package com.ruralexpress.service;
 
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.ruralexpress.dto.PaymentRequestDto;
 import com.ruralexpress.entity.Payment;
 
@@ -8,7 +9,7 @@ import java.util.Map;
 /**
  * 支付服务接口
  */
-public interface PaymentService {
+public interface PaymentService extends IService<Payment> {
     
     /**
      * 创建支付订单

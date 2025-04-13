@@ -49,7 +49,14 @@
 
 <script>
 import { getOrderDetail } from '@/api/order';
-import { payOrder } from '@/api/payment';
+import { 
+  payOrder, 
+  getPaymentStatus, 
+  cancelPayment, 
+  getUserWallet, 
+  getPaymentChannels,
+  mockPaymentSuccess 
+} from '@/api/payment.js';
 import uniIcons from '@/uni_modules/uni-icons/components/uni-icons/uni-icons.vue';
 
 export default {
@@ -63,6 +70,7 @@ export default {
       selectedMethod: 'wxpay', // 默认微信支付
       processing: false,
       orderData: null,
+      paymentId: null, // 添加支付ID字段用于模拟支付
       paymentMethods: [
         { 
           name: '微信支付', 
@@ -109,9 +117,9 @@ export default {
     const eventChannel = this.getOpenerEventChannel();
     if (eventChannel && eventChannel.on) {
       eventChannel.on('orderData', (data) => {
-        this.orderData = data;
+        this.orderData = data.order || {};
         if (!this.amount || this.amount === '0.00') {
-          this.amount = data.totalFee.toFixed(2);
+          this.amount = this.orderData.totalFee.toFixed(2);
         }
       });
     }
@@ -165,56 +173,89 @@ export default {
     },
     
     // 处理支付
-    handlePayment() {
+    async handlePayment() {
       if (this.processing) return;
       
-      if (!this.orderId) {
-        uni.showToast({
-          title: '订单ID不存在',
-          icon: 'none'
-        });
-        return;
-      }
-      
       this.processing = true;
-      
       uni.showLoading({
-        title: '处理支付...',
-        mask: true
+        title: '处理支付请求...'
       });
       
       // 构建支付参数
       const paymentParams = {
-        orderId: this.orderId,
+        orderId: this.orderData.id,
         paymentMethod: this.selectedMethod,
         amount: parseFloat(this.amount)
       };
       
-      // 调用支付API
-      payOrder(paymentParams)
-        .then(res => {
-          if (res.code === 200) {
-            uni.hideLoading();
-            
-            // 根据不同的支付方式处理
-            if (this.selectedMethod === 'wxpay') {
-              // 调用微信支付
-              uni.requestPayment({
-                provider: 'wxpay',
-                ...res.data,
+      try {
+        // 调用支付API
+        const resp = await payOrder(paymentParams);
+        console.log("支付参数返回:", resp);
+        
+        if (resp.code === 200 && resp.data) {
+          // 保存支付记录ID，用于后续查询和模拟支付
+          this.paymentId = resp.data.paymentId;
+          uni.hideLoading();
+          
+          // 根据支付方式处理
+          if (this.selectedMethod === 'wxpay') {
+            try {
+              // 尝试调用微信支付
+              console.log('调用微信支付参数:', resp.data);
+              await this.callWxPay(resp.data);
+              this.handlePaymentSuccess();
+            } catch (error) {
+              console.error('微信支付失败', error);
+              
+              // 开发环境下提供模拟支付选项
+              if (process.env.NODE_ENV === 'development') {
+                uni.showModal({
+                  title: '支付失败',
+                  content: '检测到开发环境，是否模拟支付成功？',
+                  confirmText: '模拟支付',
+                  cancelText: '取消支付',
+                  success: async (res) => {
+                    if (res.confirm) {
+                      // 调用模拟支付成功API
+                      uni.showLoading({ title: '模拟支付中...' });
+                      try {
+                        await mockPaymentSuccess(this.paymentId);
+                        uni.hideLoading();
+                        this.handlePaymentSuccess();
+                      } catch (e) {
+                        uni.hideLoading();
+                        uni.showToast({
+                          title: '模拟支付失败',
+                          icon: 'none'
+                        });
+                      }
+                    } else {
+                      this.handlePaymentFail();
+                    }
+                  }
+                });
+              } else {
+                this.handlePaymentFail();
+              }
+            }
+          } else if (this.selectedMethod === 'alipay') {
+            if (process.env.NODE_ENV === 'development') {
+              // 开发环境下模拟支付成功
+              console.log('开发环境，模拟支付宝支付成功');
+              uni.showModal({
+                title: '模拟支付',
+                content: '当前为开发环境，已模拟支付宝支付成功',
+                showCancel: false,
                 success: () => {
                   this.handlePaymentSuccess();
-                },
-                fail: (err) => {
-                  console.error('微信支付失败', err);
-                  this.handlePaymentFail();
                 }
               });
-            } else if (this.selectedMethod === 'alipay') {
-              // 调用支付宝支付
+            } else {
+              // 生产环境调用支付宝支付
               uni.requestPayment({
                 provider: 'alipay',
-                ...res.data,
+                ...resp.data,
                 success: () => {
                   this.handlePaymentSuccess();
                 },
@@ -223,23 +264,41 @@ export default {
                   this.handlePaymentFail();
                 }
               });
-            } else if (this.selectedMethod === 'balance') {
-              // 余额支付，直接处理成功
-              this.handlePaymentSuccess();
             }
-          } else {
-            throw new Error(res.message || '支付申请失败');
+          } else if (this.selectedMethod === 'balance') {
+            // 余额支付，直接处理成功
+            this.handlePaymentSuccess();
           }
-        })
-        .catch(err => {
-          console.error('支付失败', err);
-          uni.hideLoading();
-          uni.showToast({
-            title: err.message || '支付申请失败',
-            icon: 'none'
-          });
-          this.processing = false;
+        } else {
+          throw new Error(resp.message || '支付申请失败');
+        }
+      } catch (error) {
+        console.error('支付失败', error);
+        uni.hideLoading();
+        uni.showToast({
+          title: error.message || '支付申请失败',
+          icon: 'none'
         });
+        this.processing = false;
+      }
+    },
+    
+    // 调用微信支付的方法
+    callWxPay(payParams) {
+      return new Promise((resolve, reject) => {
+        uni.requestPayment({
+          provider: 'wxpay',
+          ...payParams,
+          success: (res) => {
+            console.log('微信支付成功', res);
+            resolve(res);
+          },
+          fail: (err) => {
+            console.error('微信支付失败', err);
+            reject(err);
+          }
+        });
+      });
     },
     
     // 处理支付成功

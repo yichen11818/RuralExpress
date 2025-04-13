@@ -1,7 +1,7 @@
 /**
  * 支付相关API
  */
-import { post, get, put } from '@/utils/request';
+import request from '@/utils/request';
 
 /**
  * 订单支付
@@ -9,7 +9,7 @@ import { post, get, put } from '@/utils/request';
  * @returns {Promise} 支付结果
  */
 export function payOrder(data) {
-  return post('/api/payment/pay', data);
+  return request.post('/api/payment/pay', data);
 }
 
 /**
@@ -18,7 +18,7 @@ export function payOrder(data) {
  * @returns {Promise} 支付状态
  */
 export function getPaymentStatus(orderId) {
-  return get(`/api/payment/status/${orderId}`);
+  return request.get(`/api/payment/status/${orderId}`);
 }
 
 /**
@@ -27,7 +27,7 @@ export function getPaymentStatus(orderId) {
  * @returns {Promise} 取消结果
  */
 export function cancelPayment(orderId) {
-  return put(`/api/payment/cancel/${orderId}`);
+  return request.put(`/api/payment/cancel/${orderId}`);
 }
 
 /**
@@ -35,7 +35,7 @@ export function cancelPayment(orderId) {
  * @returns {Promise} 钱包信息
  */
 export function getUserWallet() {
-  return get('/api/payment/wallet');
+  return request.get('/api/payment/wallet');
 }
 
 /**
@@ -43,5 +43,14 @@ export function getUserWallet() {
  * @returns {Promise} 支付渠道列表
  */
 export function getPaymentChannels() {
-  return get('/api/payment/channels');
+  return request.get('/api/payment/channels');
+}
+
+/**
+ * 模拟支付成功回调（开发环境使用）
+ * @param {Number} paymentId 支付记录ID
+ * @returns {Promise} 模拟支付成功结果
+ */
+export function mockPaymentSuccess(paymentId) {
+  return request.post(`/api/payment/mock-success/${paymentId}`);
 } 

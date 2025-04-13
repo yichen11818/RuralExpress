@@ -1,5 +1,6 @@
 package com.ruralexpress.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.ruralexpress.dto.PaymentRequestDto;
 import com.ruralexpress.entity.Payment;
 import com.ruralexpress.exception.BusinessException;
@@ -12,14 +13,12 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.Map;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-
 /**
  * 支付控制器
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/payment")
+@RequestMapping("/payment")
 public class PaymentController {
     
     @Autowired
@@ -117,6 +116,47 @@ public class PaymentController {
         } catch (Exception e) {
             log.error("取消支付异常: {}", e.getMessage(), e);
             return ApiResult.serverError("取消支付失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 简单测试端点
+     * @return 字符串
+     */
+    @GetMapping("/test")
+    public ApiResult<String> test() {
+        log.info("测试支付API");
+        return ApiResult.success("支付API测试成功");
+    }
+
+    /**
+     * 模拟支付成功（开发环境使用）
+     * @param orderId 订单ID
+     * @return 处理结果
+     */
+    @PostMapping("/mock/success/{orderId}")
+    public ApiResult<Payment> mockPaymentSuccess(@PathVariable Long orderId) {
+        log.info("模拟支付成功请求: orderId={}", orderId);
+        
+        try {
+            // 查询订单对应的未支付记录
+            LambdaQueryWrapper<Payment> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(Payment::getOrderId, orderId)
+                    .eq(Payment::getStatus, 0) // 未支付状态
+                    .orderByDesc(Payment::getCreatedAt)
+                    .last("LIMIT 1");
+            
+            Payment payment = paymentService.getOne(queryWrapper);
+            if (payment == null) {
+                return ApiResult.error(404, "未找到待支付的记录");
+            }
+            
+            // 更新支付记录为已支付
+            payment = paymentService.handlePaymentCallback(payment.getPaymentNo(), true);
+            return ApiResult.success(payment);
+        } catch (Exception e) {
+            log.error("模拟支付失败: {}", e.getMessage(), e);
+            return ApiResult.serverError("模拟支付失败: " + e.getMessage());
         }
     }
 } 
