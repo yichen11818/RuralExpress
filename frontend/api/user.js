@@ -121,4 +121,29 @@ export function deleteAddress(id) {
  */
 export function setDefaultAddress(id) {
   return request.put(`/api/addresses/${id}/default`);
+}
+
+/**
+ * 修改密码
+ * @param {Number} userId 用户ID
+ * @param {String} oldPassword 旧密码
+ * @param {String} newPassword 新密码
+ * @returns {Promise} 修改结果
+ */
+export function changePassword(userId, oldPassword, newPassword) {
+  const data = {
+    oldPassword,
+    newPassword
+  };
+  return request.post(`/user/${userId}/password`, data);
+}
+
+/**
+ * 修改密码（别名，与页面保持一致）
+ * @param {Number} userId 用户ID
+ * @param {Object} data 包含oldPassword和newPassword的对象
+ * @returns {Promise} 修改结果
+ */
+export function updatePassword(userId, data) {
+  return request.post(`/user/${userId}/password`, data);
 } 
