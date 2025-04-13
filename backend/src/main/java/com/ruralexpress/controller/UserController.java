@@ -84,22 +84,51 @@ public class UserController {
      */
     @PutMapping("/{id}")
     public ApiResult<User> updateUser(@PathVariable Long id, @Validated @RequestBody UserDto userDto) {
-        // 检查用户是否存在
-        User existUser = userService.findById(id);
-        if (existUser == null) {
-            return ApiResult.notFound("用户不存在");
+        log.info("接收到用户{}的信息更新请求", id);
+        
+        try {
+            // 检查用户是否存在
+            User existUser = userService.findById(id);
+            if (existUser == null) {
+                return ApiResult.notFound("用户不存在");
+            }
+            
+            // 设置用户ID，防止篡改
+            userDto.setId(id);
+            
+            // 复制非空属性
+            User user = new User();
+            user.setId(id);
+            
+            // 只更新提交的字段，避免覆盖已有数据
+            if (userDto.getNickname() != null) {
+                user.setNickname(userDto.getNickname());
+            }
+            
+            if (userDto.getAvatar() != null) {
+                user.setAvatar(userDto.getAvatar());
+            }
+            
+            if (userDto.getGender() != null) {
+                user.setGender(userDto.getGender());
+            }
+            
+            // 注意：User实体类中不存在birthday字段，所以不处理该属性
+            
+            if (userDto.getBio() != null) {
+                user.setBio(userDto.getBio());
+            }
+            
+            // 更新用户
+            User updatedUser = userService.update(user);
+            updatedUser.setPassword(null); // 清空敏感信息
+            
+            log.info("用户{}信息更新成功", id);
+            return ApiResult.success(updatedUser);
+        } catch (Exception e) {
+            log.error("更新用户{}信息时发生错误: {}", id, e.getMessage(), e);
+            return ApiResult.serverError("更新失败: " + e.getMessage());
         }
-        
-        // 设置用户ID，防止篡改
-        userDto.setId(id);
-        
-        // 复制属性
-        User user = new User();
-        BeanUtils.copyProperties(userDto, user);
-        
-        // 更新用户
-        User updatedUser = userService.update(user);
-        return ApiResult.success(updatedUser);
     }
     
     /**
