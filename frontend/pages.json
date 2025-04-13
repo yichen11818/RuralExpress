@@ -147,6 +147,24 @@
       }
     },
     {
+      "path": "pages/order/detail",
+      "style": {
+        "navigationBarTitleText": "订单详情"
+      }
+    },
+    {
+      "path": "pages/order/review",
+      "style": {
+        "navigationBarTitleText": "订单评价"
+      }
+    },
+    {
+      "path": "pages/order/review-detail",
+      "style": {
+        "navigationBarTitleText": "评价详情"
+      }
+    },
+    {
       "path": "pages/help/help",
       "style": {
         "navigationBarTitleText": "帮助中心"

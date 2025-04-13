@@ -23,7 +23,7 @@
       >
         <view class="order-header">
           <text class="order-no">订单号：{{ item.orderNo }}</text>
-          <text class="order-status" :class="'status-' + item.orderStatus">{{ getStatusText(item.orderStatus) }}</text>
+          <text class="order-status" :class="'status-' + item.status">{{ getStatusText(item.status) }}</text>
         </view>
         
         <view class="order-info">
@@ -57,21 +57,21 @@
           <view class="order-actions">
             <view 
               class="action-btn" 
-              v-if="item.orderStatus === 0"
+              v-if="item.status === 0"
               @click.stop="cancelOrder(item.id)"
             >
               取消订单
             </view>
             <view 
               class="action-btn primary-btn" 
-              v-if="item.orderStatus === 5"
+              v-if="item.status === 5"
               @click.stop="evaluateOrder(item.id)"
             >
               评价订单
             </view>
             <view 
               class="action-btn" 
-              v-if="item.orderStatus === 5"
+              v-if="item.status === 5"
               @click.stop="navigateToDetail(item.id)"
             >
               再次下单
@@ -236,6 +236,12 @@ export default {
               this.orderList = [...this.orderList, ...(res.data.records || [])];
             }
             this.total = res.data.total || 0;
+            
+            // 打印订单列表的第一个元素，检查字段
+            if (this.orderList.length > 0) {
+              console.log('订单示例:', this.orderList[0]);
+              console.log('订单状态字段:', this.orderList[0].status);
+            }
           } else {
             uni.showToast({
               title: res.message || '获取订单失败',
@@ -309,6 +315,7 @@ export default {
     
     // 获取状态文本
     getStatusText(status) {
+      console.log('订单状态码:', status, '状态文本:', getOrderStatusText(status));
       return getOrderStatusText(status);
     },
     

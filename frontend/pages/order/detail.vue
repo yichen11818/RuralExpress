@@ -1,9 +1,9 @@
 <template>
   <view class="detail-container">
     <!-- 订单状态 -->
-    <view class="status-section" :class="'status-bg-' + order.orderStatus">
-      <view class="status-text">{{ getStatusText(order.orderStatus) }}</view>
-      <view class="status-desc">{{ getStatusDesc(order.orderStatus) }}</view>
+    <view class="status-section" :class="'status-bg-' + order.status">
+      <view class="status-text">{{ getStatusText(order.status) }}</view>
+      <view class="status-desc">{{ getStatusDesc(order.status) }}</view>
     </view>
     
     <!-- 物流信息 -->
@@ -99,15 +99,15 @@
       <view class="section-title">费用信息</view>
       <view class="info-item">
         <text class="item-label">配送费</text>
-        <text class="item-value">¥{{ order.deliveryFee.toFixed(2) }}</text>
+        <text class="item-value">¥{{ (order.price || 0).toFixed(2) }}</text>
       </view>
       <view class="info-item">
         <text class="item-label">保价费</text>
-        <text class="item-value">¥{{ order.insuranceFee.toFixed(2) }}</text>
+        <text class="item-value">¥{{ (0).toFixed(2) }}</text>
       </view>
       <view class="info-item total-fee">
         <text class="item-label">合计</text>
-        <text class="item-value price">¥{{ order.totalFee.toFixed(2) }}</text>
+        <text class="item-value price">¥{{ (order.price || 0).toFixed(2) }}</text>
       </view>
     </view>
     
@@ -115,28 +115,28 @@
     <view class="footer-actions">
       <view 
         class="action-btn" 
-        v-if="order.orderStatus === 0"
+        v-if="order.status === 0"
         @click="cancelOrder(order.id)"
       >
         取消订单
       </view>
       <view 
         class="action-btn primary-btn" 
-        v-if="order.orderStatus === 5"
+        v-if="order.status === 5"
         @click="evaluateOrder(order.id)"
       >
         评价订单
       </view>
       <view 
         class="action-btn primary-btn" 
-        v-if="order.orderStatus === 6 && order.hasReview"
+        v-if="order.status === 6 && order.hasReview"
         @click="viewReview(order.id)"
       >
         查看评价
       </view>
       <view 
         class="action-btn" 
-        v-if="order.orderStatus === 5"
+        v-if="order.status === 5"
         @click="reorder()"
       >
         再次下单
@@ -162,7 +162,7 @@ export default {
       order: {
         id: null,
         orderNo: '',
-        orderStatus: 0,
+        status: 0,
         senderName: '',
         senderPhone: '',
         senderAddress: '',
@@ -174,9 +174,7 @@ export default {
         packageType: 0,
         weight: 0,
         note: '',
-        deliveryFee: 0,
-        insuranceFee: 0,
-        totalFee: 0,
+        price: 0,
         createdAt: ''
       },
       logistics: []
@@ -209,9 +207,11 @@ export default {
       
       getOrderDetail(this.orderId)
         .then(res => {
+          console.log('订单详情API响应:', res);
           if (res.code === 200 && res.data) {
-            this.order = res.data.order || {};
-            this.logistics = res.data.logistics || [];
+            // 直接使用返回的数据对象
+            this.order = res.data;
+            console.log('处理后的订单数据:', this.order);
           } else {
             uni.showToast({
               title: '获取订单详情失败',
