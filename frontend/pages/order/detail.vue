@@ -122,7 +122,7 @@
       </view>
       <view 
         class="action-btn primary-btn" 
-        v-if="order.status === 5"
+        v-if="order.status === 6"
         @click="evaluateOrder(order.id)"
       >
         评价订单
@@ -136,7 +136,7 @@
       </view>
       <view 
         class="action-btn" 
-        v-if="order.status === 5"
+        v-if="order.status === 6"
         @click="reorder()"
       >
         再次下单
@@ -212,6 +212,8 @@ export default {
             // 直接使用返回的数据对象
             this.order = res.data;
             console.log('处理后的订单数据:', this.order);
+            console.log('订单状态码:', this.order.status);
+            console.log('订单状态文本:', this.getStatusText(this.order.status));
           } else {
             uni.showToast({
               title: '获取订单详情失败',
@@ -239,8 +241,9 @@ export default {
         2: '取件中',
         3: '已取件',
         4: '配送中',
-        5: '已完成',
-        6: '已取消'
+        5: '已送达',
+        6: '已完成',
+        7: '已取消'
       };
       return statusMap[status] || '未知状态';
     },
@@ -253,8 +256,9 @@ export default {
         2: '快递员正在取件途中',
         3: '快递员已取件，即将发往目的地',
         4: '快递员正在配送途中',
-        5: '订单已完成',
-        6: '订单已取消'
+        5: '已送达，等待确认',
+        6: '订单已完成',
+        7: '订单已取消'
       };
       return descMap[status] || '';
     },
@@ -283,37 +287,57 @@ export default {
       uni.showModal({
         title: '取消订单',
         content: '确定要取消该订单吗？',
+        confirmColor: '#FF6B00',
         success: (res) => {
           if (res.confirm) {
+            // 显示加载动画，使用自定义样式
             uni.showLoading({
-              title: '取消中...'
+              title: '取消中...',
+              mask: true // 添加遮罩防止重复点击
             });
             
-            cancelOrder(orderId, '用户主动取消')
-              .then(res => {
-                uni.hideLoading();
-                if (res.code === 200) {
+            // 模拟网络延迟，提升用户体验
+            setTimeout(() => {
+              cancelOrder(orderId, '用户主动取消')
+                .then(res => {
+                  uni.hideLoading();
+                  if (res.code === 200) {
+                    // 成功动画
+                    uni.showToast({
+                      title: '订单已取消',
+                      icon: 'success',
+                      duration: 2000,
+                      mask: true
+                    });
+                    
+                    // 添加成功提示动画后再刷新数据
+                    setTimeout(() => {
+                      // 刷新订单详情
+                      this.getOrderDetail();
+                      
+                      // 返回上一页（可选）
+                      // uni.navigateBack();
+                    }, 1500);
+                  } else {
+                    // 错误提示
+                    uni.showToast({
+                      title: res.message || '取消失败',
+                      icon: 'none',
+                      duration: 2000
+                    });
+                  }
+                })
+                .catch(err => {
+                  uni.hideLoading();
+                  console.error('取消订单失败', err);
+                  // 显示带图标的错误提示
                   uni.showToast({
-                    title: '取消成功',
-                    icon: 'success'
+                    title: '网络异常，请重试',
+                    icon: 'error',
+                    duration: 2000
                   });
-                  // 刷新订单详情
-                  this.getOrderDetail();
-                } else {
-                  uni.showToast({
-                    title: res.message || '取消失败',
-                    icon: 'none'
-                  });
-                }
-              })
-              .catch(err => {
-                uni.hideLoading();
-                console.error('取消订单失败', err);
-                uni.showToast({
-                  title: '取消失败',
-                  icon: 'none'
                 });
-              });
+            }, 300); // 短暂延迟，增加用户体验
           }
         }
       });
@@ -414,6 +438,10 @@ export default {
 
 .status-bg-6 {
   background-color: #999;
+}
+
+.status-bg-7 {
+  background-color: #F56C6C;
 }
 
 .status-text {

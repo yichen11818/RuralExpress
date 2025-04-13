@@ -87,6 +87,14 @@
       <text class="empty-text">暂无订单数据</text>
       <button class="empty-btn" type="primary" @click="navigateTo('/pages/index/index')">去下单</button>
     </view>
+    
+    <!-- 加载提示 -->
+    <view class="loading-overlay" v-if="loading">
+      <view class="loading-content">
+        <view class="loading-spinner"></view>
+        <text>正在加载订单数据...</text>
+      </view>
+    </view>
   </view>
 </template>
 
@@ -340,34 +348,65 @@ export default {
     // 取消订单
     cancelOrder(id) {
       uni.showModal({
-        title: '提示',
-        content: '确定要取消该订单吗？',
+        title: '取消订单',
+        content: '确定要取消该订单吗？取消后不可恢复',
+        confirmColor: '#FF6B00',
+        cancelColor: '#999999',
         success: (res) => {
           if (res.confirm) {
-            // 调用取消订单API
-            cancelOrder(id, '用户主动取消')
-              .then(res => {
-                if (res.code === 200) {
+            // 显示加载动画，使用遮罩
+            uni.showLoading({
+              title: '处理中...',
+              mask: true
+            });
+            
+            // 添加短暂延迟，增强用户体验
+            setTimeout(() => {
+              // 调用取消订单API
+              cancelOrder(id, '用户主动取消')
+                .then(res => {
+                  uni.hideLoading();
+                  if (res.code === 200) {
+                    // 使用自定义动画效果
+                    const animation = uni.createAnimation({
+                      duration: 300,
+                      timingFunction: 'ease',
+                    });
+                    
+                    // 成功提示
+                    uni.showToast({
+                      title: '订单已取消',
+                      icon: 'success',
+                      duration: 1500,
+                      mask: true
+                    });
+                    
+                    // 动画完成后刷新数据
+                    setTimeout(() => {
+                      // 重新加载数据
+                      this.loadOrderData();
+                    }, 1000);
+                    
+                  } else {
+                    // 错误提示，使用更友好的信息
+                    uni.showToast({
+                      title: res.message || '操作失败，请重试',
+                      icon: 'none',
+                      duration: 2000
+                    });
+                  }
+                })
+                .catch(err => {
+                  uni.hideLoading();
+                  console.error('取消订单失败', err);
+                  // 网络错误提示
                   uni.showToast({
-                    title: '取消成功',
-                    icon: 'success'
+                    title: '网络异常，请检查连接',
+                    icon: 'error',
+                    duration: 2000
                   });
-                  // 重新加载数据
-                  this.loadOrderData();
-                } else {
-                  uni.showToast({
-                    title: res.message || '取消失败',
-                    icon: 'none'
-                  });
-                }
-              })
-              .catch(err => {
-                console.error('取消订单失败', err);
-                uni.showToast({
-                  title: '取消失败',
-                  icon: 'none'
                 });
-              });
+            }, 300);
           }
         }
       });
@@ -391,6 +430,18 @@ export default {
 </script>
 
 <style>
+/* 列表项淡入动画 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .order-container {
   min-height: 100vh;
   background-color: #f8f8f8;
@@ -439,6 +490,13 @@ export default {
   margin-bottom: 20rpx;
   padding: 30rpx;
   box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+  animation: fadeIn 0.3s ease-out;
+  transition: all 0.3s ease;
+}
+
+.order-item:active {
+  transform: scale(0.98);
+  background-color: #f9f9f9;
 }
 
 .order-header {
@@ -557,11 +615,17 @@ export default {
   border: 1rpx solid #ddd;
   border-radius: 30rpx;
   margin-left: 20rpx;
+  transition: all 0.2s ease;
 }
 
 .primary-btn {
   color: #3cc51f;
   border-color: #3cc51f;
+}
+
+.action-btn:active {
+  transform: scale(0.95);
+  opacity: 0.8;
 }
 
 .empty-state {
@@ -591,5 +655,41 @@ export default {
   border-radius: 40rpx;
   font-size: 30rpx;
   background-color: #3cc51f;
+}
+
+/* 加载中动画 */
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.loading-spinner {
+  width: 60rpx;
+  height: 60rpx;
+  border: 6rpx solid #f3f3f3;
+  border-top: 6rpx solid #3cc51f;
+  border-radius: 50%;
+  animation: rotate 1s linear infinite;
+  margin: 0 auto 20rpx;
+}
+
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.loading-content {
+  background-color: #fff;
+  padding: 40rpx;
+  border-radius: 12rpx;
+  text-align: center;
 }
 </style> 
