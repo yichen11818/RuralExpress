@@ -72,18 +72,89 @@ public class AdminUserController {
 
     /**
      * 创建用户
-     * @param user 用户信息
+     * @param userData 用户信息
      * @return 创建结果
      */
     @PostMapping
-    public ApiResult<User> createUser(@RequestBody User user) {
+    public ApiResult<User> createUser(@RequestBody Map<String, Object> userData) {
         try {
+            log.info("接收到创建用户请求: {}", userData);
+            
+            // 从Map中获取字段值
+            String phone = (String) userData.get("phone");
+            String password = (String) userData.get("password");
+            String nickname = (String) userData.get("nickname");
+            String realName = (String) userData.get("realName");
+            
+            // 检查必要参数
+            if (phone == null || phone.trim().isEmpty()) {
+                return ApiResult.error(400, "手机号不能为空");
+            }
+            
+            // 检查手机号格式
+            if (!phone.matches("^1[3-9]\\d{9}$")) {
+                return ApiResult.error(400, "手机号格式不正确");
+            }
+            
             // 检查手机号是否已存在
-            if (userService.isPhoneExists(user.getPhone())) {
+            if (userService.isPhoneExists(phone)) {
                 return ApiResult.error(400, "手机号已被注册");
             }
             
-            User createdUser = userService.createUser(user);
+            // 创建新用户
+            User newUser = new User();
+            newUser.setPhone(phone);
+            newUser.setPassword(password);
+            newUser.setNickname(nickname);
+            newUser.setRealName(realName);
+            
+            // 用户类型
+            Object userTypeObj = userData.get("userType");
+            if (userTypeObj != null) {
+                if (userTypeObj instanceof Integer) {
+                    newUser.setUserType((Integer) userTypeObj);
+                } else if (userTypeObj instanceof Number) {
+                    newUser.setUserType(((Number) userTypeObj).intValue());
+                } else {
+                    newUser.setUserType(0); // 默认普通用户
+                }
+            } else {
+                newUser.setUserType(0); // 默认普通用户
+            }
+            
+            // 实名认证状态
+            Object verifiedObj = userData.get("verified");
+            if (verifiedObj != null) {
+                if (verifiedObj instanceof Boolean) {
+                    newUser.setVerified(((Boolean) verifiedObj) ? 1 : 0);
+                } else if (verifiedObj instanceof Integer) {
+                    newUser.setVerified((Integer) verifiedObj);
+                } else if (verifiedObj instanceof Number) {
+                    newUser.setVerified(((Number) verifiedObj).intValue());
+                } else {
+                    newUser.setVerified(0); // 默认未认证
+                }
+            } else {
+                newUser.setVerified(0); // 默认未认证
+            }
+            
+            // 用户状态
+            Object statusObj = userData.get("status");
+            if (statusObj != null) {
+                if (statusObj instanceof Integer) {
+                    newUser.setStatus((Integer) statusObj);
+                } else if (statusObj instanceof Number) {
+                    newUser.setStatus(((Number) statusObj).intValue());
+                } else {
+                    newUser.setStatus(0); // 默认正常状态
+                }
+            } else {
+                newUser.setStatus(0); // 默认正常状态
+            }
+            
+            User createdUser = userService.createUser(newUser);
+            log.info("用户创建成功: {}", createdUser.getId());
+            
             createdUser.setPassword(null); // 清空敏感信息
             return ApiResult.success(createdUser);
         } catch (Exception e) {

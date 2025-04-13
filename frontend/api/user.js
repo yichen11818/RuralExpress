@@ -1,5 +1,5 @@
 /**
- * 用户相关的API服务
+ * 用户相关的API服务 确保添加/api前缀!!1请勿去除!
  */
 import request from '@/utils/request';
 
@@ -13,8 +13,8 @@ export function getUserProfile() {
   if (!userInfo || !userInfo.id) {
     return Promise.reject(new Error('用户未登录或无法获取用户ID'));
   }
-  // 使用实际的数字ID，去掉/api前缀
-  return request.get(`/user/${userInfo.id}`);
+  // 使用实际的数字ID，确保添加/api前缀
+  return request.get(`/api/user/${userInfo.id}`);
 }
 
 /**
@@ -29,7 +29,7 @@ export function updateUserProfile(data) {
     return Promise.reject(new Error('用户未登录或无法获取用户ID'));
   }
   // 使用实际的数字ID
-  return request.put(`/user/${userInfo.id}`, data);
+  return request.put(`/api/user/${userInfo.id}`, data);
 }
 
 /**
@@ -38,7 +38,7 @@ export function updateUserProfile(data) {
  * @returns {Promise} 用户信息
  */
 export function getUserById(id) {
-  return request.get(`/user/${id}`);
+  return request.get(`/api/user/${id}`);
 }
 
 /**
@@ -48,7 +48,7 @@ export function getUserById(id) {
  * @returns {Promise} 更新结果
  */
 export function updateUser(id, data) {
-  return request.put(`/user/${id}`, data);
+  return request.put(`/api/user/${id}`, data);
 }
 
 /**
@@ -58,7 +58,7 @@ export function updateUser(id, data) {
  * @returns {Promise} 认证结果
  */
 export function verifyUser(id, data) {
-  return request.post(`/user/${id}/verify`, data);
+  return request.post(`/api/user/${id}/verify`, data);
 }
 
 /**
@@ -66,7 +66,7 @@ export function verifyUser(id, data) {
  * @returns {Promise} 地址列表
  */
 export function getAddressList() {
-  return request.get('/addresses');
+  return request.get('/api/addresses');
 }
 
 /**
@@ -75,7 +75,7 @@ export function getAddressList() {
  * @returns {Promise} 地址详情
  */
 export function getAddressById(id) {
-  return request.get(`/addresses/${id}`);
+  return request.get(`/api/addresses/${id}`);
 }
 
 /**
@@ -83,7 +83,7 @@ export function getAddressById(id) {
  * @returns {Promise} 默认地址
  */
 export function getDefaultAddress() {
-  return request.get('/addresses/default');
+  return request.get('/api/addresses/default');
 }
 
 /**
@@ -92,7 +92,7 @@ export function getDefaultAddress() {
  * @returns {Promise} 添加后的地址
  */
 export function addAddress(data) {
-  return request.post('/addresses', data);
+  return request.post('/api/addresses', data);
 }
 
 /**
@@ -102,7 +102,7 @@ export function addAddress(data) {
  * @returns {Promise} 更新结果
  */
 export function updateAddress(id, data) {
-  return request.put(`/addresses/${id}`, data);
+  return request.put(`/api/addresses/${id}`, data);
 }
 
 /**
@@ -111,7 +111,7 @@ export function updateAddress(id, data) {
  * @returns {Promise} 删除结果
  */
 export function deleteAddress(id) {
-  return request.delete(`/addresses/${id}`);
+  return request.delete(`/api/addresses/${id}`);
 }
 
 /**
@@ -120,7 +120,7 @@ export function deleteAddress(id) {
  * @returns {Promise} 设置结果
  */
 export function setDefaultAddress(id) {
-  return request.put(`/addresses/${id}/default`);
+  return request.put(`/api/addresses/${id}/default`);
 }
 
 /**
@@ -135,7 +135,7 @@ export function changePassword(userId, oldPassword, newPassword) {
     oldPassword,
     newPassword
   };
-  return request.post(`/user/${userId}/password`, data);
+  return request.post(`/api/user/${userId}/password`, data);
 }
 
 /**
@@ -145,7 +145,7 @@ export function changePassword(userId, oldPassword, newPassword) {
  * @returns {Promise} 修改结果
  */
 export function updatePassword(userId, data) {
-  return request.post(`/user/${userId}/password`, data);
+  return request.post(`/api/user/${userId}/password`, data);
 }
 
 /**
@@ -154,7 +154,7 @@ export function updatePassword(userId, data) {
  * @returns {Promise} 发送结果
  */
 export function sendPhoneVerifyCode(phone) {
-  return request.post(`/user/verifyCode/phone?phone=${encodeURIComponent(phone)}`);
+  return request.post(`/api/user/verifyCode/phone?phone=${encodeURIComponent(phone)}`);
 }
 
 /**
@@ -164,5 +164,5 @@ export function sendPhoneVerifyCode(phone) {
  * @returns {Promise} 更换结果
  */
 export function changePhone(userId, data) {
-  return request.post(`/user/${userId}/phone`, data);
+  return request.post(`/api/user/${userId}/phone`, data);
 } 

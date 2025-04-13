@@ -75,17 +75,17 @@ export default {
         { 
           name: '微信支付', 
           value: 'wxpay', 
-          icon: '/static/images/tabbar/my-active.png'  // 临时使用已有图标
+          icon: '/static/images/wxpay.png'
         },
         { 
           name: '支付宝', 
           value: 'alipay', 
-          icon: '/static/images/tabbar/order-active.png'  // 临时使用已有图标
+          icon: '/static/images/alipay.png'
         },
         { 
           name: '余额支付', 
           value: 'balance', 
-          icon: '/static/images/tabbar/home-active.png'  // 临时使用已有图标
+          icon: '/static/images/balance.png'
         }
       ]
     };

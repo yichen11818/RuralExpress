@@ -120,9 +120,9 @@
           </view>
           <view class="form-item">
             <text class="form-label">用户类型</text>
-            <picker @change="handleFormTypeChange" :value="formTypeIndex" :range="typeOptions">
+            <picker @change="handleFormTypeChange" :value="formTypeIndex" :range="userTypeOptions">
               <view class="form-picker">
-                <text>{{ typeOptions[formTypeIndex] }}</text>
+                <text>{{ userTypeOptions[formTypeIndex] }}</text>
                 <uni-icons type="down" size="14" color="#666"></uni-icons>
               </view>
             </picker>
@@ -162,6 +162,7 @@ export default {
       statusOptions: ['全部', '正常', '禁用'],
       typeIndex: 0,
       typeOptions: ['全部', '普通用户', '快递员', '管理员'],
+      userTypeOptions: ['普通用户', '快递员', '管理员'],
       users: [],
       total: 0,
       currentPage: 1,
@@ -211,6 +212,8 @@ export default {
       }
       
       if (this.typeIndex > 0) {
+        // typeIndex: 0=全部, 1=普通用户, 2=快递员, 3=管理员
+        // userType: 0=普通用户, 1=快递员, 2=管理员
         params.userType = this.typeIndex - 1;
       }
       
