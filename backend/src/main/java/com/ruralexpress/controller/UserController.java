@@ -1,5 +1,6 @@
 package com.ruralexpress.controller;
 
+import com.ruralexpress.dto.PasswordChangeDto;
 import com.ruralexpress.dto.UserDto;
 import com.ruralexpress.entity.User;
 import com.ruralexpress.exception.BusinessException;
@@ -91,6 +92,45 @@ public class UserController {
         // 更新用户
         User updatedUser = userService.update(user);
         return ApiResult.success(updatedUser);
+    }
+    
+    /**
+     * 修改密码
+     * @param id 用户ID
+     * @param passwordChangeDto 密码修改信息
+     * @return 修改结果
+     */
+    @PostMapping("/{id}/password")
+    public ApiResult<Void> changePassword(@PathVariable Long id, @Validated @RequestBody PasswordChangeDto passwordChangeDto) {
+        log.info("接收到用户{}的密码修改请求", id);
+        
+        try {
+            // 设置用户ID，防止篡改
+            passwordChangeDto.setUserId(id);
+            
+            // 调用服务修改密码
+            boolean result = userService.changePassword(
+                passwordChangeDto.getUserId(),
+                passwordChangeDto.getOldPassword(),
+                passwordChangeDto.getNewPassword()
+            );
+            
+            if (result) {
+                log.info("用户{}密码修改成功", id);
+                return ApiResult.success(null, "密码修改成功");
+            } else {
+                log.warn("用户{}密码修改失败", id);
+                return ApiResult.error(500, "密码修改失败");
+            }
+        } catch (BusinessException e) {
+            // 业务异常，返回具体错误信息
+            log.warn("用户{}密码修改业务异常: {}", id, e.getMessage());
+            return ApiResult.error(e.getCode(), e.getMessage());
+        } catch (Exception e) {
+            // 未预期的异常，返回详细错误信息
+            log.error("用户{}密码修改过程中发生未知异常: {}", id, e.getMessage(), e);
+            return ApiResult.serverError("密码修改失败: " + e.getMessage());
+        }
     }
     
     /**

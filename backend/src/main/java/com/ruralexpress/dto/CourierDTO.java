@@ -52,4 +52,14 @@ public class CourierDTO {
      * 状态(0-正常,1-禁用,2-待审核)
      */
     private Integer status;
+    
+    /**
+     * 身份证正面照片URL
+     */
+    private String idCardFront;
+    
+    /**
+     * 身份证背面照片URL
+     */
+    private String idCardBack;
 } 

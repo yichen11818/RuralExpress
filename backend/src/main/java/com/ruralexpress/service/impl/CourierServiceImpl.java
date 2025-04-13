@@ -710,6 +710,10 @@ public class CourierServiceImpl implements CourierService {
             courier.setCreatedAt(LocalDateTime.now());
             courier.setUpdatedAt(LocalDateTime.now());
             
+            // 设置身份证照片URL
+            courier.setIdCardFront(courierDTO.getIdCardFront());
+            courier.setIdCardBack(courierDTO.getIdCardBack());
+            
             // 保存快递员
             courierMapper.insert(courier);
             

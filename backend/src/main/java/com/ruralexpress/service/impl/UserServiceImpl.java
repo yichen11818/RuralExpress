@@ -636,4 +636,56 @@ public class UserServiceImpl implements UserService {
             throw new BusinessException("搜索用户失败: " + e.getMessage());
         }
     }
+    
+    /**
+     * 修改密码
+     */
+    @Override
+    @Transactional
+    public boolean changePassword(Long userId, String oldPassword, String newPassword) {
+        try {
+            log.info("开始处理用户{}的密码修改", userId);
+            
+            // 查询用户
+            User user = this.findById(userId);
+            if (user == null) {
+                log.warn("修改密码失败: 用户{}不存在", userId);
+                throw new BusinessException("用户不存在");
+            }
+            
+            // 验证旧密码
+            if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+                log.warn("修改密码失败: 用户{}的旧密码错误", userId);
+                throw new BusinessException("旧密码错误");
+            }
+            
+            // 如果新密码与旧密码相同，直接返回成功
+            if (passwordEncoder.matches(newPassword, user.getPassword())) {
+                log.info("用户{}的新密码与旧密码相同，无需修改", userId);
+                return true;
+            }
+            
+            // 加密新密码
+            String encodedPassword = passwordEncoder.encode(newPassword);
+            
+            // 更新密码
+            user.setPassword(encodedPassword);
+            user.setUpdatedAt(LocalDateTime.now());
+            
+            int result = userMapper.updateById(user);
+            
+            if (result > 0) {
+                log.info("用户{}密码修改成功", userId);
+                return true;
+            } else {
+                log.warn("用户{}密码修改失败: 数据库更新异常", userId);
+                throw new BusinessException("密码修改失败");
+            }
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("修改密码过程中发生错误: {}", e.getMessage(), e);
+            throw new BusinessException("修改密码失败: " + e.getMessage());
+        }
+    }
 } 

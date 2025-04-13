@@ -46,6 +46,15 @@ public interface UserService {
     User update(User user);
     
     /**
+     * 修改密码
+     * @param userId 用户ID
+     * @param oldPassword 旧密码
+     * @param newPassword 新密码
+     * @return 是否修改成功
+     */
+    boolean changePassword(Long userId, String oldPassword, String newPassword);
+    
+    /**
      * 实名认证
      * @param id 用户ID
      * @param realName 真实姓名
@@ -78,7 +87,7 @@ public interface UserService {
     Map<String, Object> getUsersWithPagination(Integer page, Integer pageSize, String keyword, Integer userType, Integer status);
     
     /**
-     * 管理员功能：检查手机号是否已存在
+     * 管理员功能：判断手机号是否存在
      * @param phone 手机号
      * @return 是否存在
      */

@@ -175,7 +175,7 @@
             </picker>
           </view>
           <view class="form-item">
-            <text class="form-label">身份证正面照</text>
+            <text class="form-label">身份证正面照 <text class="optional-tag">(选填，未上传将使用默认图片)</text></text>
             <view class="upload-box">
               <image 
                 v-if="courierForm.idCardFront" 
@@ -191,7 +191,7 @@
             </view>
           </view>
           <view class="form-item">
-            <text class="form-label">身份证背面照</text>
+            <text class="form-label">身份证背面照 <text class="optional-tag">(选填，未上传将使用默认图片)</text></text>
             <view class="upload-box">
               <image 
                 v-if="courierForm.idCardBack" 
@@ -453,8 +453,8 @@ export default {
           workNo: courier.workNo,
           serviceArea: courier.serviceArea,
           status: courier.status,
-          idCardFront: courier.idCardFront,
-          idCardBack: courier.idCardBack
+          idCardFront: courier.idCardFront || '',
+          idCardBack: courier.idCardBack || ''
         };
         this.originalCourier = { ...courier };
         this.formStatusIndex = courier.status + 1;
@@ -509,21 +509,19 @@ export default {
         return;
       }
       
-      // 检查身份证照片是否上传
-      if (!this.courierForm.idCardFront) {
-        uni.showToast({
-          title: '请上传身份证正面照',
-          icon: 'none'
-        });
-        return;
+      // 如果身份证照片为空，则设置默认值
+      const formData = { ...this.courierForm };
+      
+      // 设置默认图片URL
+      const defaultImageUrl = '/static/images/default-avatar.png';
+      
+      // 为空值设置默认图片
+      if (!formData.idCardFront) {
+        formData.idCardFront = defaultImageUrl;
       }
       
-      if (!this.courierForm.idCardBack) {
-        uni.showToast({
-          title: '请上传身份证背面照',
-          icon: 'none'
-        });
-        return;
+      if (!formData.idCardBack) {
+        formData.idCardBack = defaultImageUrl;
       }
       
       // 实际API调用
@@ -535,15 +533,30 @@ export default {
       
       const apiMethod = this.formType === 'add' ? this.$request.post : this.$request.put;
       
-      apiMethod(url, this.courierForm)
+      apiMethod(url, formData)
         .then(res => {
           uni.hideLoading();
           if (res.code === 200) {
-            uni.showToast({
-              title: this.formType === 'add' ? '添加成功' : '更新成功'
-            });
-            this.closeCourierForm();
-            this.loadCouriers();
+            // 提示创建成功
+            const usedDefaultImage = !this.courierForm.idCardFront || !this.courierForm.idCardBack;
+            
+            if (this.formType === 'add' && usedDefaultImage) {
+              uni.showModal({
+                title: '创建成功',
+                content: '快递员创建成功，但您未上传身份证照片。您可以稍后在编辑页面补充上传。',
+                showCancel: false,
+                success: () => {
+                  this.closeCourierForm();
+                  this.loadCouriers();
+                }
+              });
+            } else {
+              uni.showToast({
+                title: this.formType === 'add' ? '添加成功' : '更新成功'
+              });
+              this.closeCourierForm();
+              this.loadCouriers();
+            }
           } else {
             uni.showToast({
               title: res.message || (this.formType === 'add' ? '添加失败' : '更新失败'),
@@ -1006,5 +1019,11 @@ export default {
   border-radius: 8rpx;
   object-fit: cover;
   border: 1px solid #eee;
+}
+
+.optional-tag {
+  color: #999;
+  font-size: 24rpx;
+  margin-left: 10rpx;
 }
 </style> 
