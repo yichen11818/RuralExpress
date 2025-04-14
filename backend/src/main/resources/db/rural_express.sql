@@ -333,19 +333,19 @@ CREATE TABLE `t_express_company`  (
 -- ----------------------------
 -- Records of t_express_company
 -- ----------------------------
-INSERT INTO `t_express_company` VALUES (1, '顺丰速运', 'SF', '/static/images/sf-logo.png', '95338', '95338', 'https://www.sf-express.com', 0, '2025-03-24 23:33:42', '2025-03-24 23:33:42');
-INSERT INTO `t_express_company` VALUES (2, '中通快递', 'ZTO', '/static/images/zt-logo.png', NULL, '95311', 'https://www.zto.com', 0, '2025-03-24 23:33:42', '2025-03-24 23:33:42');
-INSERT INTO `t_express_company` VALUES (3, '圆通速递', 'YTO', '/static/images/yt-logo.png', NULL, '95554', 'https://www.yto.net.cn', 0, '2025-03-24 23:33:42', '2025-03-24 23:33:42');
-INSERT INTO `t_express_company` VALUES (4, '韵达快递', 'YD', '/static/images/yd-logo.png', '95546', '95546', 'https://www.yundaex.com', 0, '2025-03-24 23:33:42', '2025-03-24 23:33:42');
-INSERT INTO `t_express_company` VALUES (5, '申通快递', 'STO', '/static/images/st-logo.png', '95543', '95543', 'https://www.sto.cn', 0, '2025-03-24 23:33:42', '2025-03-24 23:33:42');
-INSERT INTO `t_express_company` VALUES (6, '京东物流', 'JD', '/static/images/jd-logo.png', '950616', '950616', 'https://www.jdl.com', 0, '2025-03-24 23:33:42', '2025-03-24 23:33:42');
-INSERT INTO `t_express_company` VALUES (207, '圆通快递', 'YT', '/static/images/icon/yt.png', '95554', NULL, NULL, 1, '2025-03-30 20:31:19', NULL);
-INSERT INTO `t_express_company` VALUES (208, '中通快递', 'ZT', '/static/images/icon/zt.png', '95311', NULL, NULL, 1, '2025-03-30 20:31:19', NULL);
-INSERT INTO `t_express_company` VALUES (209, '百世快递', 'HT', '/static/images/icon/ht.png', '95320', NULL, NULL, 1, '2025-03-30 20:31:19', NULL);
-INSERT INTO `t_express_company` VALUES (210, '邮政快递', 'EMS', '/static/images/icon/ems.png', '11183', NULL, NULL, 1, '2025-03-30 20:31:19', NULL);
+INSERT INTO `t_express_company` VALUES (1, '顺丰速运', 'SF', '/static/images/sf.png', '95338', '95338', 'https://www.sf-express.com', 0, '2025-03-24 23:33:42', '2025-03-24 23:33:42');
+INSERT INTO `t_express_company` VALUES (2, '中通快递', 'ZTO', '/static/images/zt.png', NULL, '95311', 'https://www.zto.com', 0, '2025-03-24 23:33:42', '2025-03-24 23:33:42');
+INSERT INTO `t_express_company` VALUES (3, '圆通速递', 'YTO', '/static/images/yt.png', NULL, '95554', 'https://www.yto.net.cn', 0, '2025-03-24 23:33:42', '2025-03-24 23:33:42');
+INSERT INTO `t_express_company` VALUES (4, '韵达快递', 'YD', '/static/images/yd.png', '95546', '95546', 'https://www.yundaex.com', 0, '2025-03-24 23:33:42', '2025-03-24 23:33:42');
+INSERT INTO `t_express_company` VALUES (5, '申通快递', 'STO', '/static/images/st.png', '95543', '95543', 'https://www.sto.cn', 0, '2025-03-24 23:33:42', '2025-03-24 23:33:42');
+INSERT INTO `t_express_company` VALUES (6, '京东物流', 'JD', '/static/images/jd.png', '950616', '950616', 'https://www.jdl.com', 0, '2025-03-24 23:33:42', '2025-03-24 23:33:42');
+INSERT INTO `t_express_company` VALUES (207, '圆通快递', 'YT', '/static/images/yt.png', '95554', NULL, NULL, 1, '2025-03-30 20:31:19', NULL);
+INSERT INTO `t_express_company` VALUES (208, '中通快递', 'ZT', '/static/images/zt.png', '95311', NULL, NULL, 1, '2025-03-30 20:31:19', NULL);
+INSERT INTO `t_express_company` VALUES (209, '百世快递', 'HT', '/static/images/ht.png', '95320', NULL, NULL, 1, '2025-03-30 20:31:19', NULL);
+INSERT INTO `t_express_company` VALUES (210, '邮政快递', 'EMS', '/static/images/ems.png', '11183', NULL, NULL, 1, '2025-03-30 20:31:19', NULL);
 INSERT INTO `t_express_company` VALUES (211, '乡递通快递', 'RuralExpress', '/static/images/company-logo.png', '400-123-4567', NULL, NULL, 1, '2025-03-30 20:31:19', NULL);
-INSERT INTO `t_express_company` VALUES (263, '德邦快递', 'DBKD', 'https://example.com/dbl_logo.png', NULL, '95353', 'https://www.deppon.com', 0, '2025-04-01 21:16:55', '2025-04-01 21:16:55');
-INSERT INTO `t_express_company` VALUES (264, '极兔速递', 'JTSD', 'https://example.com/jtexpress_logo.png', NULL, '950999', 'https://www.jtexpress.com', 0, '2025-04-01 21:16:55', '2025-04-01 21:16:55');
+INSERT INTO `t_express_company` VALUES (263, '德邦快递', 'DBKD', '/static/images/dbkd.png', NULL, '95353', 'https://www.deppon.com', 0, '2025-04-01 21:16:55', '2025-04-01 21:16:55');
+INSERT INTO `t_express_company` VALUES (264, '极兔速递', 'JTSD', '/static/images/jtsd.png', NULL, '950999', 'https://www.jtexpress.com', 0, '2025-04-01 21:16:55', '2025-04-01 21:16:55');
 
 -- ----------------------------
 -- Table structure for t_logistics_trace

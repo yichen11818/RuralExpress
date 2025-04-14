@@ -103,7 +103,7 @@
           </view>
         </view>
         <view class="tracking-list">
-          <view class="tracking-item" v-for="(item, index) in trackingList" :key="index" @click="navigateTo(`/pages/order/track?trackingNo=${item.trackingNo}`)">
+          <view class="tracking-item" v-for="(item, index) in trackingList" :key="index" @click="navigateToDetail(item.trackingNo)">
             <view class="tracking-company">
               <image :src="item.logo || '/static/images/package.png'" mode="aspectFit" class="tracking-logo"></image>
               <view class="tracking-info">
@@ -617,34 +617,38 @@ export default {
     
     // 加载物流追踪列表
     loadTrackingList() {
-      getTrackingList()
+      // 添加分页参数
+      const params = {
+        page: 1,
+        pageSize: 3 // 只获取3条记录显示在首页
+      };
+      
+      // 打印请求参数，便于调试
+      console.log('首页请求物流列表参数：', params);
+      
+      getTrackingList(params)
         .then(res => {
           console.log('物流追踪列表响应:', res);
           if (res && res.code === 200 && res.data) {
             // 修复：正确访问data.list数组
             const trackingData = res.data.list || [];
+            
             // 只显示最近的3个物流信息
-            this.trackingList = trackingData.slice(0, 3).map(item => {
-              // 处理status值，确保是数字类型
-              // 如果status是布尔值false，转换为0（等待揽收）
-              // 如果是布尔值true，转换为1（已揽收）
-              // 如果是数字，则保持原样
-              let statusValue = 0;
+            this.trackingList = trackingData.map(item => {
+              // 确保状态是数字类型
               if (item.status !== undefined && item.status !== null) {
-                if (typeof item.status === 'boolean') {
-                  statusValue = item.status ? 1 : 0;
-                } else {
-                  statusValue = Number(item.status);
-                }
+                item.status = Number(item.status);
               }
               
-              console.log(`物流项[${item.trackingNo}] 原始status: ${item.status}, 类型: ${typeof item.status}, 转换后: ${statusValue}`);
+              console.log(`物流项[${item.trackingNo}] status:`, item.status, typeof item.status);
               
               return {
                 trackingNo: item.trackingNo,
-                company: item.company || item.companyName || '未知快递公司',
-                logo: item.logo || item.companyLogo || '/static/images/package.png',
-                status: statusValue
+                company: item.company || '未知快递公司',
+                logo: item.logo || '/static/images/icon/package.png',
+                status: item.status || 0,
+                address: item.address || '',
+                updateTime: item.updateTime || ''
               };
             });
           }
@@ -753,6 +757,13 @@ export default {
       
       // 计算总价
       this.calculatedPrice = basePrice + distanceFee + packageTypeFee;
+    },
+    
+    // 跳转到物流详情
+    navigateToDetail(trackingNo) {
+      uni.navigateTo({
+        url: `/pages/order/track?trackingNo=${trackingNo}`
+      });
     }
   }
 };
@@ -1433,12 +1444,16 @@ export default {
   color: #999;
 }
 
-.status-1, .status-2 {
+.status-1 {
   color: #3cc51f;
 }
 
-.status-3 {
+.status-2 {
   color: #ff9900;
+}
+
+.status-3 {
+  color: #ff5500;
 }
 
 .status-4 {
