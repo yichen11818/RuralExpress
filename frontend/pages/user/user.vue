@@ -45,7 +45,9 @@
           <uni-icons type="right" size="16" color="#ccc"></uni-icons>
         </view>
         <view class="menu-item" @click="navigateTo('/pages/admin/companies/index')">
-          <uni-icons type="cloud" size="20" color="#ff7043"></uni-icons>
+          <view class="icon-wrapper">
+            <image src="/static/images/kdgs.png" mode="aspectFill" class="custom-icon"></image>
+          </view>
           <text class="menu-name">快递公司管理</text>
           <uni-icons type="right" size="16" color="#ccc"></uni-icons>
         </view>
@@ -93,7 +95,7 @@
           <uni-icons type="right" size="16" color="#ccc"></uni-icons>
         </view>
         <view class="menu-item" @click="navigateTo('/pages/order/list?status=pending')">
-          <uni-icons type="waiting" size="20" color="#3cc51f"></uni-icons>
+          <uni-icons type="help" size="20" color="#3cc51f"></uni-icons>
           <text class="menu-name">待处理订单</text>
           <uni-icons type="right" size="16" color="#ccc"></uni-icons>
         </view>
@@ -314,5 +316,19 @@ export default {
   font-size: 32rpx;
   border-radius: 45rpx;
   margin: 60rpx auto;
+}
+
+.icon-wrapper {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.custom-icon {
+  width: 25rpx;
+  height: 25rpx;
+  filter: brightness(0) saturate(100%) invert(55%) sepia(87%) saturate(1206%) hue-rotate(334deg) brightness(101%) contrast(103%);
 }
 </style> 
