@@ -149,7 +149,13 @@ public class LogisticsServiceImpl implements LogisticsService {
                     tracking.put("trackingNo", pkg.get("tracking_no"));
                     tracking.put("company", pkg.get("company_name"));
                     tracking.put("logo", pkg.get("company_logo"));
-                    tracking.put("status", pkg.get("status"));
+                    
+                    // 记录状态值及其类型
+                    Object statusObj = pkg.get("status");
+                    logger.info("包裹[{}]的状态值: {}, 类型: {}", pkg.get("id"), statusObj, 
+                        statusObj != null ? statusObj.getClass().getName() : "null");
+                    
+                    tracking.put("status", statusObj);
                     
                     // 包裹信息
                     String packageInfo = "包裹";

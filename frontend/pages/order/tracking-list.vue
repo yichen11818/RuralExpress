@@ -151,6 +151,16 @@ export default {
               this.trackingList = data.list
             }
             
+            // 打印每个项目的状态信息，用于调试
+            this.trackingList.forEach((item, index) => {
+              console.log(`物流项[${index}] status:`, item.status, typeof item.status)
+              
+              // 确保状态是数字类型
+              if (item.status !== undefined && item.status !== null) {
+                item.status = Number(item.status)
+              }
+            })
+            
             // 更新分页信息
             this.hasMore = data.list.length >= this.pageSize
             
@@ -309,6 +319,12 @@ export default {
     
     // 获取状态文本
     getStatusText(status) {
+      // 调试状态信息
+      console.log('getStatusText - 收到的状态：', status, typeof status)
+      
+      // 确保状态是数字
+      status = Number(status)
+      
       const statusMap = {
         0: '等待揽收',
         1: '已揽收',
@@ -322,6 +338,9 @@ export default {
     
     // 获取状态样式类
     getStatusClass(status) {
+      // 确保状态是数字
+      status = Number(status)
+      
       const statusMap = {
         0: 'status-waiting',
         1: 'status-collected',

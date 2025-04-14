@@ -165,7 +165,7 @@ export default {
         // 隐藏加载
         uni.hideLoading();
         
-        // 判断是否是首次登录（未设置昵称和头像）
+        // 判断是否需要完善个人信息（未设置昵称和头像）
         if (!res.data.user.nickname || !res.data.user.avatar) {
           // 跳转到个人信息完善页面，并传递用户信息
           const userInfoParam = encodeURIComponent(JSON.stringify(res.data.user));
@@ -258,11 +258,19 @@ export default {
         // 保存登录信息
         saveLoginInfo(loginRes.data);
         
-        // 跳转到个人信息完善页面，并传递用户信息
-        const userInfoParam = encodeURIComponent(JSON.stringify(loginRes.data.user));
-        uni.navigateTo({
-          url: `../user/profile-setup?userInfo=${userInfoParam}`
-        });
+        // 判断是否需要完善个人信息（未设置昵称和头像）
+        if (!loginRes.data.user.nickname ) {
+          // 跳转到个人信息完善页面，并传递用户信息
+          const userInfoParam = encodeURIComponent(JSON.stringify(loginRes.data.user));
+          uni.navigateTo({
+            url: `../user/profile-setup?userInfo=${userInfoParam}`
+          });
+        } else {
+          // 跳转到首页
+          uni.switchTab({
+            url: '/pages/index/index'
+          });
+        }
       } catch (error) {
         // 隐藏加载
         uni.hideLoading();
