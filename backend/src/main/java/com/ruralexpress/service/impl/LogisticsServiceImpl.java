@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 
 /**
@@ -166,9 +168,21 @@ public class LogisticsServiceImpl implements LogisticsService {
                     // 更新时间
                     Date updateTime = null;
                     if (pkg.get("updated_at") != null) {
-                        updateTime = (Date) pkg.get("updated_at");
+                        // 转换LocalDateTime为Date
+                        if (pkg.get("updated_at") instanceof java.time.LocalDateTime) {
+                            java.time.LocalDateTime localDateTime = (java.time.LocalDateTime) pkg.get("updated_at");
+                            updateTime = java.util.Date.from(localDateTime.atZone(java.time.ZoneId.systemDefault()).toInstant());
+                        } else {
+                            updateTime = (Date) pkg.get("updated_at");
+                        }
                     } else if (pkg.get("created_at") != null) {
-                        updateTime = (Date) pkg.get("created_at");
+                        // 转换LocalDateTime为Date
+                        if (pkg.get("created_at") instanceof java.time.LocalDateTime) {
+                            java.time.LocalDateTime localDateTime = (java.time.LocalDateTime) pkg.get("created_at");
+                            updateTime = java.util.Date.from(localDateTime.atZone(java.time.ZoneId.systemDefault()).toInstant());
+                        } else {
+                            updateTime = (Date) pkg.get("created_at");
+                        }
                     } else {
                         updateTime = new Date();
                     }

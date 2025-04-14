@@ -196,9 +196,27 @@ export default {
         return;
       }
       
+      // 验证手机号格式
+      if (!/^1[3-9]\d{9}$/.test(this.registerForm.phone)) {
+        uni.showToast({
+          title: '手机号格式不正确',
+          icon: 'none'
+        });
+        return;
+      }
+      
       if (!this.registerForm.password) {
         uni.showToast({
           title: '请输入密码',
+          icon: 'none'
+        });
+        return;
+      }
+      
+      // 验证密码长度
+      if (this.registerForm.password.length < 6 || this.registerForm.password.length > 20) {
+        uni.showToast({
+          title: '密码长度必须在6-20位之间',
           icon: 'none'
         });
         return;
@@ -249,6 +267,18 @@ export default {
         // 隐藏加载
         uni.hideLoading();
         console.error('注册失败', error);
+        
+        // 显示后端返回的错误信息
+        let errorMsg = '注册失败';
+        if (error && error.data && error.data.message) {
+          errorMsg = error.data.message;
+        }
+        
+        uni.showToast({
+          title: errorMsg,
+          icon: 'none',
+          duration: 3000
+        });
       }
     },
     
