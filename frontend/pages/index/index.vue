@@ -625,11 +625,26 @@ export default {
             const trackingData = res.data.list || [];
             // 只显示最近的3个物流信息
             this.trackingList = trackingData.slice(0, 3).map(item => {
+              // 处理status值，确保是数字类型
+              // 如果status是布尔值false，转换为0（等待揽收）
+              // 如果是布尔值true，转换为1（已揽收）
+              // 如果是数字，则保持原样
+              let statusValue = 0;
+              if (item.status !== undefined && item.status !== null) {
+                if (typeof item.status === 'boolean') {
+                  statusValue = item.status ? 1 : 0;
+                } else {
+                  statusValue = Number(item.status);
+                }
+              }
+              
+              console.log(`物流项[${item.trackingNo}] 原始status: ${item.status}, 类型: ${typeof item.status}, 转换后: ${statusValue}`);
+              
               return {
                 trackingNo: item.trackingNo,
-                company: item.companyName || '未知快递公司',
-                logo: item.companyLogo || '/static/images/package.png',
-                status: item.status || 0
+                company: item.company || item.companyName || '未知快递公司',
+                logo: item.logo || item.companyLogo || '/static/images/package.png',
+                status: statusValue
               };
             });
           }
@@ -641,6 +656,9 @@ export default {
     
     // 获取物流状态文本
     getTrackingStatusText(status) {
+      // 确保状态是数字
+      status = Number(status);
+      
       const statusMap = {
         0: '等待揽收',
         1: '已揽收',

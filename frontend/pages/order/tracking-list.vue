@@ -114,6 +114,26 @@ export default {
       this.loadMore()
     }
   },
+  // 添加微信小程序分享功能
+  onShareAppMessage(e) {
+    // 检查是否是从按钮分享的
+    if (e.from === 'button') {
+      const item = e.target.dataset.item
+      return {
+        title: `${item.company}物流追踪`,
+        path: `/pages/order/track?trackingNo=${item.trackingNo}`,
+        imageUrl: '/static/images/icon/package.png',
+        desc: `运单号：${item.trackingNo}，当前状态：${this.getStatusText(item.status)}`
+      }
+    }
+    
+    // 默认分享页面本身
+    return {
+      title: '物流追踪列表',
+      path: '/pages/order/tracking-list',
+      imageUrl: '/static/images/icon/package.png'
+    }
+  },
   methods: {
     // 加载物流列表
     loadTrackingList(append = false) {
@@ -301,20 +321,17 @@ export default {
     
     // 分享物流
     shareTracking(item) {
-      uni.share({
-        provider: 'weixin',
-        scene: 'WXSceneSession',
-        type: 0,
-        title: `${item.company}物流追踪`,
-        summary: `运单号：${item.trackingNo}，当前状态：${this.getStatusText(item.status)}`,
-        imageUrl: '/static/images/icon/package.png',
-        success: (res) => {
-          console.log('分享成功', res)
-        },
-        fail: (err) => {
-          console.log('分享失败', err)
+      // 微信小程序不支持uni.share，显示提示并引导用户使用右上角的分享功能
+      uni.showModal({
+        title: '分享提示',
+        content: '请点击右上角的"···"按钮，选择"分享"将物流信息分享给好友',
+        showCancel: false,
+        success: function (res) {
+          if (res.confirm) {
+            console.log('用户点击确定');
+          }
         }
-      })
+      });
     },
     
     // 获取状态文本

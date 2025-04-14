@@ -162,6 +162,16 @@ export default {
     this.refreshTimeline();
   },
   
+  // 添加微信小程序分享功能
+  onShareAppMessage() {
+    return {
+      title: `${this.logistics.company}物流轨迹`,
+      path: `/pages/order/track?trackingNo=${this.logistics.trackingNo}`,
+      imageUrl: '/static/images/icon/package.png',
+      desc: `运单号：${this.logistics.trackingNo}，当前状态：${this.logistics.statusText}`
+    };
+  },
+  
   methods: {
     // 加载物流信息
     loadTrackingInfo() {
@@ -313,18 +323,15 @@ export default {
     
     // 分享物流信息
     shareTracking() {
-      uni.share({
-        provider: 'weixin',
-        scene: 'WXSceneSession',
-        type: 0,
-        title: `${this.logistics.company}物流轨迹`,
-        summary: `运单号：${this.logistics.trackingNo}，当前状态：${this.logistics.statusText}`,
-        imageUrl: '/static/images/icon/package.png',
-        success: (res) => {
-          console.log('分享成功', res);
-        },
-        fail: (err) => {
-          console.log('分享失败', err);
+      // 微信小程序不支持uni.share，显示提示并引导用户使用右上角的分享功能
+      uni.showModal({
+        title: '分享提示',
+        content: '请点击右上角的"···"按钮，选择"分享"将物流信息分享给好友',
+        showCancel: false,
+        success: function (res) {
+          if (res.confirm) {
+            console.log('用户点击确定');
+          }
         }
       });
     },
