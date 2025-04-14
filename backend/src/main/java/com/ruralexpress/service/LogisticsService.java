@@ -16,6 +16,14 @@ public interface LogisticsService {
     Map<String, Object> getLogisticsInfo(String trackingNo);
     
     /**
+     * 通过订单ID获取物流信息
+     * 
+     * @param orderId 订单ID
+     * @return 物流信息
+     */
+    Map<String, Object> getLogisticsInfoByOrderId(Long orderId);
+    
+    /**
      * 获取用户的物流追踪列表
      * 
      * @param userId 用户ID

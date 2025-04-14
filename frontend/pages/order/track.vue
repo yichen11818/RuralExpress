@@ -144,8 +144,8 @@ export default {
     if (options.trackingNo) {
       this.trackingNo = options.trackingNo;
       this.loadTrackingInfo();
-    } else if (options.orderId) {
-      this.orderId = options.orderId;
+    } else if (options.orderId || options.id) {
+      this.orderId = options.orderId || options.id;
       this.loadTrackingInfo();
     } else {
       uni.showToast({

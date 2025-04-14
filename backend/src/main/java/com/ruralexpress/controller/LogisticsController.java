@@ -29,16 +29,35 @@ public class LogisticsController {
     /**
      * 获取物流信息
      *
-     * @param trackingNo 运单号
+     * @param trackingNo 运单号(可选)
+     * @param orderId 订单ID(可选)
      * @return 响应结果
      */
     @GetMapping("/logistics")
-    public ResponseEntity<Map<String, Object>> getLogisticsInfo(@RequestParam String trackingNo) {
+    public ResponseEntity<Map<String, Object>> getLogisticsInfo(
+            @RequestParam(required = false) String trackingNo,
+            @RequestParam(required = false) Long orderId) {
+        
+        logger.info("获取物流信息请求: trackingNo={}, orderId={}", trackingNo, orderId);
+        
+        if (trackingNo == null && orderId == null) {
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("code", 400);
+            errorResult.put("success", false);
+            errorResult.put("message", "运单号和订单ID不能同时为空");
+            return ResponseEntity.ok(errorResult);
+        }
+        
         Map<String, Object> result = new HashMap<>();
         
         try {
             // 调用物流服务获取物流信息
-            Map<String, Object> data = logisticsService.getLogisticsInfo(trackingNo);
+            Map<String, Object> data;
+            if (trackingNo != null) {
+                data = logisticsService.getLogisticsInfo(trackingNo);
+            } else {
+                data = logisticsService.getLogisticsInfoByOrderId(orderId);
+            }
             
             result.put("code", 200);
             result.put("success", true);
@@ -47,6 +66,7 @@ public class LogisticsController {
             
             return ResponseEntity.ok(result);
         } catch (Exception e) {
+            logger.error("获取物流信息失败", e);
             result.put("code", 500);
             result.put("success", false);
             result.put("message", "获取物流信息失败: " + e.getMessage());

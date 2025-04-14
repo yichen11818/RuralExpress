@@ -33,9 +33,118 @@ public class LogisticsServiceImpl implements LogisticsService {
     public Map<String, Object> getLogisticsInfo(String trackingNo) {
         logger.info("获取物流信息: trackingNo={}", trackingNo);
         
-        // 此处应该是从第三方物流API获取物流信息
-        // 由于暂时没有接入第三方物流API，这里返回一些基本的物流信息
-        
+        try {
+            // 查询数据库获取物流信息
+            String sql = "SELECT p.id, p.tracking_no, p.status, p.receiver_name, p.receiver_address, " +
+                    "p.created_at, p.updated_at, p.remark, p.estimated_delivery_time, p.signed_time, " +
+                    "p.user_id, c.name as company_name, c.logo as company_logo " +
+                    "FROM t_package p " +
+                    "JOIN t_express_company c ON p.company_id = c.id " +
+                    "WHERE p.tracking_no = ?";
+            
+            Map<String, Object> packageInfo = null;
+            
+            try {
+                packageInfo = jdbcTemplate.queryForMap(sql, trackingNo);
+                logger.info("查询物流信息成功: {}", packageInfo);
+            } catch (Exception e) {
+                logger.error("查询物流信息失败: {}", e.getMessage(), e);
+            }
+            
+            // 如果数据库中没有记录，返回模拟数据
+            if (packageInfo == null || packageInfo.isEmpty()) {
+                logger.warn("未找到物流信息，使用模拟数据: trackingNo={}", trackingNo);
+                return generateMockLogisticsInfo(trackingNo);
+            }
+            
+            // 构建物流信息
+            Map<String, Object> data = new HashMap<>();
+            
+            // 运单基本信息
+            data.put("trackingNo", trackingNo);
+            data.put("companyName", packageInfo.get("company_name") != null ? 
+                    packageInfo.get("company_name").toString() : "乡递通快递");
+            data.put("companyLogo", packageInfo.get("company_logo") != null ? 
+                    packageInfo.get("company_logo").toString() : "/static/images/company-logo.png");
+            
+            // 状态信息
+            int status = 0;
+            if (packageInfo.get("status") != null) {
+                try {
+                    status = Integer.parseInt(packageInfo.get("status").toString());
+                } catch (NumberFormatException e) {
+                    logger.warn("物流状态解析失败: {}", e.getMessage());
+                }
+            }
+            data.put("status", status);
+            
+            // 状态文本
+            String statusText;
+            switch (status) {
+                case 0: statusText = "待揽收"; break;
+                case 1: statusText = "已揽收"; break;
+                case 2: statusText = "运输中"; break;
+                case 3: statusText = "派送中"; break;
+                case 4: statusText = "已签收"; break;
+                case 5: statusText = "异常"; break;
+                default: statusText = "未知";
+            }
+            data.put("statusText", statusText);
+            
+            // 收件人信息
+            data.put("receiverName", packageInfo.get("receiver_name") != null ? 
+                    packageInfo.get("receiver_name").toString() : "收件人");
+            data.put("receiverPhone", maskPhoneNumber("13900139000")); // 模拟手机号
+            data.put("receiverAddress", packageInfo.get("receiver_address") != null ? 
+                    packageInfo.get("receiver_address").toString() : "");
+            
+            // 发件人信息 - 从数据库获取不到的使用默认值
+            data.put("senderName", "发件人");
+            data.put("senderPhone", maskPhoneNumber("13800138000"));
+            data.put("senderAddress", "江西省南昌市青山湖区高新大道1888号");
+            
+            // 包裹信息
+            String packageDesc = "包裹";
+            if (packageInfo.get("remark") != null && !packageInfo.get("remark").toString().isEmpty()) {
+                packageDesc = packageInfo.get("remark").toString();
+            }
+            data.put("packageInfo", packageDesc);
+            
+            // 时间信息
+            Date estimatedDelivery = null;
+            
+            if (packageInfo.get("estimated_delivery_time") != null) {
+                if (packageInfo.get("estimated_delivery_time") instanceof LocalDateTime) {
+                    LocalDateTime ldt = (LocalDateTime) packageInfo.get("estimated_delivery_time");
+                    estimatedDelivery = Date.from(ldt.atZone(ZoneId.systemDefault()).toInstant());
+                } else {
+                    estimatedDelivery = (Date) packageInfo.get("estimated_delivery_time");
+                }
+            } else {
+                // 如果没有预计送达时间，默认为当前时间+2天
+                Calendar cal = Calendar.getInstance();
+                cal.add(Calendar.DAY_OF_MONTH, 2);
+                estimatedDelivery = cal.getTime();
+            }
+            
+            data.put("estimatedDelivery", formatDate(estimatedDelivery));
+            
+            // 物流轨迹
+            List<Map<String, Object>> traces = generateTraces(trackingNo, status);
+            data.put("traces", traces);
+            
+            return data;
+            
+        } catch (Exception e) {
+            logger.error("获取物流信息失败: {}", e.getMessage(), e);
+            return generateMockLogisticsInfo(trackingNo);
+        }
+    }
+    
+    /**
+     * 生成模拟物流信息（当数据库中没有记录时使用）
+     */
+    private Map<String, Object> generateMockLogisticsInfo(String trackingNo) {
         Map<String, Object> data = new HashMap<>();
         
         // 运单基本信息
@@ -94,6 +203,190 @@ public class LogisticsServiceImpl implements LogisticsService {
         data.put("traces", traces);
         
         return data;
+    }
+    
+    /**
+     * 通过订单ID获取物流信息
+     *
+     * @param orderId 订单ID
+     * @return 物流信息
+     */
+    @Override
+    public Map<String, Object> getLogisticsInfoByOrderId(Long orderId) {
+        logger.info("通过订单ID获取物流信息: orderId={}", orderId);
+        
+        try {
+            // 查询订单关联的物流信息
+            String sql = "SELECT o.tracking_no, o.status, o.receiver_name, o.receiver_address, " +
+                    "o.sender_name, o.sender_address, o.created_at, o.updated_at, " +
+                    "o.estimated_delivery_time, o.package_description, o.courier_id, " +
+                    "c.name as company_name, c.logo as company_logo " +
+                    "FROM t_order o " +
+                    "LEFT JOIN t_express_company c ON o.company_id = c.id " +
+                    "WHERE o.id = ?";
+            
+            Map<String, Object> orderInfo = null;
+            
+            try {
+                orderInfo = jdbcTemplate.queryForMap(sql, orderId);
+                logger.info("查询订单物流信息: {}", orderInfo);
+            } catch (Exception e) {
+                logger.error("查询订单物流信息失败: {}", e.getMessage(), e);
+            }
+            
+            if (orderInfo == null || orderInfo.isEmpty()) {
+                logger.warn("未找到订单物流信息: orderId={}", orderId);
+                // 如果数据库中没有记录，返回一个基本信息
+                Map<String, Object> emptyData = new HashMap<>();
+                emptyData.put("trackingNo", "未分配");
+                emptyData.put("companyName", "乡递通快递");
+                emptyData.put("companyLogo", "/static/images/company-logo.png");
+                emptyData.put("status", 0);
+                emptyData.put("statusText", "待揽收");
+                emptyData.put("traces", new ArrayList<>());
+                return emptyData;
+            }
+            
+            // 构建物流信息
+            Map<String, Object> data = new HashMap<>();
+            
+            // 运单基本信息
+            String trackingNo = orderInfo.get("tracking_no") != null ? 
+                    orderInfo.get("tracking_no").toString() : "未分配";
+            data.put("trackingNo", trackingNo);
+            data.put("orderId", orderId);
+            data.put("companyName", orderInfo.get("company_name") != null ? 
+                    orderInfo.get("company_name").toString() : "乡递通快递");
+            data.put("companyLogo", orderInfo.get("company_logo") != null ? 
+                    orderInfo.get("company_logo").toString() : "/static/images/company-logo.png");
+            
+            // 状态信息
+            int status = 0;
+            if (orderInfo.get("status") != null) {
+                try {
+                    status = Integer.parseInt(orderInfo.get("status").toString());
+                } catch (NumberFormatException e) {
+                    logger.warn("订单状态解析失败: {}", e.getMessage());
+                }
+            }
+            data.put("status", status);
+            
+            // 状态文本
+            String statusText;
+            switch (status) {
+                case 0: statusText = "待揽收"; break;
+                case 1: statusText = "已揽收"; break;
+                case 2: statusText = "运输中"; break;
+                case 3: statusText = "派送中"; break;
+                case 4: statusText = "已签收"; break;
+                case 5: statusText = "异常"; break;
+                default: statusText = "未知";
+            }
+            data.put("statusText", statusText);
+            
+            // 发件人信息
+            data.put("senderName", orderInfo.get("sender_name") != null ? 
+                    orderInfo.get("sender_name").toString() : "发件人");
+            data.put("senderAddress", orderInfo.get("sender_address") != null ? 
+                    orderInfo.get("sender_address").toString() : "");
+            
+            // 收件人信息
+            data.put("receiverName", orderInfo.get("receiver_name") != null ? 
+                    orderInfo.get("receiver_name").toString() : "收件人");
+            data.put("receiverAddress", orderInfo.get("receiver_address") != null ? 
+                    orderInfo.get("receiver_address").toString() : "");
+            
+            // 包裹信息
+            data.put("packageInfo", orderInfo.get("package_description") != null ? 
+                    orderInfo.get("package_description").toString() : "包裹");
+            
+            // 时间信息
+            Date createdAt = null;
+            Date updatedAt = null;
+            Date estimatedDelivery = null;
+            
+            if (orderInfo.get("created_at") != null) {
+                if (orderInfo.get("created_at") instanceof LocalDateTime) {
+                    LocalDateTime ldt = (LocalDateTime) orderInfo.get("created_at");
+                    createdAt = Date.from(ldt.atZone(ZoneId.systemDefault()).toInstant());
+                } else {
+                    createdAt = (Date) orderInfo.get("created_at");
+                }
+            }
+            
+            if (orderInfo.get("updated_at") != null) {
+                if (orderInfo.get("updated_at") instanceof LocalDateTime) {
+                    LocalDateTime ldt = (LocalDateTime) orderInfo.get("updated_at");
+                    updatedAt = Date.from(ldt.atZone(ZoneId.systemDefault()).toInstant());
+                } else {
+                    updatedAt = (Date) orderInfo.get("updated_at");
+                }
+            }
+            
+            if (orderInfo.get("estimated_delivery_time") != null) {
+                if (orderInfo.get("estimated_delivery_time") instanceof LocalDateTime) {
+                    LocalDateTime ldt = (LocalDateTime) orderInfo.get("estimated_delivery_time");
+                    estimatedDelivery = Date.from(ldt.atZone(ZoneId.systemDefault()).toInstant());
+                } else {
+                    estimatedDelivery = (Date) orderInfo.get("estimated_delivery_time");
+                }
+            } else {
+                // 如果没有预计送达时间，默认为创建时间+2天
+                if (createdAt != null) {
+                    Calendar cal = Calendar.getInstance();
+                    cal.setTime(createdAt);
+                    cal.add(Calendar.DAY_OF_MONTH, 2);
+                    estimatedDelivery = cal.getTime();
+                } else {
+                    Calendar cal = Calendar.getInstance();
+                    cal.add(Calendar.DAY_OF_MONTH, 2);
+                    estimatedDelivery = cal.getTime();
+                }
+            }
+            
+            data.put("createdTime", createdAt != null ? formatDate(createdAt) : "");
+            data.put("updateTime", updatedAt != null ? formatDate(updatedAt) : "");
+            data.put("estimatedDelivery", estimatedDelivery != null ? formatDate(estimatedDelivery) : "");
+            
+            // 快递员信息
+            if (orderInfo.get("courier_id") != null) {
+                Long courierId = Long.parseLong(orderInfo.get("courier_id").toString());
+                if (courierId > 0) {
+                    try {
+                        String courierSql = "SELECT id, name, phone, avatar FROM t_user WHERE id = ? AND role = 'courier'";
+                        Map<String, Object> courierInfo = jdbcTemplate.queryForMap(courierSql, courierId);
+                        
+                        Map<String, Object> courier = new HashMap<>();
+                        courier.put("id", courierInfo.get("id"));
+                        courier.put("name", courierInfo.get("name"));
+                        courier.put("phone", maskPhoneNumber(courierInfo.get("phone").toString()));
+                        courier.put("avatar", courierInfo.get("avatar"));
+                        
+                        data.put("courier", courier);
+                    } catch (Exception e) {
+                        logger.warn("获取快递员信息失败: {}", e.getMessage());
+                    }
+                }
+            }
+            
+            // 物流轨迹
+            List<Map<String, Object>> traces = generateTraces(trackingNo, status);
+            data.put("traces", traces);
+            
+            return data;
+            
+        } catch (Exception e) {
+            logger.error("通过订单ID获取物流信息失败: {}", e.getMessage(), e);
+            // 如果发生异常，返回一个基本信息
+            Map<String, Object> errorData = new HashMap<>();
+            errorData.put("trackingNo", "未知");
+            errorData.put("companyName", "乡递通快递");
+            errorData.put("companyLogo", "/static/images/company-logo.png");
+            errorData.put("status", 0);
+            errorData.put("statusText", "待揽收");
+            errorData.put("traces", new ArrayList<>());
+            return errorData;
+        }
     }
     
     /**
