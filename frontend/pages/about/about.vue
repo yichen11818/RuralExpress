@@ -14,7 +14,7 @@
       <!-- 由于logo.png可能不存在，使用default-avatar.png作为临时替代 -->
       <image class="logo" src="/static/images/default-avatar.png" mode="aspectFit"></image>
       <text class="app-name">乡递通</text>
-      <text class="app-version">版本 1.0.0</text>
+      <text class="app-version">版本 2.0.0</text>
     </view>
     
     <view class="about-content">
