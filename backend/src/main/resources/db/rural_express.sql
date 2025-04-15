@@ -11,7 +11,7 @@
  Target Server Version : 90001 (9.0.1)
  File Encoding         : 65001
 
- Date: 01/04/2025 22:33:28
+ Date: 15/04/2025 21:10:43
 */
 
 SET NAMES utf8mb4;
@@ -88,7 +88,7 @@ CREATE TABLE `notice`  (
 -- Records of notice
 -- ----------------------------
 INSERT INTO `notice` VALUES (31, '乡递通平台正式上线，为乡村快递提供便捷服务', '/pages/notice/detail?id=1', 1, 1, NULL, NULL, '2025-03-25 14:05:44', '2025-03-30 00:46:45');
-INSERT INTO `notice` VALUES (32, '成为快递员，每单收益最高可达10元', '/pages/courier/recruitment', 2, 1, NULL, NULL, '2025-03-25 14:05:44', '2025-03-25 14:05:44');
+INSERT INTO `notice` VALUES (32, '成为快递员，每单收益最高可达10元', '/pages/courier/recruitment', 2, 1, NULL, NULL, '2025-03-25 14:05:44', '2025-04-15 01:45:25');
 INSERT INTO `notice` VALUES (33, '乡递通招募村镇快递员，详情查看招募页面', '/pages/notice/detail?id=3', 3, 1, NULL, NULL, '2025-03-25 14:05:44', '2025-03-25 14:05:44');
 
 -- ----------------------------
@@ -163,11 +163,11 @@ CREATE TABLE `t_company`  (
 -- ----------------------------
 -- Records of t_company
 -- ----------------------------
-INSERT INTO `t_company` VALUES (1, 'SF', '顺丰速运', '顺丰', 'https://www.sf-express.com/logo.png', '张经理', '400-111-1111', '深圳市南山区科技园', '国内领先的快递公司', 0, 1, '2025-03-30 01:25:11', '2025-03-30 01:28:08', 0);
-INSERT INTO `t_company` VALUES (2, 'YTO', '圆通速递', '圆通', 'https://www.yto.net.cn/logo.png', '李经理', '400-222-2222', '上海市青浦区华新镇', '全国性快递物流服务商', 0, 2, '2025-03-30 01:25:11', '2025-03-30 01:28:12', 0);
-INSERT INTO `t_company` VALUES (3, 'ZTO', '中通快递', '中通', 'https://www.zto.com/logo.png', '王经理', '400-333-3333', '上海市青浦区华徐公路', '国内大型综合物流服务商', 0, 3, '2025-03-30 01:25:11', '2025-03-30 01:28:15', 0);
-INSERT INTO `t_company` VALUES (4, 'STO', '申通快递', '申通', 'https://www.sto.cn/logo.png', '赵经理', '400-444-4444', '上海市青浦区华徐公路', '全国性连锁快递企业', 0, 4, '2025-03-30 01:25:11', '2025-03-30 01:28:16', 0);
-INSERT INTO `t_company` VALUES (5, 'YUNDA', '韵达速递', '韵达', 'https://www.yundaex.com/logo.png', '钱经理', '400-555-5555', '上海市青浦区盈港东路', '全国性快递物流企业', 0, 5, '2025-03-30 01:25:11', '2025-03-30 01:28:17', 0);
+INSERT INTO `t_company` VALUES (1, 'SF', '顺丰速运', '顺丰', '/static/images/sf.png', '张经理', '400-111-1111', '深圳市南山区科技园', '国内领先的快递公司', 0, 1, '2025-03-30 01:25:11', '2025-04-15 02:13:40', 0);
+INSERT INTO `t_company` VALUES (2, 'YTO', '圆通速递', '圆通', '/static/images/yt.png', '李经理', '400-222-2222', '上海市青浦区华新镇', '全国性快递物流服务商', 0, 2, '2025-03-30 01:25:11', '2025-04-15 02:13:58', 0);
+INSERT INTO `t_company` VALUES (3, 'ZTO', '中通快递', '中通', '/static/images/zt.png', '王经理', '400-333-3333', '上海市青浦区华徐公路', '国内大型综合物流服务商', 0, 3, '2025-03-30 01:25:11', '2025-04-15 02:14:03', 0);
+INSERT INTO `t_company` VALUES (4, 'STO', '申通快递', '申通', '/static/images/st.png', '赵经理', '400-444-4444', '上海市青浦区华徐公路', '全国性连锁快递企业', 0, 4, '2025-03-30 01:25:11', '2025-04-15 02:14:08', 0);
+INSERT INTO `t_company` VALUES (5, 'YUNDA', '韵达速递', '韵达', '/static/images/yd.png', '钱经理', '400-555-5555', '上海市青浦区盈港东路', '全国性快递物流企业', 0, 5, '2025-03-30 01:25:11', '2025-04-15 02:14:13', 0);
 
 -- ----------------------------
 -- Table structure for t_config
@@ -225,7 +225,7 @@ CREATE TABLE `t_courier`  (
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
   INDEX `idx_courier_status`(`status` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 9 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '蹇??鍛樿〃' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 10 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '蹇??鍛樿〃' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of t_courier
@@ -234,6 +234,7 @@ INSERT INTO `t_courier` VALUES (2, 2, '福田区', 1, 1, 4.7, 50.00, 218, '/stat
 INSERT INTO `t_courier` VALUES (5, 1, '广东省深圳市南山区', 1, 1, 4.9, 0.00, 326, '/static/images/id-card-front.jpg', '/static/images/id-card-back.jpg', '08:00', '20:00', '电动车', '5年快递配送经验，熟悉南山区域路线', 5, '2025-03-25 11:14:01', '2025-03-25 11:14:01', 0, NULL, NULL, NULL, 0, 0, 0.00, NULL, NULL, NULL, '1,2,3,4,5,6,7', 20);
 INSERT INTO `t_courier` VALUES (7, 103, '山东省青岛市即墨区', 1, 1, 4.8, 1200.50, 156, 'https://example.com/id_front1.jpg', 'https://example.com/id_back1.jpg', '08:00', '18:00', '电动三轮车', '5年配送经验，熟悉本地区域', 10, '2025-04-01 21:13:19', '2025-04-01 21:13:19', 1, NULL, NULL, NULL, 0, 0, 0.00, NULL, NULL, NULL, '1,2,3,4,5,6,7', 20);
 INSERT INTO `t_courier` VALUES (8, 104, '山东省青岛市即墨区', 1, 1, 4.6, 890.20, 92, 'https://example.com/id_front2.jpg', 'https://example.com/id_back2.jpg', '09:00', '19:00', '摩托车', '3年物流经验，服务热情周到', 15, '2025-04-01 21:13:19', '2025-04-01 21:13:19', 1, NULL, NULL, NULL, 0, 0, 0.00, NULL, NULL, NULL, '1,2,3,4,5,6,7', 20);
+INSERT INTO `t_courier` VALUES (9, 42, '123', 0, 1, 5.0, 0.00, 0, '/static/images/default-avatar.png', '/static/images/default-avatar.png', '08:00', '20:00', NULL, NULL, 15, '2025-04-13 12:32:04', '2025-04-13 12:32:04', 0, NULL, NULL, NULL, 0, 0, 0.00, NULL, NULL, NULL, '1,2,3,4,5,6,7', 20);
 
 -- ----------------------------
 -- Table structure for t_courier_old
@@ -305,7 +306,7 @@ CREATE TABLE `t_evaluation`  (
   UNIQUE INDEX `idx_order_id`(`order_id` ASC) USING BTREE,
   INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
   INDEX `idx_courier_id`(`courier_id` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '订单评价表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 3 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '订单评价表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of t_evaluation
@@ -339,13 +340,13 @@ INSERT INTO `t_express_company` VALUES (3, '圆通速递', 'YTO', '/static/image
 INSERT INTO `t_express_company` VALUES (4, '韵达快递', 'YD', '/static/images/yd.png', '95546', '95546', 'https://www.yundaex.com', 0, '2025-03-24 23:33:42', '2025-03-24 23:33:42');
 INSERT INTO `t_express_company` VALUES (5, '申通快递', 'STO', '/static/images/st.png', '95543', '95543', 'https://www.sto.cn', 0, '2025-03-24 23:33:42', '2025-03-24 23:33:42');
 INSERT INTO `t_express_company` VALUES (6, '京东物流', 'JD', '/static/images/jd.png', '950616', '950616', 'https://www.jdl.com', 0, '2025-03-24 23:33:42', '2025-03-24 23:33:42');
-INSERT INTO `t_express_company` VALUES (207, '圆通快递', 'YT', '/static/images/yt.png', '95554', NULL, NULL, 1, '2025-03-30 20:31:19', NULL);
-INSERT INTO `t_express_company` VALUES (208, '中通快递', 'ZT', '/static/images/zt.png', '95311', NULL, NULL, 1, '2025-03-30 20:31:19', NULL);
-INSERT INTO `t_express_company` VALUES (209, '百世快递', 'HT', '/static/images/ht.png', '95320', NULL, NULL, 1, '2025-03-30 20:31:19', NULL);
-INSERT INTO `t_express_company` VALUES (210, '邮政快递', 'EMS', '/static/images/ems.png', '11183', NULL, NULL, 1, '2025-03-30 20:31:19', NULL);
-INSERT INTO `t_express_company` VALUES (211, '乡递通快递', 'RuralExpress', '/static/images/company-logo.png', '400-123-4567', NULL, NULL, 1, '2025-03-30 20:31:19', NULL);
-INSERT INTO `t_express_company` VALUES (263, '德邦快递', 'DBKD', '/static/images/dbkd.png', NULL, '95353', 'https://www.deppon.com', 0, '2025-04-01 21:16:55', '2025-04-01 21:16:55');
-INSERT INTO `t_express_company` VALUES (264, '极兔速递', 'JTSD', '/static/images/jtsd.png', NULL, '950999', 'https://www.jtexpress.com', 0, '2025-04-01 21:16:55', '2025-04-01 21:16:55');
+INSERT INTO `t_express_company` VALUES (207, '圆通快递', 'YT', '/static/images/yt.png', '95554', NULL, NULL, 1, '2025-03-30 20:31:19', '2025-03-30 20:31:19');
+INSERT INTO `t_express_company` VALUES (208, '中通快递', 'ZT', '/static/images/zt.png', '95311', NULL, NULL, 1, '2025-03-30 20:31:19', '2025-03-30 20:31:19');
+INSERT INTO `t_express_company` VALUES (209, '百世快递', 'HT', '/static/images/icon/ht.png', '95320', NULL, NULL, 1, '2025-03-30 20:31:19', '2025-03-30 20:31:19');
+INSERT INTO `t_express_company` VALUES (210, '邮政快递', 'EMS', '/static/images/icon/ems.png', '11183', NULL, NULL, 1, '2025-03-30 20:31:19', '2025-03-30 20:31:19');
+INSERT INTO `t_express_company` VALUES (211, '乡递通快递', 'RuralExpress', '/static/images/company-logo.png', '400-123-4567', NULL, NULL, 1, '2025-03-30 20:31:19', '2025-03-30 20:31:19');
+INSERT INTO `t_express_company` VALUES (263, '德邦快递', 'DBKD', 'https://example.com/dbl_logo.png', NULL, '95353', 'https://www.deppon.com', 0, '2025-04-01 21:16:55', '2025-04-01 21:16:55');
+INSERT INTO `t_express_company` VALUES (264, '极兔速递', 'JTSD', 'https://example.com/jtexpress_logo.png', NULL, '950999', 'https://www.jtexpress.com', 0, '2025-04-01 21:16:55', '2025-04-01 21:16:55');
 
 -- ----------------------------
 -- Table structure for t_logistics_trace
@@ -430,24 +431,43 @@ CREATE TABLE `t_order`  (
   `cancel_reason` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '取消原因',
   `created_at` datetime NOT NULL COMMENT '创建时间',
   `updated_at` datetime NOT NULL COMMENT '更新时间',
+  `sender_longitude` double NULL DEFAULT NULL COMMENT '寄件地址经度',
+  `sender_latitude` double NULL DEFAULT NULL COMMENT '寄件地址纬度',
+  `receiver_longitude` double NULL DEFAULT NULL COMMENT '收件地址经度',
+  `receiver_latitude` double NULL DEFAULT NULL COMMENT '收件地址纬度',
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `idx_order_no`(`order_no` ASC) USING BTREE,
   INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
   INDEX `idx_courier_id`(`courier_id` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 10 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '订单表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 25 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '订单表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of t_order
 -- ----------------------------
-INSERT INTO `t_order` VALUES (1, 'RE20230325001', 3, 2, '李大壮', '13800138001', '山东省青岛市即墨区龙泉街道社区村66号', '王收件', '13700137001', '山东省青岛市市北区辽宁路167号', 1, 3.50, 15.00, 6, '2023-03-25 14:00:00', '2023-03-25 14:10:23', '2023-03-25 16:00:00', '2023-03-25 15:55:42', '小心轻放，内含易碎物品', NULL, '2023-03-25 10:15:30', '2023-03-25 16:10:22');
-INSERT INTO `t_order` VALUES (2, 'RE20230326001', 4, 2, '张小花', '13800138002', '山东省青岛市即墨区通济街道幸福村88号', '赵收件', '13700137002', '山东省青岛市李沧区重庆中路92号', 0, 1.20, 8.00, 3, '2023-03-26 10:00:00', '2023-03-26 10:05:17', '2023-03-26 12:00:00', NULL, '普通物品', NULL, '2023-03-26 08:30:45', '2023-03-26 10:15:22');
-INSERT INTO `t_order` VALUES (3, 'RE20230326002', 3, 5, '李大壮', '13800138001', '山东省青岛市即墨区龙泉街道社区村66号', '钱收件', '13700137003', '山东省青岛市崂山区科苑纬四路100号', 2, 8.00, 25.00, 2, '2023-03-26 15:00:00', NULL, '2023-03-26 17:00:00', NULL, '大件电器，需要两人搬运', NULL, '2023-03-26 11:42:18', '2023-03-26 14:22:33');
-INSERT INTO `t_order` VALUES (4, 'RE20230405001', 1, 2, '张三', '13900001111', '山东省青岛市市北区辽宁路128号', '李明', '13711112222', '山东省青岛市崂山区松岭路99号', 1, 2.80, 15.00, 3, '2023-04-05 10:00:00', '2023-04-05 10:15:20', '2023-04-05 16:00:00', NULL, '普通快递，不着急', NULL, '2025-04-01 21:20:46', '2025-04-01 21:20:46');
-INSERT INTO `t_order` VALUES (5, 'RE20230406001', 1, 5, '张三', '13900001111', '山东省青岛市市北区辽宁路128号', '王芳', '13722223333', '山东省青岛市黄岛区长江中路168号', 2, 6.50, 30.00, 1, '2023-04-06 14:00:00', NULL, '2023-04-06 18:00:00', NULL, '大件物品，需要两人搬运', NULL, '2025-04-01 21:20:46', '2025-04-01 21:20:46');
-INSERT INTO `t_order` VALUES (6, 'RE20230407001', 1, NULL, '张三', '13900001111', '山东省青岛市市北区辽宁路128号', '刘强', '13733334444', '山东省青岛市城阳区城阳街道正阳路388号', 0, 1.20, 10.00, 0, '2023-04-07 09:00:00', NULL, '2023-04-07 12:00:00', NULL, '小件快递，文件资料', NULL, '2025-04-01 21:20:46', '2025-04-01 21:20:46');
-INSERT INTO `t_order` VALUES (7, 'RE20230410001', 1, 2, '张三', '13900001111', '山东省青岛市市北区辽宁路128号', '李明', '13711112222', '山东省青岛市崂山区松岭路99号', 1, 2.80, 15.00, 0, '2025-04-02 21:24:26', NULL, '2025-04-03 21:24:26', NULL, '普通快递，不着急', NULL, '2025-04-01 21:24:26', '2025-04-01 21:24:26');
-INSERT INTO `t_order` VALUES (8, 'RE20230410002', 1, 5, '张三', '13900001111', '山东省青岛市市北区辽宁路128号', '王芳', '13722223333', '山东省青岛市黄岛区长江中路168号', 2, 6.50, 30.00, 4, '2025-03-31 21:24:26', '2025-03-31 21:24:26', '2025-04-02 21:24:26', NULL, '大件物品，需要搬运', NULL, '2025-03-31 21:24:26', '2025-04-01 21:24:26');
-INSERT INTO `t_order` VALUES (9, 'RE20230410003', 1, 2, '张三', '13900001111', '山东省青岛市市北区辽宁路128号', '刘强', '13733334444', '山东省青岛市城阳区城阳街道正阳路388号', 0, 1.20, 10.00, 5, '2025-03-29 21:24:26', '2025-03-29 21:24:26', '2025-03-31 21:24:26', '2025-03-31 21:24:26', '小件快递', NULL, '2025-03-29 21:24:26', '2025-03-31 21:24:26');
+INSERT INTO `t_order` VALUES (1, 'RE20230325001', 3, 2, '李大壮', '13800138001', '山东省青岛市即墨区龙泉街道社区村66号', '王收件', '13700137001', '山东省青岛市市北区辽宁路167号', 1, 3.50, 15.00, 6, '2023-03-25 14:00:00', '2023-03-25 14:10:23', '2023-03-25 16:00:00', '2023-03-25 15:55:42', '小心轻放，内含易碎物品', NULL, '2023-03-25 10:15:30', '2023-03-25 16:10:22', NULL, NULL, NULL, NULL);
+INSERT INTO `t_order` VALUES (2, 'RE20230326001', 4, 2, '张小花', '13800138002', '山东省青岛市即墨区通济街道幸福村88号', '赵收件', '13700137002', '山东省青岛市李沧区重庆中路92号', 0, 1.20, 8.00, 3, '2023-03-26 10:00:00', '2023-03-26 10:05:17', '2023-03-26 12:00:00', NULL, '普通物品', NULL, '2023-03-26 08:30:45', '2023-03-26 10:15:22', NULL, NULL, NULL, NULL);
+INSERT INTO `t_order` VALUES (3, 'RE20230326002', 3, 5, '李大壮', '13800138001', '山东省青岛市即墨区龙泉街道社区村66号', '钱收件', '13700137003', '山东省青岛市崂山区科苑纬四路100号', 2, 8.00, 25.00, 2, '2023-03-26 15:00:00', NULL, '2023-03-26 17:00:00', NULL, '大件电器，需要两人搬运', NULL, '2023-03-26 11:42:18', '2023-03-26 14:22:33', NULL, NULL, NULL, NULL);
+INSERT INTO `t_order` VALUES (4, 'RE20230405001', 1, 2, '张三', '13900001111', '山东省青岛市市北区辽宁路128号', '李明', '13711112222', '山东省青岛市崂山区松岭路99号', 1, 2.80, 15.00, 3, '2023-04-05 10:00:00', '2023-04-05 10:15:20', '2023-04-05 16:00:00', NULL, '普通快递，不着急', NULL, '2025-04-01 21:20:46', '2025-04-01 21:20:46', NULL, NULL, NULL, NULL);
+INSERT INTO `t_order` VALUES (5, 'RE20230406001', 1, 5, '张三', '13900001111', '山东省青岛市市北区辽宁路128号', '王芳', '13722223333', '山东省青岛市黄岛区长江中路168号', 2, 6.50, 30.00, 1, '2023-04-06 14:00:00', NULL, '2023-04-06 18:00:00', NULL, '大件物品，需要两人搬运', NULL, '2025-04-01 21:20:46', '2025-04-01 21:20:46', NULL, NULL, NULL, NULL);
+INSERT INTO `t_order` VALUES (6, 'RE20230407001', 1, NULL, '张三', '13900001111', '山东省青岛市市北区辽宁路128号', '刘强', '13733334444', '山东省青岛市城阳区城阳街道正阳路388号', 0, 1.20, 10.00, 0, '2023-04-07 09:00:00', NULL, '2023-04-07 12:00:00', NULL, '小件快递，文件资料', NULL, '2025-04-01 21:20:46', '2025-04-01 21:20:46', NULL, NULL, NULL, NULL);
+INSERT INTO `t_order` VALUES (7, 'RE20230410001', 1, 2, '张三', '13900001111', '山东省青岛市市北区辽宁路128号', '李明', '13711112222', '山东省青岛市崂山区松岭路99号', 1, 2.80, 15.00, 0, '2025-04-02 21:24:26', NULL, '2025-04-03 21:24:26', NULL, '普通快递，不着急', NULL, '2025-04-01 21:24:26', '2025-04-01 21:24:26', NULL, NULL, NULL, NULL);
+INSERT INTO `t_order` VALUES (8, 'RE20230410002', 1, 5, '张三', '13900001111', '山东省青岛市市北区辽宁路128号', '王芳', '13722223333', '山东省青岛市黄岛区长江中路168号', 2, 6.50, 30.00, 4, '2025-03-31 21:24:26', '2025-03-31 21:24:26', '2025-04-02 21:24:26', NULL, '大件物品，需要搬运', NULL, '2025-03-31 21:24:26', '2025-04-01 21:24:26', NULL, NULL, NULL, NULL);
+INSERT INTO `t_order` VALUES (9, 'RE20230410003', 1, 2, '张三', '13900001111', '山东省青岛市市北区辽宁路128号', '刘强', '13733334444', '山东省青岛市城阳区城阳街道正阳路388号', 0, 1.20, 10.00, 5, '2025-03-29 21:24:26', '2025-03-29 21:24:26', '2025-03-31 21:24:26', '2025-03-31 21:24:26', '小件快递', NULL, '2025-03-29 21:24:26', '2025-03-31 21:24:26', NULL, NULL, NULL, NULL);
+INSERT INTO `t_order` VALUES (10, '202504130043447287', 1, NULL, '1', '15579961188', '北京市北京市东城区 1', '1', '15579961188', '北京市北京市东城区 1', 0, 1.00, 15.00, 0, NULL, NULL, NULL, NULL, NULL, NULL, '2025-04-13 00:43:45', '2025-04-13 00:43:45', NULL, NULL, NULL, NULL);
+INSERT INTO `t_order` VALUES (11, '202504130043505142', 1, NULL, '1', '15579961188', '北京市北京市东城区 1', '1', '15579961188', '北京市北京市东城区 1', 0, 1.00, 15.00, 0, NULL, NULL, NULL, NULL, NULL, NULL, '2025-04-13 00:43:51', '2025-04-13 00:43:51', NULL, NULL, NULL, NULL);
+INSERT INTO `t_order` VALUES (12, '202504130043576176', 1, NULL, '1', '15579961188', '北京市北京市东城区 1', '1', '15579961188', '北京市北京市东城区 1', 0, 1.00, 15.00, 0, NULL, NULL, NULL, NULL, NULL, NULL, '2025-04-13 00:43:58', '2025-04-13 00:43:58', NULL, NULL, NULL, NULL);
+INSERT INTO `t_order` VALUES (13, '202504130048150444', 1, NULL, '1', '15579961188', '北京市北京市东城区 1', '1', '15579961188', '北京市北京市东城区 1', 0, 1.00, 15.00, 0, NULL, NULL, NULL, NULL, NULL, NULL, '2025-04-13 00:48:16', '2025-04-13 00:48:16', NULL, NULL, NULL, NULL);
+INSERT INTO `t_order` VALUES (14, '202504130051191196', 1, NULL, '1', '15579961188', '北京市北京市东城区 1', '1', '15579961188', '北京市北京市东城区 1', 0, 1.00, 15.00, 0, NULL, NULL, NULL, NULL, NULL, NULL, '2025-04-13 00:51:20', '2025-04-13 00:51:20', NULL, NULL, NULL, NULL);
+INSERT INTO `t_order` VALUES (15, '202504130102139328', 1, NULL, '1', '15579961188', '北京市北京市东城区 1', '1', '15579961188', '北京市北京市东城区 1', 0, 1.00, 15.00, 0, NULL, NULL, NULL, NULL, NULL, NULL, '2025-04-13 01:02:13', '2025-04-13 01:02:13', NULL, NULL, NULL, NULL);
+INSERT INTO `t_order` VALUES (16, '202504130102217687', 1, NULL, '1', '15579961188', '北京市北京市东城区 1', '1', '15579961188', '北京市北京市东城区 1', 0, 1.00, 15.00, 0, NULL, NULL, NULL, NULL, NULL, NULL, '2025-04-13 01:02:21', '2025-04-13 01:02:21', NULL, NULL, NULL, NULL);
+INSERT INTO `t_order` VALUES (17, '202504131110291720', 1, NULL, '1', '15579961188', '北京市北京市东城区 1', '1', '15579961188', '北京市北京市东城区 1', 0, 1.00, 15.00, 1, NULL, NULL, NULL, NULL, NULL, NULL, '2025-04-13 11:10:29', '2025-04-13 14:32:56', NULL, NULL, NULL, NULL);
+INSERT INTO `t_order` VALUES (18, '202504131117302249', 1, NULL, '用户1188', '15579961188', 'asfdsafd', '1', '15579961188', '北京市北京市东城区 1', 0, 1.00, 15.00, 0, NULL, NULL, NULL, NULL, NULL, NULL, '2025-04-13 11:17:30', '2025-04-13 11:17:30', NULL, NULL, NULL, NULL);
+INSERT INTO `t_order` VALUES (19, '202504131129507507', 1, NULL, '用户1188', '15579961188', '13123', '1', '15579961188', '北京市北京市东城区 1', 0, 1.00, 15.00, 7, NULL, NULL, NULL, NULL, NULL, '用户主动取消', '2025-04-13 11:29:51', '2025-04-13 15:02:20', NULL, NULL, NULL, NULL);
+INSERT INTO `t_order` VALUES (20, '202504131130040597', 1, NULL, '用户1188', '15579961188', '13123', '1', '15579961188', '北京市北京市东城区 1', 0, 1.00, 15.00, 7, NULL, NULL, NULL, NULL, NULL, '用户主动取消', '2025-04-13 11:30:05', '2025-04-13 15:02:13', NULL, NULL, NULL, NULL);
+INSERT INTO `t_order` VALUES (21, '202504131145306437', 1, NULL, '用户1188', '15579961188', '1', '1', '15579961188', '北京市北京市东城区 1', 0, 1.00, 15.00, 1, NULL, NULL, NULL, NULL, NULL, NULL, '2025-04-13 11:45:31', '2025-04-13 11:45:39', NULL, NULL, NULL, NULL);
+INSERT INTO `t_order` VALUES (22, '202504131150073153', 1, NULL, '用户1188', '15579961188', '1', '1', '15579961188', '北京市北京市东城区 1', 0, 1.00, 15.00, 4, NULL, NULL, NULL, NULL, NULL, NULL, '2025-04-13 11:50:08', '2025-04-13 14:32:50', NULL, NULL, NULL, NULL);
+INSERT INTO `t_order` VALUES (23, '202504131445148840', 1, NULL, '用户11881', '15579961188', '1', '1', '15579991111', '1', 0, 1.00, 15.00, 1, NULL, NULL, NULL, NULL, NULL, NULL, '2025-04-13 14:45:14', '2025-04-13 14:45:16', NULL, NULL, NULL, NULL);
+INSERT INTO `t_order` VALUES (24, '202504131445193523', 1, NULL, '用户11881', '15579961188', '1', '1', '15579991111', '1', 0, 1.00, 15.00, 7, NULL, NULL, NULL, NULL, NULL, '用户主动取消', '2025-04-13 14:45:20', '2025-04-13 15:01:04', NULL, NULL, NULL, NULL);
 
 -- ----------------------------
 -- Table structure for t_package
@@ -490,10 +510,10 @@ CREATE TABLE `t_package`  (
 -- ----------------------------
 -- Records of t_package
 -- ----------------------------
-INSERT INTO `t_package` VALUES (1, 33, 1, 'SF1234567890', '张三', '13800138000', '江西省南昌市青山湖区高新大道1888号', '李四', '13900139000', '江西省赣州市章贡区红旗大道123号', 2.00, 2, '文件包裹 2kg', '2025-04-01 20:40:08', NULL, 0, NULL, NULL, '2025-03-30 20:40:08', NULL, NULL);
-INSERT INTO `t_package` VALUES (2, 33, 207, 'YT9876543210', '王五', '13700137000', '江西省赣州市南康区健康路456号', '赵六', '13600136000', '江西省南昌市青云谱区井冈山大道2000号', 1.00, 4, '衣服 1kg', '2025-03-31 20:40:08', NULL, 0, NULL, NULL, '2025-03-30 20:40:08', NULL, NULL);
-INSERT INTO `t_package` VALUES (3, 33, 208, 'ZT5678901234', '孙七', '13500135000', '江西省赣州市赣县区红金大道789号', '周八', '13400134000', '江西省南昌市东湖区三经路555号', 3.00, 5, '电子产品 3kg', '2025-03-29 20:40:08', '2025-03-30 20:43:40', 0, NULL, NULL, '2025-03-27 20:40:08', NULL, NULL);
-INSERT INTO `t_package` VALUES (4, 33, 6, 'JD2345678901', '吴九', '13300133000', '江西省赣州市章贡区黄金大道100号', '郑十', '13200132000', '江西省南昌市西湖区北京西路88号', 1.50, 3, '日用品 1.5kg', '2025-03-31 20:40:08', NULL, 0, NULL, NULL, '2025-03-28 20:40:08', NULL, NULL);
+INSERT INTO `t_package` VALUES (1, 33, 1, 'SF1234567890', '张三', '13800138000', '江西省南昌市青山湖区高新大道1888号', '李四', '13900139000', '江西省赣州市章贡区红旗大道123号', 2.00, 2, '文件包裹 2kg', '2025-04-01 20:40:08', NULL, 0, NULL, NULL, '2025-03-30 20:40:08', '2025-03-30 20:40:08', NULL);
+INSERT INTO `t_package` VALUES (2, 33, 207, 'YT9876543210', '王五', '13700137000', '江西省赣州市南康区健康路456号', '赵六', '13600136000', '江西省南昌市青云谱区井冈山大道2000号', 1.00, 4, '衣服 1kg', '2025-03-31 20:40:08', NULL, 0, NULL, NULL, '2025-03-30 20:40:08', '2025-03-30 20:40:08', NULL);
+INSERT INTO `t_package` VALUES (3, 33, 208, 'ZT5678901234', '孙七', '13500135000', '江西省赣州市赣县区红金大道789号', '周八', '13400134000', '江西省南昌市东湖区三经路555号', 3.00, 5, '电子产品 3kg', '2025-03-29 20:40:08', '2025-03-30 20:43:40', 0, NULL, NULL, '2025-03-27 20:40:08', '2025-03-27 20:40:08', NULL);
+INSERT INTO `t_package` VALUES (4, 33, 6, 'JD2345678901', '吴九', '13300133000', '江西省赣州市章贡区黄金大道100号', '郑十', '13200132000', '江西省南昌市西湖区北京西路88号', 1.50, 3, '日用品 1.5kg', '2025-03-31 20:40:08', NULL, 0, NULL, NULL, '2025-03-28 20:40:08', '2025-03-28 20:40:08', NULL);
 INSERT INTO `t_package` VALUES (19, 3, 1, 'SF2234567890', '李大壮', '13800138001', '山东省青岛市即墨区龙泉街道社区村66号', NULL, NULL, NULL, NULL, 1, '轻拿轻放，易碎物品', '2023-03-28 14:00:00', NULL, 1, 4, NULL, '2023-03-25 10:22:33', '2023-03-25 15:35:46', NULL);
 INSERT INTO `t_package` VALUES (20, 4, 2, 'ZTO2876543210', '张小花', '13800138002', '山东省青岛市即墨区通济街道幸福村88号', NULL, NULL, NULL, NULL, 0, '生鲜水果，请及时签收', '2023-03-27 16:30:00', NULL, 0, NULL, NULL, '2023-03-26 09:15:27', '2023-03-26 09:15:27', NULL);
 INSERT INTO `t_package` VALUES (21, 3, 3, 'YTO2432167890', '李大壮', '13800138001', '山东省青岛市即墨区龙泉街道社区村66号', NULL, NULL, NULL, NULL, 2, '普通快递', '2023-03-26 11:00:00', '2023-03-26 10:52:31', 1, 4, NULL, '2023-03-24 17:42:19', '2023-03-26 10:52:31', NULL);
@@ -555,7 +575,7 @@ CREATE TABLE `t_payment`  (
   INDEX `idx_order_id`(`order_id` ASC) USING BTREE,
   CONSTRAINT `fk_payment_order` FOREIGN KEY (`order_id`) REFERENCES `t_order` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
   CONSTRAINT `fk_payment_user` FOREIGN KEY (`user_id`) REFERENCES `t_user` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 7 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '支付记录表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 13 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '支付记录表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of t_payment
@@ -566,6 +586,12 @@ INSERT INTO `t_payment` VALUES (3, 3, 3, 'PAY202303260002', '银行卡', 25.00, 
 INSERT INTO `t_payment` VALUES (4, 1, 2, 'PAY202304050001', '微信支付', 15.00, 1, '2023-04-05 09:05:30', '2023-04-05 09:00:30', '2023-04-05 09:05:30');
 INSERT INTO `t_payment` VALUES (5, 1, 3, 'PAY202304060001', '支付宝', 30.00, 1, '2023-04-06 13:45:20', '2023-04-06 13:40:20', '2023-04-06 13:45:20');
 INSERT INTO `t_payment` VALUES (6, 1, 4, 'PAY202304070001', '微信支付', 10.00, 0, NULL, '2023-04-07 08:55:10', '2023-04-07 08:55:10');
+INSERT INTO `t_payment` VALUES (7, 1, 18, 'PAY202504131119019757', 'wxpay', 15.00, 0, NULL, '2025-04-13 11:19:01', '2025-04-13 11:19:01');
+INSERT INTO `t_payment` VALUES (8, 1, 18, 'PAY202504131119046707', 'wxpay', 15.00, 0, NULL, '2025-04-13 11:19:05', '2025-04-13 11:19:05');
+INSERT INTO `t_payment` VALUES (9, 1, 18, 'PAY202504131119078996', 'wxpay', 15.00, 0, NULL, '2025-04-13 11:19:07', '2025-04-13 11:19:07');
+INSERT INTO `t_payment` VALUES (10, 1, 21, 'PAY202504131145341478', 'wxpay', 15.00, 1, '2025-04-13 11:45:39', '2025-04-13 11:45:35', '2025-04-13 11:45:39');
+INSERT INTO `t_payment` VALUES (11, 1, 22, 'PAY202504131150098449', 'wxpay', 15.00, 1, '2025-04-13 11:50:09', '2025-04-13 11:50:09', '2025-04-13 11:50:09');
+INSERT INTO `t_payment` VALUES (12, 1, 23, 'PAY202504131445153293', 'wxpay', 15.00, 1, '2025-04-13 14:45:16', '2025-04-13 14:45:16', '2025-04-13 14:45:16');
 
 -- ----------------------------
 -- Table structure for t_station
@@ -601,6 +627,13 @@ CREATE TABLE `t_station`  (
 -- ----------------------------
 -- Records of t_station
 -- ----------------------------
+-- 服务点表需要先删除可能存在的记录以避免主键冲突
+DELETE FROM `t_station_review` WHERE `station_id` IN (4, 5, 6);
+DELETE FROM `t_station_photo` WHERE `station_id` IN (4, 5, 6);
+DELETE FROM `t_station_company` WHERE `station_id` IN (4, 5, 6);
+DELETE FROM `t_package` WHERE `station_id` IN (4, 5, 6);
+DELETE FROM `t_station` WHERE `id` IN (4, 5, 6);
+
 INSERT INTO `t_station` VALUES (4, '即墨区农村物流服务点1', 'https://example.com/station1_logo.png', '0532-86123456', 'wx123456', '山东省', '青岛市', '即墨区', '龙泉街道社区服务中心旁', 120.447162, 36.389401, '08:00', '20:00', 4.7, 52, 0, NULL, '13900138001', '2025-04-01 21:13:49', '2025-04-01 21:13:49', '08:00-20:00', '刘站长');
 INSERT INTO `t_station` VALUES (5, '即墨区农村物流服务点2', 'https://example.com/station2_logo.png', '0532-86123457', 'wx123457', '山东省', '青岛市', '即墨区', '通济街道文化服务中心对面', 120.463770, 36.379712, '08:30', '19:30', 4.5, 38, 0, NULL, '13900138002', '2025-04-01 21:13:49', '2025-04-01 21:13:49', '08:30-19:30', '陈站长');
 INSERT INTO `t_station` VALUES (6, '即墨区农村物流服务点3', 'https://example.com/station3_logo.png', '0532-86123458', 'wx123458', '山东省', '青岛市', '即墨区', '蓝村镇政府东100米', 120.414181, 36.355601, '08:00', '19:00', 4.8, 45, 0, NULL, '13900138003', '2025-04-01 21:13:49', '2025-04-01 21:13:49', '08:00-19:00', '孙站长');
@@ -638,7 +671,7 @@ CREATE TABLE `t_station_photo`  (
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `idx_station_id`(`station_id` ASC) USING BTREE,
   CONSTRAINT `fk_photo_station` FOREIGN KEY (`station_id`) REFERENCES `t_station` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '服务点图片表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '服务点图片表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of t_station_photo
@@ -681,7 +714,7 @@ CREATE TABLE `t_system_settings`  (
   `updated_at` datetime NOT NULL COMMENT '更新时间',
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `idx_setting_key`(`setting_key` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 30 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '系统设置表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 22 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '系统设置表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of t_system_settings
@@ -725,30 +758,36 @@ CREATE TABLE `t_user`  (
   `status` tinyint(1) NULL DEFAULT 0 COMMENT '状态(0-正常,1-禁用)',
   `created_at` datetime NOT NULL COMMENT '创建时间',
   `updated_at` datetime NOT NULL COMMENT '更新时间',
+  `bio` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '用户简介',
+  `birthday` date NULL DEFAULT NULL COMMENT '用户生日',
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `idx_phone`(`phone` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 39 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '用户表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 46 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '用户表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of t_user
 -- ----------------------------
-INSERT INTO `t_user` VALUES (1, '15579961188', '$2a$10$iK1Udx0wEt3nV02gzlbD1OYCM1voHA/8jSvsb1mRuAhC7OsNIpcxy', '用户1188', NULL, 0, NULL, NULL, 0, 2, 0, '2025-03-24 06:29:42', '2025-03-29 16:16:02');
-INSERT INTO `t_user` VALUES (3, '13800138001', 'e10adc3949ba59abbe56e057f20f883e', '张三', 'https://cdn.ruralexpress.cn/avatars/user1.jpg', 1, '张三', '加密的身份证号', 1, 0, 0, '2025-03-29 10:42:09', '2025-03-29 10:42:09');
-INSERT INTO `t_user` VALUES (4, '13800138002', 'e10adc3949ba59abbe56e057f20f883e', '李四', 'https://cdn.ruralexpress.cn/avatars/user2.jpg', 1, '李四', '加密的身份证号', 1, 0, 0, '2025-03-29 10:42:09', '2025-03-29 10:42:09');
-INSERT INTO `t_user` VALUES (5, '13800138003', 'e10adc3949ba59abbe56e057f20f883e', '王五', 'https://cdn.ruralexpress.cn/avatars/user3.jpg', 1, '王五', '加密的身份证号', 1, 0, 0, '2025-03-29 10:42:09', '2025-03-29 10:42:09');
-INSERT INTO `t_user` VALUES (6, '13800138004', 'e10adc3949ba59abbe56e057f20f883e', '赵六', 'https://cdn.ruralexpress.cn/avatars/user4.jpg', 1, '赵六', '加密的身份证号', 1, 1, 0, '2025-03-29 10:42:09', '2025-03-29 10:42:09');
-INSERT INTO `t_user` VALUES (7, '13800138005', 'e10adc3949ba59abbe56e057f20f883e', '钱七', 'https://cdn.ruralexpress.cn/avatars/user5.jpg', 1, '钱七', '加密的身份证号', 1, 1, 0, '2025-03-29 10:42:09', '2025-03-29 10:42:09');
-INSERT INTO `t_user` VALUES (8, '13800138006', 'e10adc3949ba59abbe56e057f20f883e', '孙八', 'https://cdn.ruralexpress.cn/avatars/user6.jpg', 2, '孙八', '加密的身份证号', 1, 1, 0, '2025-03-29 10:42:09', '2025-03-29 10:42:09');
-INSERT INTO `t_user` VALUES (9, '13800138007', 'e10adc3949ba59abbe56e057f20f883e', '周九', 'https://cdn.ruralexpress.cn/avatars/user7.jpg', 2, '周九', '加密的身份证号', 1, 0, 0, '2025-03-29 10:42:09', '2025-03-29 10:42:09');
-INSERT INTO `t_user` VALUES (10, '13800138008', 'e10adc3949ba59abbe56e057f20f883e', '吴十', 'https://cdn.ruralexpress.cn/avatars/user8.jpg', 1, '吴十', '加密的身份证号', 1, 0, 0, '2025-03-29 10:42:09', '2025-03-29 10:42:09');
-INSERT INTO `t_user` VALUES (11, '13800138009', 'e10adc3949ba59abbe56e057f20f883e', '郑十一', 'https://cdn.ruralexpress.cn/avatars/user9.jpg', 1, '郑十一', '加密的身份证号', 1, 2, 0, '2025-03-29 10:42:09', '2025-03-29 10:42:09');
-INSERT INTO `t_user` VALUES (12, '13800138010', 'e10adc3949ba59abbe56e057f20f883e', '王十二', 'https://cdn.ruralexpress.cn/avatars/user10.jpg', 2, '王十二', '加密的身份证号', 1, 0, 0, '2025-03-29 10:42:09', '2025-03-29 10:42:09');
-INSERT INTO `t_user` VALUES (33, '13800138000', '$2a$10$uxuOPJR9vUvK6uAJFVvYMOQlkqH1eqSBSOQ9VVMx9Cx/VLbAVIczS', '测试用户', '/static/images/default-avatar.png', 0, '张三', NULL, 0, 0, 0, '2025-03-30 20:30:02', '2025-03-30 20:30:02');
-INSERT INTO `t_user` VALUES (34, '13811138001', '$2a$10$xPPoZIxBpXkCTj3WyBe/7.SrC3EYCBGgVQxv0Qv0rXFQpwwmbRSVi', '李大壮', 'https://example.com/avatar1.jpg', 1, '李大壮', '360300199001010001', 1, 0, 0, '2025-04-01 21:12:46', '2025-04-01 21:12:46');
-INSERT INTO `t_user` VALUES (35, '13811138002', '$2a$10$xPPoZIxBpXkCTj3WyBe/7.SrC3EYCBGgVQxv0Qv0rXFQpwwmbRSVi', '张小花', 'https://example.com/avatar2.jpg', 2, '张小花', '360300199001010002', 1, 0, 0, '2025-04-01 21:12:46', '2025-04-01 21:12:46');
-INSERT INTO `t_user` VALUES (36, '13811138003', '$2a$10$xPPoZIxBpXkCTj3WyBe/7.SrC3EYCBGgVQxv0Qv0rXFQpwwmbRSVi', '王快递', 'https://example.com/avatar3.jpg', 1, '王快递', '360300199001010003', 1, 1, 0, '2025-04-01 21:12:46', '2025-04-01 21:12:46');
-INSERT INTO `t_user` VALUES (37, '13811138004', '$2a$10$xPPoZIxBpXkCTj3WyBe/7.SrC3EYCBGgVQxv0Qv0rXFQpwwmbRSVi', '赵配送', 'https://example.com/avatar4.jpg', 1, '赵配送', '360300199001010004', 1, 1, 0, '2025-04-01 21:12:46', '2025-04-01 21:12:46');
-INSERT INTO `t_user` VALUES (38, '13811138005', '$2a$10$xPPoZIxBpXkCTj3WyBe/7.SrC3EYCBGgVQxv0Qv0rXFQpwwmbRSVi', '管理员', 'https://example.com/avatar5.jpg', 1, '郑管理', '360300199001010005', 1, 2, 0, '2025-04-01 21:12:46', '2025-04-01 21:12:46');
+INSERT INTO `t_user` VALUES (1, '15579961188', '$2a$10$6ZYpcR2UHIf/YBkLzVePjub07o0U9PP1iEFfzDGS0vC9N02BmysnG', '用户11881', NULL, 0, NULL, NULL, 0, 2, 0, '2025-03-24 06:29:42', '2025-04-13 14:22:56', '', NULL);
+INSERT INTO `t_user` VALUES (3, '13800138001', 'e10adc3949ba59abbe56e057f20f883e', '张三', 'https://cdn.ruralexpress.cn/avatars/user1.jpg', 1, '张三', '加密的身份证号', 1, 0, 0, '2025-03-29 10:42:09', '2025-03-29 10:42:09', NULL, NULL);
+INSERT INTO `t_user` VALUES (4, '13800138002', 'e10adc3949ba59abbe56e057f20f883e', '李四', 'https://cdn.ruralexpress.cn/avatars/user2.jpg', 1, '李四', '加密的身份证号', 1, 0, 0, '2025-03-29 10:42:09', '2025-03-29 10:42:09', NULL, NULL);
+INSERT INTO `t_user` VALUES (5, '13800138003', 'e10adc3949ba59abbe56e057f20f883e', '王五', 'https://cdn.ruralexpress.cn/avatars/user3.jpg', 1, '王五', '加密的身份证号', 1, 0, 0, '2025-03-29 10:42:09', '2025-03-29 10:42:09', NULL, NULL);
+INSERT INTO `t_user` VALUES (6, '13800138004', 'e10adc3949ba59abbe56e057f20f883e', '赵六', 'https://cdn.ruralexpress.cn/avatars/user4.jpg', 1, '赵六', '加密的身份证号', 1, 1, 0, '2025-03-29 10:42:09', '2025-03-29 10:42:09', NULL, NULL);
+INSERT INTO `t_user` VALUES (7, '13800138005', 'e10adc3949ba59abbe56e057f20f883e', '钱七', 'https://cdn.ruralexpress.cn/avatars/user5.jpg', 1, '钱七', '加密的身份证号', 1, 1, 0, '2025-03-29 10:42:09', '2025-03-29 10:42:09', NULL, NULL);
+INSERT INTO `t_user` VALUES (8, '13800138006', 'e10adc3949ba59abbe56e057f20f883e', '孙八', 'https://cdn.ruralexpress.cn/avatars/user6.jpg', 2, '孙八', '加密的身份证号', 1, 1, 0, '2025-03-29 10:42:09', '2025-03-29 10:42:09', NULL, NULL);
+INSERT INTO `t_user` VALUES (9, '13800138007', 'e10adc3949ba59abbe56e057f20f883e', '周九', 'https://cdn.ruralexpress.cn/avatars/user7.jpg', 2, '周九', '加密的身份证号', 1, 0, 0, '2025-03-29 10:42:09', '2025-03-29 10:42:09', NULL, NULL);
+INSERT INTO `t_user` VALUES (10, '13800138008', 'e10adc3949ba59abbe56e057f20f883e', '吴十', 'https://cdn.ruralexpress.cn/avatars/user8.jpg', 1, '吴十', '加密的身份证号', 1, 0, 0, '2025-03-29 10:42:09', '2025-03-29 10:42:09', NULL, NULL);
+INSERT INTO `t_user` VALUES (11, '13800138009', 'e10adc3949ba59abbe56e057f20f883e', '郑十一', 'https://cdn.ruralexpress.cn/avatars/user9.jpg', 1, '郑十一', '加密的身份证号', 1, 2, 0, '2025-03-29 10:42:09', '2025-03-29 10:42:09', NULL, NULL);
+INSERT INTO `t_user` VALUES (12, '13800138010', 'e10adc3949ba59abbe56e057f20f883e', '王十二', 'https://cdn.ruralexpress.cn/avatars/user10.jpg', 2, '王十二', '加密的身份证号', 1, 0, 0, '2025-03-29 10:42:09', '2025-03-29 10:42:09', NULL, NULL);
+INSERT INTO `t_user` VALUES (33, '13800138000', '$2a$10$uxuOPJR9vUvK6uAJFVvYMOQlkqH1eqSBSOQ9VVMx9Cx/VLbAVIczS', '测试用户', '/static/images/default-avatar.png', 0, '张三', NULL, 0, 0, 0, '2025-03-30 20:30:02', '2025-03-30 20:30:02', NULL, NULL);
+INSERT INTO `t_user` VALUES (34, '13811138001', '$2a$10$xPPoZIxBpXkCTj3WyBe/7.SrC3EYCBGgVQxv0Qv0rXFQpwwmbRSVi', '李大壮', 'https://example.com/avatar1.jpg', 1, '李大壮', '360300199001010001', 1, 0, 0, '2025-04-01 21:12:46', '2025-04-01 21:12:46', NULL, NULL);
+INSERT INTO `t_user` VALUES (35, '13811138002', '$2a$10$xPPoZIxBpXkCTj3WyBe/7.SrC3EYCBGgVQxv0Qv0rXFQpwwmbRSVi', '张小花', 'https://example.com/avatar2.jpg', 2, '张小花', '360300199001010002', 1, 0, 0, '2025-04-01 21:12:46', '2025-04-01 21:12:46', NULL, NULL);
+INSERT INTO `t_user` VALUES (36, '13811138003', '$2a$10$xPPoZIxBpXkCTj3WyBe/7.SrC3EYCBGgVQxv0Qv0rXFQpwwmbRSVi', '王快递', 'https://example.com/avatar3.jpg', 1, '王快递', '360300199001010003', 1, 1, 0, '2025-04-01 21:12:46', '2025-04-01 21:12:46', NULL, NULL);
+INSERT INTO `t_user` VALUES (37, '13811138004', '$2a$10$xPPoZIxBpXkCTj3WyBe/7.SrC3EYCBGgVQxv0Qv0rXFQpwwmbRSVi', '赵配送', 'https://example.com/avatar4.jpg', 1, '赵配送', '360300199001010004', 1, 1, 0, '2025-04-01 21:12:46', '2025-04-01 21:12:46', NULL, NULL);
+INSERT INTO `t_user` VALUES (38, '13811138005', '$2a$10$xPPoZIxBpXkCTj3WyBe/7.SrC3EYCBGgVQxv0Qv0rXFQpwwmbRSVi', '管理员', 'https://example.com/avatar5.jpg', 1, '郑管理', '360300199001010005', 1, 2, 0, '2025-04-01 21:12:46', '2025-04-01 21:12:46', NULL, NULL);
+INSERT INTO `t_user` VALUES (42, '15579961100', '123123', '夏', NULL, 0, '夏', NULL, 0, 1, 0, '2025-04-13 12:32:04', '2025-04-13 12:32:04', NULL, NULL);
+INSERT INTO `t_user` VALUES (43, '15579961101', '$2a$10$O7nZ11//YavRYgx8Mbq4vOiGwJYiJSicM84HROSnUKAlI5JdOduEa', '测试', NULL, 0, '测试', NULL, 0, 0, 1, '2025-04-13 14:29:40', '2025-04-13 14:32:21', NULL, NULL);
+INSERT INTO `t_user` VALUES (44, '13879961188', '$2a$10$lvut1.IDWfUgYtsTJKg/peYwVM7h9sbR9JSGG/usIde3VQrWpMKzq', '用户1188', NULL, 0, NULL, NULL, 0, 0, 0, '2025-04-15 01:37:10', '2025-04-15 01:37:10', NULL, NULL);
+INSERT INTO `t_user` VALUES (45, '17898451544', '$2a$10$gHpDL0.IzbrG3Nl4E7j8U.Ai0aWwwO8pt44MPqG/PnshkB0VnZ3QW', '用户1544', NULL, 0, NULL, NULL, 0, 0, 0, '2025-04-15 01:43:26', '2025-04-15 01:43:26', NULL, NULL);
 
 -- ----------------------------
 -- Table structure for t_user_verification

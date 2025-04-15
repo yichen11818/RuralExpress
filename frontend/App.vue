@@ -8,6 +8,9 @@ export default {
   onLaunch: function() {
     console.log('App Launch');
     this.checkLoginStatus();
+    
+    // 添加页面跳转拦截器
+    this.addInterceptor();
   },
   
   onShow: function() {
@@ -39,6 +42,115 @@ export default {
         this.globalData.isLoggedIn = false;
         this.globalData.userInfo = null;
       }
+    },
+    
+    // 添加页面跳转拦截器
+    addInterceptor() {
+      console.log('添加页面跳转拦截器');
+      
+      // 拦截页面跳转
+      uni.addInterceptor('navigateTo', {
+        invoke(args) {
+          // 为所有导航添加超时设置
+          if (!args.timeout) {
+            args.timeout = 15000; // 15秒超时
+          }
+          
+          // 记录跳转信息
+          console.log('navigateTo 请求:', args);
+          
+          // 如果是前往登录页，建议使用重定向
+          if (args.url && args.url.includes('/pages/login/login')) {
+            console.log('检测到导航到登录页，建议使用redirectTo');
+          }
+          
+          return args;
+        },
+        success(args) {
+          // 记录跳转信息
+          console.log('navigateTo 成功:', args);
+          return args;
+        },
+        fail(err) {
+          console.error('navigateTo 失败:', err);
+          
+          // 如果是跳转到登录页失败，尝试使用reLaunch
+          const pages = getCurrentPages();
+          const currentPage = pages[pages.length - 1];
+          
+          if (err.errMsg && err.errMsg.includes('timeout') && 
+              currentPage && currentPage.route === 'pages/index/index') {
+            console.log('尝试使用备选方案打开登录页');
+            
+            // 延迟执行，避免冲突
+            setTimeout(() => {
+              uni.reLaunch({
+                url: '/pages/login/login'
+              });
+            }, 500);
+          }
+          
+          return err;
+        }
+      });
+      
+      // 拦截页面重定向
+      uni.addInterceptor('redirectTo', {
+        invoke(args) {
+          // 为所有导航添加超时设置
+          if (!args.timeout) {
+            args.timeout = 15000; // 15秒超时
+          }
+          
+          // 记录跳转信息
+          console.log('redirectTo 请求:', args);
+          return args;
+        },
+        success(args) {
+          // 记录跳转信息
+          console.log('redirectTo 成功:', args);
+          return args;
+        },
+        fail(err) {
+          console.error('redirectTo 失败:', err);
+          
+          // 如果重定向到登录页面失败，尝试使用reLaunch
+          if (err.errMsg && err.errMsg.includes('timeout') && 
+              err.url && err.url.includes('/pages/login/login')) {
+            console.log('尝试使用备选方案打开登录页');
+            
+            // 延迟执行，避免冲突
+            setTimeout(() => {
+              uni.reLaunch({
+                url: '/pages/login/login'
+              });
+            }, 500);
+          }
+          
+          return err;
+        }
+      });
+      
+      // 拦截reLaunch
+      uni.addInterceptor('reLaunch', {
+        invoke(args) {
+          // 为所有导航添加超时设置
+          if (!args.timeout) {
+            args.timeout = 15000; // 15秒超时
+          }
+          
+          console.log('reLaunch 请求:', args);
+          return args;
+        },
+        success(args) {
+          console.log('reLaunch 成功:', args);
+          return args;
+        },
+        fail(err) {
+          console.error('reLaunch 失败:', err);
+          return err;
+        }
+      });
     }
   }
 };

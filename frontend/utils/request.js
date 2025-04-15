@@ -76,7 +76,7 @@ const responseInterceptor = (response) => {
             title: '请先登录',
             icon: 'none'
           });
-          uni.navigateTo({
+          uni.redirectTo({
             url: '/pages/login/login'
           });
           return Promise.reject(responseData);

@@ -116,7 +116,28 @@ export default {
     };
   },
   
+  onLoad() {
+    console.log('登录页面加载完成');
+  },
+  
+  onReady() {
+    console.log('登录页面渲染完成');
+    // 延迟初始化非关键性资源
+    setTimeout(() => {
+      this.initPage();
+    }, 200);
+  },
+  
   methods: {
+    // 页面初始化操作
+    initPage() {
+      console.log('登录页面初始化');
+      // 预设一些默认值
+      // 以下是示例，根据需要调整
+      this.loginForm.agreement = true;
+      this.loginForm.rememberMe = true;
+    },
+    
     // 切换标签页
     switchTab(tab) {
       this.activeTab = tab;
@@ -301,25 +322,26 @@ export default {
 </script>
 
 <style>
+/* 优化样式，减少复杂渲染 */
 .login-container {
   min-height: 100vh;
   padding: 40rpx;
-  background-color: #f8f8f8;
+  background-color: #fff; /* 改为纯白色背景，减少渲染复杂度 */
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
 .logo-container {
-  margin: 80rpx 0;
+  margin: 60rpx 0;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
 .logo {
-  width: 180rpx;
-  height: 180rpx;
+  width: 160rpx; /* 稍微减小尺寸 */
+  height: 160rpx;
   margin-bottom: 20rpx;
 }
 
@@ -340,7 +362,7 @@ export default {
   background-color: #fff;
   border-radius: 20rpx;
   padding: 30rpx;
-  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+  /* 移除阴影，减少渲染压力 */
 }
 
 .tabs {

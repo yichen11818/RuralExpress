@@ -72,7 +72,7 @@ export function checkLogin(redirect = true) {
   
   // 如果未登录且需要跳转，则跳转到登录页
   if (!loggedIn && redirect) {
-    uni.navigateTo({
+    uni.redirectTo({
       url: '/pages/login/login'
     });
   }

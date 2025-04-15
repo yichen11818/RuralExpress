@@ -275,8 +275,30 @@ export default {
   onLoad() {
     // 检查登录状态
     if (!isLoggedIn()) {
-      uni.navigateTo({
-        url: '/pages/login/login'
+      console.log('用户未登录，准备跳转到登录页面');
+      
+      // 使用reLaunch彻底清除页面堆栈并打开新页面
+      uni.reLaunch({
+        url: '/pages/login/login',
+        success: () => {
+          console.log('登录页面跳转成功');
+        },
+        fail: (err) => {
+          console.error('登录页面跳转失败', err);
+          
+          // 延迟尝试switchTab作为备选方案
+          setTimeout(() => {
+            uni.switchTab({
+              url: '/pages/user/user',
+              success: () => {
+                console.log('切换到用户Tab页面成功');
+              },
+              fail: (error) => {
+                console.error('所有页面跳转方式均失败', error);
+              }
+            });
+          }, 500);
+        }
       });
       return;
     }
@@ -684,9 +706,30 @@ export default {
     
     // 页面导航
     navigateTo(url) {
-      uni.navigateTo({
-        url
-      });
+      console.log('导航到:', url);
+      
+      // 判断是否是登录页面
+      if (url.includes('/pages/login/login')) {
+        uni.redirectTo({
+          url,
+          timeout: 10000, // 增加超时时间
+          fail: (err) => {
+            console.error('跳转失败:', err);
+            // 提供备选方案
+            uni.reLaunch({
+              url
+            });
+          }
+        });
+      } else {
+        uni.navigateTo({
+          url,
+          timeout: 10000,
+          fail: (err) => {
+            console.error('跳转失败:', err);
+          }
+        });
+      }
     },
     
     // 处理轮播图点击
