@@ -129,13 +129,15 @@ public class SearchController {
      */
     @GetMapping("/couriers")
     public ResponseEntity<Map<String, Object>> searchCouriers(
-            @RequestParam String keyword,
+            @RequestParam(required = false, defaultValue = "") String keyword,
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer pageSize) {
         
         Map<String, Object> result = new HashMap<>();
         
         try {
+            System.out.println("搜索快递员接口请求: keyword=" + keyword + ", page=" + page + ", pageSize=" + pageSize);
+            
             // 使用真实数据搜索快递员
             List<Map<String, Object>> couriers = courierService.searchCouriers(keyword, 50);
             
@@ -144,7 +146,7 @@ public class SearchController {
             int start = (page - 1) * pageSize;
             int end = Math.min(start + pageSize, total);
             
-            List<Map<String, Object>> pagedList = total > 0 ? couriers.subList(start, end) : new ArrayList<>();
+            List<Map<String, Object>> pagedList = total > 0 ? (start < total ? couriers.subList(start, end) : new ArrayList<>()) : new ArrayList<>();
             
             Map<String, Object> data = new HashMap<>();
             data.put("list", pagedList);
@@ -153,6 +155,8 @@ public class SearchController {
             data.put("pageSize", pageSize);
             data.put("totalPage", (int) Math.ceil((double) total / pageSize));
             
+            System.out.println("搜索快递员接口响应: 总数=" + total + ", 页数=" + data.get("totalPage"));
+            
             result.put("success", true);
             result.put("code", 200);
             result.put("message", "搜索成功");
@@ -160,6 +164,9 @@ public class SearchController {
             
             return ResponseEntity.ok(result);
         } catch (Exception e) {
+            System.err.println("搜索快递员接口异常: " + e.getMessage());
+            e.printStackTrace();
+            
             result.put("success", false);
             result.put("code", 500);
             result.put("message", "搜索失败: " + e.getMessage());

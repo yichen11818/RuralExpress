@@ -538,7 +538,16 @@ public class CourierServiceImpl implements CourierService {
 
     @Override
     public List<Map<String, Object>> searchCouriers(String keyword, Integer limit) {
-        List<Courier> couriers = courierMapper.searchCouriers(keyword, limit);
+        List<Courier> couriers;
+        
+        // 空关键字时查询所有快递员
+        if (keyword == null || keyword.trim().isEmpty()) {
+            // 通过审核的快递员
+            couriers = courierMapper.selectActiveCouriers(limit);
+        } else {
+            // 按关键字搜索
+            couriers = courierMapper.searchCouriers(keyword, limit);
+        }
         
         // 转换为Map列表
         List<Map<String, Object>> resultList = new ArrayList<>();
@@ -557,7 +566,7 @@ public class CourierServiceImpl implements CourierService {
             map.put("serviceStatus", courier.getServiceStatus());
             map.put("serviceStatusText", courier.getServiceStatus() == 1 ? "接单中" : "休息中");
             map.put("rating", courier.getRating());
-            map.put("deliveryCount", courier.getCompletedOrders());
+            map.put("completedOrders", courier.getCompletedOrders());
             map.put("company", "乡递通快递"); // 可根据实际情况从关联表查询
             
             resultList.add(map);

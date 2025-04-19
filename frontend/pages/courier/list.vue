@@ -109,12 +109,22 @@ export default {
   },
   
   onLoad() {
+    console.log('快递员列表页面加载');
     // 获取当前位置
     this.getCurrentLocation();
+    
+    // 确保即使位置获取失败，也会加载数据
+    setTimeout(() => {
+      if (this.courierList.length === 0 && !this.loading) {
+        console.log('位置获取可能超时，直接加载数据');
+        this.loadCourierData();
+      }
+    }, 3000);
   },
   
   // 添加onShow生命周期函数，确保每次页面显示时都能加载数据
   onShow() {
+    console.log('快递员列表页面显示');
     // 当页面显示时，确保列表已加载
     if (this.courierList.length === 0 && !this.loading) {
       this.loadCourierData();
@@ -124,10 +134,12 @@ export default {
   methods: {
     // 获取当前位置
     getCurrentLocation() {
+      console.log('开始获取位置信息');
       // 这里可以调用小程序的定位API
       uni.getLocation({
         type: 'gcj02',
         success: (res) => {
+          console.log('位置获取成功', res);
           // 保存经纬度信息
           this.latitude = res.latitude;
           this.longitude = res.longitude;
@@ -140,6 +152,7 @@ export default {
               key: config.mapKey // 使用导入的config对象
             },
             success: (locationRes) => {
+              console.log('地理位置解析成功', locationRes.data);
               if (locationRes.data.status === 0) {
                 const result = locationRes.data.result;
                 const addressComponent = result.address_component;
@@ -150,17 +163,21 @@ export default {
                 ];
                 // 加载附近快递员
                 this.loadCourierData();
+              } else {
+                console.warn('地理位置解析返回错误状态', locationRes.data);
+                this.loadCourierData();
               }
             },
-            fail: () => {
+            fail: (err) => {
               // 即使地址解析失败也应该加载数据
+              console.error('地理位置解析失败', err);
               this.loadCourierData();
             }
           });
         },
-        fail: () => {
+        fail: (err) => {
           // 位置获取失败，使用赣州的模拟位置
-          console.log('获取位置失败，使用赣州模拟位置');
+          console.warn('获取位置失败，使用赣州模拟位置', err);
           // 赣州市中心经纬度（大致位置）
           this.latitude = 25.831829;
           this.longitude = 114.935029;
@@ -182,16 +199,20 @@ export default {
     loadCourierData(append = false) {
       // 修改条件，确保首次加载能够正常进行
       if (this.loading && !this.refreshing && append) return;
+      
+      console.log('开始加载快递员数据', { page: this.page, append });
       this.loading = true;
       
-      // 使用搜索接口获取列表
+      // 使用搜索接口获取列表，确保传递空字符串而非undefined
       searchCouriers('', this.page, 10)
         .then(res => {
+          console.log('快递员数据加载结果', res);
           if (res.code === 200) {
             const data = res.data;
             
             // 处理列表数据
             let list = data.list || [];
+            console.log('获取到快递员列表', list);
             
             // 应用筛选条件
             if (this.selectedRegion && this.selectedRegion[0]) {
@@ -224,7 +245,8 @@ export default {
             });
           }
         })
-        .catch(() => {
+        .catch(err => {
+          console.error('加载快递员数据错误', err);
           uni.showToast({
             title: '网络错误，请稍后重试',
             icon: 'none'

@@ -60,12 +60,19 @@ export function searchOrders(keyword, page = 1, pageSize = 10) {
  * @returns {Promise} 搜索结果
  */
 export function searchCouriers(keyword, page = 1, pageSize = 10) {
+  console.log('调用搜索快递员API', { keyword, page, pageSize });
   return request.get('/api/search/couriers', {
     params: {
-      keyword,
+      keyword: keyword || '', // 确保关键词不为undefined
       page,
       pageSize
     }
+  }).then(res => {
+    console.log('搜索快递员API返回结果', res);
+    return res;
+  }).catch(err => {
+    console.error('搜索快递员API出错', err);
+    throw err;
   });
 }
 

@@ -107,4 +107,15 @@ public interface CourierMapper extends BaseMapper<Courier> {
      */
     @Select("SELECT COUNT(*) FROM t_order WHERE courier_id = #{courierId}")
     int countCourierOrders(@Param("courierId") Long courierId);
+    
+    /**
+     * 查询活跃的快递员(无关键词查询使用)
+     * @param limit 限制数量
+     * @return 快递员列表
+     */
+    @Select("SELECT c.* FROM t_courier c " +
+            "JOIN t_user u ON c.user_id = u.id " +
+            "WHERE c.audit_status = 1 " +
+            "ORDER BY c.rating DESC, c.completed_orders DESC LIMIT #{limit}")
+    List<Courier> selectActiveCouriers(@Param("limit") Integer limit);
 } 
