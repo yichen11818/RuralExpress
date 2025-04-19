@@ -193,14 +193,14 @@ export default {
             const months = (now.getFullYear() - createDate.getFullYear()) * 12 + 
                           (now.getMonth() - createDate.getMonth());
             this.courierInfo.serviceTime = Math.max(1, months);
-          }
+          } 
           
           // 处理评分数量
           if (!this.courierInfo.ratingCount) {
             this.courierInfo.ratingCount = 0;
           }
           
-          console.log('获取到快递员信息:', this.courierInfo);
+          //console.log('获取到快递员信息:', this.courierInfo);
         } else {
           uni.showToast({
             title: res.message || '获取快递员信息失败',
@@ -248,7 +248,7 @@ export default {
           }
           
           this.hasMoreReviews = newReviews.length === 10;
-          console.log('获取到评价列表:', this.reviews);
+          //console.log('获取到评价列表:', this.reviews);
         } else {
           uni.showToast({
             title: res.message || '获取评价失败',

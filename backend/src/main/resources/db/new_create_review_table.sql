@@ -31,4 +31,34 @@ INSERT INTO `t_review` (
 
 -- 添加快递员回复
 UPDATE `t_review` SET `reply` = '感谢您的好评，我会继续努力' WHERE `id` = 1;
-UPDATE `t_review` SET `reply` = '非常抱歉送货有延迟，下次会更加注意时间' WHERE `id` = 2; 
+UPDATE `t_review` SET `reply` = '非常抱歉送货有延迟，下次会更加注意时间' WHERE `id` = 2;
+
+-- 添加缺失的用户数据
+INSERT INTO `t_user` 
+    (`id`, `phone`, `password`, `nickname`, `avatar`, `gender`, 
+    `real_name`, `user_type`, `status`, `created_at`, `updated_at`) 
+VALUES 
+    -- 对应快递员ID=2的用户
+    (2, '13800138021', '$2a$10$uxuOPJR9vUvK6uAJFVvYMOQlkqH1eqSBSOQ9VVMx9Cx/VLbAVIczS', '福田快递员', 
+    '/static/images/default-avatar.png', 1, '李四', 1, 0, 
+    NOW(), NOW()),
+    
+    -- 对应快递员ID=7的用户
+    (103, '13800138103', '$2a$10$uxuOPJR9vUvK6uAJFVvYMOQlkqH1eqSBSOQ9VVMx9Cx/VLbAVIczS', '青岛快递员1', 
+    '/static/images/default-avatar.png', 1, '王配送', 1, 0, 
+    NOW(), NOW()),
+    
+    -- 对应快递员ID=8的用户
+    (104, '13800138104', '$2a$10$uxuOPJR9vUvK6uAJFVvYMOQlkqH1eqSBSOQ9VVMx9Cx/VLbAVIczS', '青岛快递员2', 
+    '/static/images/default-avatar.png', 1, '张配送', 1, 0, 
+    NOW(), NOW());
+
+-- 提示：执行上述SQL后，需要更新status字段值
+-- 根据你提供的数据，快递员status应设置为1(正常)
+UPDATE `t_courier` SET `status` = 1 WHERE `id` IN (2, 7, 8);
+
+-- 显示已添加的用户记录
+SELECT * FROM `t_user` WHERE `id` IN (2, 103, 104);
+
+-- 显示对应的快递员记录
+SELECT * FROM `t_courier` WHERE `user_id` IN (2, 103, 104); 
