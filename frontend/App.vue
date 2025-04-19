@@ -57,18 +57,18 @@ export default {
           }
           
           // 记录跳转信息
-          console.log('navigateTo 请求:', args);
+          //console.log('navigateTo 请求:', args);
           
           // 如果是前往登录页，建议使用重定向
           if (args.url && args.url.includes('/pages/login/login')) {
-            console.log('检测到导航到登录页，建议使用redirectTo');
+            //console.log('检测到导航到登录页，建议使用redirectTo');
           }
           
           return args;
         },
         success(args) {
           // 记录跳转信息
-          console.log('navigateTo 成功:', args);
+          //console.log('navigateTo 成功:', args);
           return args;
         },
         fail(err) {

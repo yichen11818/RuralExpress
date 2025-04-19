@@ -417,4 +417,31 @@ public class ReviewServiceImpl implements ReviewService {
         
         return address;
     }
+    
+    /**
+     * 计算两个经纬度坐标之间的距离
+     * @param lat1 第一个点的纬度
+     * @param lon1 第一个点的经度
+     * @param lat2 第二个点的纬度
+     * @param lon2 第二个点的经度
+     * @return 两点之间的距离（单位：公里）
+     */
+    private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+        // 地球平均半径（单位：千米）
+        final int R = 6371;
+        
+        // 将经纬度转换为弧度
+        double latDistance = Math.toRadians(lat2 - lat1);
+        double lonDistance = Math.toRadians(lon2 - lon1);
+        
+        // Haversine公式
+        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+        
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        
+        // 计算距离
+        return R * c;
+    }
 } 

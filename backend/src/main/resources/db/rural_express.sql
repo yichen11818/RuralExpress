@@ -815,4 +815,33 @@ CREATE TABLE `t_user_verification`  (
 -- Records of t_user_verification
 -- ----------------------------
 
+-- ----------------------------
+-- Table structure for t_review
+-- ----------------------------
+DROP TABLE IF EXISTS `t_review`;
+CREATE TABLE `t_review`  (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '评价ID',
+  `user_id` bigint NOT NULL COMMENT '用户ID',
+  `courier_id` bigint NOT NULL COMMENT '快递员ID',
+  `order_id` bigint NOT NULL COMMENT '订单ID',
+  `rating` int(1) NOT NULL COMMENT '评分(1-5)',
+  `content` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '评价内容',
+  `reply` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '快递员回复',
+  `anonymous` tinyint(1) NULL DEFAULT 0 COMMENT '是否匿名(0-否,1-是)',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
+  INDEX `idx_courier_id`(`courier_id` ASC) USING BTREE,
+  INDEX `idx_order_id`(`order_id` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '评价表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of t_review
+-- ----------------------------
+INSERT INTO `t_review` VALUES (1, 1, 2, 1, 5, '快递员服务很好，送货速度快', '感谢您的好评，我会继续努力', 0, '2025-04-15 10:00:00', '2025-04-15 10:30:00');
+INSERT INTO `t_review` VALUES (2, 2, 2, 2, 4, '服务态度不错，但送货稍有延迟', '非常抱歉送货有延迟，下次会更加注意时间', 0, '2025-04-15 11:00:00', '2025-04-15 11:30:00');
+INSERT INTO `t_review` VALUES (3, 3, 5, 3, 5, '快递员非常热情，服务很周到', NULL, 1, '2025-04-15 12:00:00', '2025-04-15 12:00:00');
+INSERT INTO `t_review` VALUES (4, 4, 5, 4, 3, '送货速度可以再快一些', NULL, 0, '2025-04-15 13:00:00', '2025-04-15 13:00:00');
+
 SET FOREIGN_KEY_CHECKS = 1;
