@@ -320,7 +320,7 @@ public class DemandPredictionServiceImpl implements DemandPredictionService {
         wrapper.eq(Courier::getStatus, 1) // 启用状态
                .eq(Courier::getServiceArea, area);
         
-        return courierMapper.selectCount(wrapper);
+        return courierMapper.selectCount(wrapper).intValue();
     }
     
     /**
