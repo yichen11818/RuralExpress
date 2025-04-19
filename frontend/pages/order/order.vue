@@ -4,7 +4,7 @@
     <view class="tabs">
       <view 
         class="tab-item" 
-        v-for="(item, index) in tabs" 
+        v-for="(item, index) in currentTabs" 
         :key="index"
         :class="{ active: currentTab === index }"
         @click="switchTab(index)"
@@ -48,6 +48,12 @@
               <text class="address-text">{{ item.receiverAddress }}</text>
             </view>
           </view>
+          
+          <!-- 订单价格 -->
+          <view class="price-info" v-if="isCourier && item.status === 0">
+            <text class="price-label">配送费：</text>
+            <text class="price-value">¥{{ item.price }}</text>
+          </view>
         </view>
         
         <view class="order-footer">
@@ -55,27 +61,48 @@
             <text>下单时间：{{ formatDate(item.createdAt) }}</text>
           </view>
           <view class="order-actions">
-            <view 
-              class="action-btn" 
-              v-if="item.status === 0"
-              @click.stop="cancelOrder(item.id)"
-            >
-              取消订单
-            </view>
-            <view 
-              class="action-btn primary-btn" 
-              v-if="item.status === 5"
-              @click.stop="evaluateOrder(item.id)"
-            >
-              评价订单
-            </view>
-            <view 
-              class="action-btn" 
-              v-if="item.status === 5"
-              @click.stop="navigateToDetail(item.id)"
-            >
-              再次下单
-            </view>
+            <!-- 用户操作按钮 -->
+            <template v-if="!isCourier">
+              <view 
+                class="action-btn" 
+                v-if="item.status === 0"
+                @click.stop="cancelOrder(item.id)"
+              >
+                取消订单
+              </view>
+              <view 
+                class="action-btn primary-btn" 
+                v-if="item.status === 5"
+                @click.stop="evaluateOrder(item.id)"
+              >
+                评价订单
+              </view>
+              <view 
+                class="action-btn" 
+                v-if="item.status === 5"
+                @click.stop="navigateToDetail(item.id)"
+              >
+                再次下单
+              </view>
+            </template>
+            
+            <!-- 快递员操作按钮 -->
+            <template v-else>
+              <view 
+                class="action-btn primary-btn" 
+                v-if="item.status === 0"
+                @click.stop="handleAcceptOrder(item.id)"
+              >
+                接单
+              </view>
+              <view 
+                class="action-btn" 
+                v-if="[1, 2, 3, 4].includes(item.status)"
+                @click.stop="updateStatus(item.id, item.status + 1)"
+              >
+                {{ getNextStatusText(item.status) }}
+              </view>
+            </template>
           </view>
         </view>
       </view>
@@ -84,8 +111,9 @@
     <!-- 空状态 -->
     <view class="empty-state" v-else>
       <image class="empty-image" src="/static/images/empty.png" mode="aspectFit"></image>
-      <text class="empty-text">暂无订单数据</text>
-      <button class="empty-btn" type="primary" @click="navigateTo('/pages/index/index')">去下单</button>
+      <text class="empty-text">{{ isCourier ? '暂无可接订单' : '暂无订单数据' }}</text>
+      <button class="empty-btn" type="primary" @click="navigateTo('/pages/index/index')" v-if="!isCourier">去下单</button>
+      <button class="empty-btn" type="primary" @click="refreshPendingOrders()" v-else>刷新订单</button>
     </view>
     
     <!-- 加载提示 -->
@@ -95,22 +123,37 @@
         <text>正在加载订单数据...</text>
       </view>
     </view>
+    
+    <!-- 位置信息提示 -->
+    <view class="location-tips" v-if="isCourier && showLocationTips">
+      <text>需要开启位置权限才能获取附近订单</text>
+      <button class="location-btn" type="primary" size="mini" @click="getLocation">开启位置</button>
+    </view>
   </view>
 </template>
 
 <script>
 import { isLoggedIn } from '@/api/auth';
-import { getUserOrders, cancelOrder, getOrderStatusText } from '@/api/order';
+import { getUserOrders, cancelOrder, getOrderStatusText, getCourierOrders, getPendingOrders, acceptOrder, updateOrderStatus } from '@/api/order';
 import { getUserProfile } from '@/api/user';
+import { getCourierByUserId } from '@/api/courier';
 
 export default {
   data() {
     return {
-      // 标签页
-      tabs: [
+      // 用户标签页
+      userTabs: [
         { name: '全部' },
         { name: '待接单' },
         { name: '处理中' },
+        { name: '已完成' }
+      ],
+      
+      // 快递员标签页
+      courierTabs: [
+        { name: '附近订单' },
+        { name: '我的订单' },
+        { name: '配送中' },
         { name: '已完成' }
       ],
       
@@ -123,15 +166,37 @@ export default {
       // 用户信息
       userInfo: null,
       
+      // 快递员信息
+      courierInfo: null,
+      
+      // 是否为快递员角色
+      isCourier: false,
+      
       // 分页信息
       page: 1,
       size: 10,
       total: 0,
       
+      // 位置信息
+      location: {
+        longitude: null,
+        latitude: null
+      },
+      
+      // 显示位置提示
+      showLocationTips: false,
+      
       // 加载状态
       loading: false,
       userLoading: false
     };
+  },
+  
+  computed: {
+    // 根据角色返回对应的标签页
+    currentTabs() {
+      return this.isCourier ? this.courierTabs : this.userTabs;
+    }
   },
   
   onLoad() {
@@ -147,16 +212,32 @@ export default {
     this.loadUserProfile();
   },
   
+  onShow() {
+    // 如果已加载用户信息，则刷新订单数据
+    if (this.userInfo) {
+      this.refreshData();
+    }
+  },
+  
   onPullDownRefresh() {
     // 刷新数据
-    this.page = 1;
-    this.loadOrderData();
+    this.refreshData();
     setTimeout(() => {
       uni.stopPullDownRefresh();
     }, 1000);
   },
   
   methods: {
+    // 刷新数据
+    refreshData() {
+      this.page = 1;
+      if (this.isCourier) {
+        this.loadCourierData();
+      } else {
+        this.loadOrderData();
+      }
+    },
+    
     // 获取用户资料
     loadUserProfile() {
       this.userLoading = true;
@@ -169,8 +250,9 @@ export default {
         .then(res => {
           if (res.code === 200 && res.data) {
             this.userInfo = res.data;
-            // 加载订单数据
-            this.loadOrderData();
+            
+            // 判断是否为快递员
+            this.checkIsCourier();
           } else {
             uni.showToast({
               title: '获取用户信息失败',
@@ -191,16 +273,254 @@ export default {
         });
     },
     
+    // 检查是否为快递员
+    checkIsCourier() {
+      if (!this.userInfo || !this.userInfo.id) return;
+      
+      getCourierByUserId(this.userInfo.id)
+        .then(res => {
+          if (res.code === 200 && res.data) {
+            this.courierInfo = res.data;
+            this.isCourier = true;
+            console.log('当前用户是快递员:', this.courierInfo);
+            
+            // 加载快递员订单数据
+            this.loadCourierData();
+          } else {
+            console.log('当前用户不是快递员');
+            // 加载普通用户订单数据
+            this.loadOrderData();
+          }
+        })
+        .catch(err => {
+          console.error('检查快递员身份失败', err);
+          // 默认加载普通用户订单数据
+          this.loadOrderData();
+        });
+    },
+    
+    // 获取位置信息
+    getLocation() {
+      uni.getLocation({
+        type: 'gcj02',
+        success: (res) => {
+          this.location.longitude = res.longitude;
+          this.location.latitude = res.latitude;
+          this.showLocationTips = false;
+          
+          console.log('获取位置成功:', this.location);
+          
+          // 重新加载待接单数据
+          if (this.isCourier && this.currentTab === 0) {
+            this.loadPendingOrders();
+          }
+        },
+        fail: (err) => {
+          console.error('获取位置失败:', err);
+          this.showLocationTips = true;
+          
+          uni.showModal({
+            title: '提示',
+            content: '获取位置信息失败，请前往设置开启位置权限',
+            success: (res) => {
+              if (res.confirm) {
+                uni.openSetting();
+              }
+            }
+          });
+        }
+      });
+    },
+    
     // 切换标签页
     switchTab(index) {
       if (this.currentTab === index) return;
       this.currentTab = index;
       this.page = 1;
       this.orderList = [];
-      this.loadOrderData();
+      
+      if (this.isCourier) {
+        this.loadCourierData();
+      } else {
+        this.loadOrderData();
+      }
     },
     
-    // 加载订单数据
+    // 加载快递员数据
+    loadCourierData() {
+      if (!this.courierInfo || !this.courierInfo.id) {
+        uni.showToast({
+          title: '快递员信息不完整',
+          icon: 'none'
+        });
+        return;
+      }
+      
+      switch (this.currentTab) {
+        case 0: // 附近订单
+          this.loadPendingOrders();
+          break;
+        case 1: // 我的订单
+          this.loadCourierOrders(1); // 已接单状态
+          break;
+        case 2: // 配送中
+          this.loadCourierProcessingOrders();
+          break;
+        case 3: // 已完成
+          this.loadCourierOrders(6); // 已完成状态
+          break;
+      }
+    },
+    
+    // 加载待接单数据
+    loadPendingOrders() {
+      this.loading = true;
+      
+      // 检查位置信息
+      if (!this.location.longitude || !this.location.latitude) {
+        this.getLocation();
+        return;
+      }
+      
+      // 查询参数
+      const params = {
+        longitude: this.location.longitude,
+        latitude: this.location.latitude,
+        distance: 10, // 查询10公里内的订单
+        page: this.page,
+        size: this.size
+      };
+      
+      // 调用API获取待接单列表
+      getPendingOrders(params)
+        .then(res => {
+          console.log('获取待接单响应:', res);
+          if (res.code === 200 && res.data) {
+            // 合并数据
+            if (this.page === 1) {
+              this.orderList = res.data.records || [];
+            } else {
+              this.orderList = [...this.orderList, ...(res.data.records || [])];
+            }
+            this.total = res.data.total || 0;
+          } else {
+            uni.showToast({
+              title: res.message || '获取待接单失败',
+              icon: 'none'
+            });
+          }
+        })
+        .catch(err => {
+          console.error('获取待接单失败', err);
+          uni.showToast({
+            title: '获取待接单失败',
+            icon: 'none'
+          });
+        })
+        .finally(() => {
+          this.loading = false;
+        });
+    },
+    
+    // 加载快递员订单
+    loadCourierOrders(status) {
+      this.loading = true;
+      
+      // 查询参数
+      const params = {
+        page: this.page,
+        size: this.size
+      };
+      
+      // 如果指定了状态，添加状态过滤
+      if (status !== undefined) {
+        params.status = status;
+      }
+      
+      // 调用API获取快递员订单列表
+      getCourierOrders(this.courierInfo.id, params)
+        .then(res => {
+          console.log('获取快递员订单响应:', res);
+          if (res.code === 200 && res.data) {
+            // 合并数据
+            if (this.page === 1) {
+              this.orderList = res.data.records || [];
+            } else {
+              this.orderList = [...this.orderList, ...(res.data.records || [])];
+            }
+            this.total = res.data.total || 0;
+          } else {
+            uni.showToast({
+              title: res.message || '获取订单失败',
+              icon: 'none'
+            });
+          }
+        })
+        .catch(err => {
+          console.error('获取快递员订单失败', err);
+          uni.showToast({
+            title: '获取订单失败',
+            icon: 'none'
+          });
+        })
+        .finally(() => {
+          this.loading = false;
+        });
+    },
+    
+    // 加载快递员处理中的订单
+    loadCourierProcessingOrders() {
+      this.loading = true;
+      
+      const promises = [];
+      
+      // 依次加载状态为2-4的订单
+      for (let status = 2; status <= 4; status++) {
+        const params = {
+          page: this.page,
+          size: this.size,
+          status
+        };
+        
+        promises.push(getCourierOrders(this.courierInfo.id, params));
+      }
+      
+      // 合并结果
+      Promise.all(promises)
+        .then(results => {
+          let processingOrders = [];
+          
+          results.forEach(res => {
+            if (res.code === 200 && res.data && res.data.records) {
+              processingOrders = [...processingOrders, ...res.data.records];
+            }
+          });
+          
+          // 按创建时间排序
+          processingOrders.sort((a, b) => {
+            return new Date(b.createdAt) - new Date(a.createdAt);
+          });
+          
+          // 更新数据
+          if (this.page === 1) {
+            this.orderList = processingOrders;
+          } else {
+            this.orderList = [...this.orderList, ...processingOrders];
+          }
+        })
+        .catch(err => {
+          console.error('获取处理中订单失败', err);
+          uni.showToast({
+            title: '获取订单失败',
+            icon: 'none'
+          });
+        })
+        .finally(() => {
+          this.loading = false;
+        });
+    },
+    
+    // 加载用户订单数据
     loadOrderData() {
       if (!this.userInfo || !this.userInfo.id) {
         uni.showToast({
@@ -321,6 +641,133 @@ export default {
         });
     },
     
+    // 处理接单操作
+    handleAcceptOrder(orderId) {
+      if (!this.courierInfo || !this.courierInfo.id) {
+        uni.showToast({
+          title: '快递员信息不完整',
+          icon: 'none'
+        });
+        return;
+      }
+      
+      uni.showModal({
+        title: '接单确认',
+        content: '确定要接此订单吗？',
+        success: (res) => {
+          if (res.confirm) {
+            uni.showLoading({
+              title: '处理中...',
+              mask: true
+            });
+            
+            acceptOrder(orderId, this.courierInfo.id)
+              .then(res => {
+                uni.hideLoading();
+                if (res.code === 200) {
+                  uni.showToast({
+                    title: '接单成功',
+                    icon: 'success'
+                  });
+                  
+                  // 刷新数据
+                  setTimeout(() => {
+                    this.refreshData();
+                  }, 1000);
+                } else {
+                  uni.showToast({
+                    title: res.message || '接单失败',
+                    icon: 'none'
+                  });
+                }
+              })
+              .catch(err => {
+                uni.hideLoading();
+                console.error('接单失败', err);
+                uni.showToast({
+                  title: '接单失败，请重试',
+                  icon: 'none'
+                });
+              });
+          }
+        }
+      });
+    },
+    
+    // 更新订单状态
+    updateStatus(orderId, newStatus) {
+      if (newStatus < 1 || newStatus > 6) {
+        uni.showToast({
+          title: '状态更新无效',
+          icon: 'none'
+        });
+        return;
+      }
+      
+      const statusText = this.getNextStatusText(newStatus - 1);
+      
+      uni.showModal({
+        title: '状态更新',
+        content: `确定将订单状态更新为"${statusText}"吗？`,
+        success: (res) => {
+          if (res.confirm) {
+            uni.showLoading({
+              title: '更新中...',
+              mask: true
+            });
+            
+            updateOrderStatus(orderId, newStatus)
+              .then(res => {
+                uni.hideLoading();
+                if (res.code === 200) {
+                  uni.showToast({
+                    title: '状态更新成功',
+                    icon: 'success'
+                  });
+                  
+                  // 刷新数据
+                  setTimeout(() => {
+                    this.refreshData();
+                  }, 1000);
+                } else {
+                  uni.showToast({
+                    title: res.message || '状态更新失败',
+                    icon: 'none'
+                  });
+                }
+              })
+              .catch(err => {
+                uni.hideLoading();
+                console.error('状态更新失败', err);
+                uni.showToast({
+                  title: '状态更新失败，请重试',
+                  icon: 'none'
+                });
+              });
+          }
+        }
+      });
+    },
+    
+    // 获取下一个状态文本
+    getNextStatusText(currentStatus) {
+      const nextStatusMap = {
+        1: '开始取件',   // 已接单 -> 取件中
+        2: '已取到件',   // 取件中 -> 已取件
+        3: '开始配送',   // 已取件 -> 配送中
+        4: '已送达'      // 配送中 -> 已送达
+      };
+      return nextStatusMap[currentStatus] || '更新状态';
+    },
+    
+    // 刷新待接单
+    refreshPendingOrders() {
+      if (this.isCourier) {
+        this.page = 1;
+        this.loadPendingOrders();
+      }
+    },
+    
     // 获取状态文本
     getStatusText(status) {
       console.log('订单状态码:', status, '状态文本:', getOrderStatusText(status));
@@ -340,9 +787,16 @@ export default {
     
     // 跳转到详情页
     navigateToDetail(id) {
-      uni.navigateTo({
-        url: `/pages/order/detail?id=${id}`
-      });
+      // 根据用户身份跳转不同的详情页
+      if (this.isCourier) {
+        uni.navigateTo({
+          url: `/pages/order/courier-detail?id=${id}`
+        });
+      } else {
+        uni.navigateTo({
+          url: `/pages/order/detail?id=${id}`
+        });
+      }
     },
     
     // 取消订单
@@ -442,6 +896,12 @@ export default {
   }
 }
 
+/* 旋转动画 */
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 .order-container {
   min-height: 100vh;
   background-color: #f8f8f8;
@@ -499,6 +959,7 @@ export default {
   background-color: #f9f9f9;
 }
 
+/* 订单头部样式 */
 .order-header {
   display: flex;
   justify-content: space-between;
@@ -516,22 +977,7 @@ export default {
   font-weight: bold;
 }
 
-.status-0 {
-  color: #ff9900;
-}
-
-.status-1, .status-2, .status-3, .status-4 {
-  color: #007aff;
-}
-
-.status-5 {
-  color: #3cc51f;
-}
-
-.status-6 {
-  color: #999;
-}
-
+/* 订单内容样式 */
 .order-info {
   padding: 20rpx 0;
   border-bottom: 1rpx solid #f5f5f5;
@@ -592,6 +1038,27 @@ export default {
   color: #333;
 }
 
+/* 价格信息样式 */
+.price-info {
+  margin-top: 10rpx;
+  padding: 10rpx 0;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.price-label {
+  font-size: 28rpx;
+  color: #666;
+}
+
+.price-value {
+  font-size: 32rpx;
+  color: #ff6b00;
+  font-weight: bold;
+}
+
+/* 订单底部样式 */
 .order-footer {
   padding-top: 20rpx;
   display: flex;
@@ -628,6 +1095,7 @@ export default {
   opacity: 0.8;
 }
 
+/* 空状态样式 */
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -658,21 +1126,6 @@ export default {
 }
 
 /* 加载中动画 */
-@keyframes rotate {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.loading-spinner {
-  width: 60rpx;
-  height: 60rpx;
-  border: 6rpx solid #f3f3f3;
-  border-top: 6rpx solid #3cc51f;
-  border-radius: 50%;
-  animation: rotate 1s linear infinite;
-  margin: 0 auto 20rpx;
-}
-
 .loading-overlay {
   position: fixed;
   top: 0;
@@ -691,5 +1144,59 @@ export default {
   padding: 40rpx;
   border-radius: 12rpx;
   text-align: center;
+}
+
+.loading-spinner {
+  width: 60rpx;
+  height: 60rpx;
+  border: 6rpx solid #f3f3f3;
+  border-top: 6rpx solid #3cc51f;
+  border-radius: 50%;
+  animation: rotate 1s linear infinite;
+  margin: 0 auto 20rpx;
+}
+
+/* 位置提示样式 */
+.location-tips {
+  position: fixed;
+  bottom: 40rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  padding: 20rpx 30rpx;
+  border-radius: 50rpx;
+  display: flex;
+  align-items: center;
+  z-index: 100;
+}
+
+.location-btn {
+  margin-left: 20rpx;
+  font-size: 24rpx;
+  height: 60rpx;
+  line-height: 60rpx;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+/* 订单状态颜色 */
+.status-0 {
+  color: #ff9900;
+}
+.status-1 {
+  color: #3cc51f;
+}
+.status-2, .status-3, .status-4 {
+  color: #007aff;
+}
+.status-5 {
+  color: #ff6b00;
+}
+.status-6 {
+  color: #8f8f94;
+}
+.status-7 {
+  color: #dd524d;
 }
 </style> 

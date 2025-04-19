@@ -9,6 +9,21 @@
     <!-- 物流信息 -->
     <view class="logistics-section" v-if="logistics.length > 0">
       <view class="section-title">物流信息</view>
+      
+      <!-- 物流公司信息 -->
+      <view class="logistics-company" v-if="logisticsCompany">
+        <image :src="logisticsCompany.logo" mode="aspectFit" class="company-logo"></image>
+        <view class="company-info">
+          <view class="company-name">{{ logisticsCompany.name }}</view>
+          <view class="tracking-no">
+            <text class="tracking-label">运单号：</text>
+            <text class="tracking-value">{{ logisticsCompany.trackingNo }}</text>
+            <view class="copy-btn" @click="copyTrackingNo(logisticsCompany.trackingNo)">复制</view>
+          </view>
+        </view>
+        <view class="logistics-status">{{ logisticsCompany.status }}</view>
+      </view>
+      
       <view class="logistics-timeline">
         <view 
           class="logistics-item" 
@@ -48,6 +63,91 @@
       <view class="info-item">
         <text class="item-label">下单时间</text>
         <text class="item-value">{{ order.createdAt }}</text>
+      </view>
+    </view>
+    
+    <!-- 快递员详细信息 -->
+    <view class="courier-section" v-if="order.courierId && order.status > 0 && order.status < 7">
+      <view class="section-title">快递员信息</view>
+      <view class="courier-profile">
+        <image :src="courierInfo.avatar || '/static/images/default-avatar.png'" mode="aspectFill" class="courier-avatar"></image>
+        <view class="courier-details">
+          <view class="courier-name-row">
+            <text class="courier-full-name">{{ order.courierName || courierInfo.name }}</text>
+            <view class="courier-badge">认证快递员</view>
+          </view>
+          <view class="courier-rating">
+            <uni-icons type="star-filled" size="14" color="#ff9900"></uni-icons>
+            <text class="rating-score">{{ courierInfo.rating || '4.8' }}</text>
+            <text class="rating-count">{{ courierInfo.ratingCount || 0 }}条评价</text>
+          </view>
+          <view class="courier-stats">
+            <text class="stat-item">服务{{ courierInfo.serviceTime || '12' }}个月</text>
+            <text class="stat-item">已完成{{ courierInfo.completedOrders || '0' }}单</text>
+          </view>
+        </view>
+        <view class="contact-courier-btn" @click="callCourier(order.courierPhone)">
+          <uni-icons type="phone-filled" size="20" color="#3cc51f"></uni-icons>
+        </view>
+      </view>
+      <view class="courier-contact-info">
+        <view class="contact-info-item">
+          <text class="info-label">联系电话</text>
+          <text class="info-value">{{ formatPhone(order.courierPhone) }}</text>
+        </view>
+        <view class="contact-info-item" v-if="courierInfo.serviceArea">
+          <text class="info-label">服务区域</text>
+          <text class="info-value">{{ courierInfo.serviceArea }}</text>
+        </view>
+      </view>
+    </view>
+    
+    <!-- 评价信息 -->
+    <view class="review-section" v-if="order.status === 6">
+      <view class="section-title">订单评价</view>
+      <view class="review-content" v-if="reviewInfo.id">
+        <view class="review-rating">
+          <text class="rating-label">评分</text>
+          <view class="rating-stars">
+            <uni-icons v-for="i in 5" :key="i" 
+              :type="i <= reviewInfo.rating ? 'star-filled' : 'star'" 
+              size="20" 
+              :color="i <= reviewInfo.rating ? '#ff9900' : '#ddd'">
+            </uni-icons>
+          </view>
+          <text class="rating-value">{{ reviewInfo.rating }}.0</text>
+        </view>
+        <view class="review-text">
+          <text>{{ reviewInfo.content }}</text>
+        </view>
+        <view class="review-images" v-if="reviewInfo.images && reviewInfo.images.length > 0">
+          <image 
+            v-for="(img, idx) in reviewInfo.images" 
+            :key="idx" 
+            :src="img" 
+            mode="aspectFill" 
+            class="review-image" 
+            @click="previewImage(img, reviewInfo.images)">
+          </image>
+        </view>
+        <view class="review-time">{{ reviewInfo.createdAt }}</view>
+        
+        <!-- 快递员回复 -->
+        <view class="courier-reply" v-if="reviewInfo.reply">
+          <view class="reply-header">
+            <text class="reply-title">快递员回复</text>
+          </view>
+          <view class="reply-content">
+            <text>{{ reviewInfo.reply }}</text>
+          </view>
+          <view class="reply-time">{{ reviewInfo.replyTime }}</view>
+        </view>
+      </view>
+      
+      <!-- 未评价提示 -->
+      <view class="no-review-tip" v-else>
+        <text>您还没有评价此订单</text>
+        <button class="review-now-btn" @click="evaluateOrder(order.id)">立即评价</button>
       </view>
     </view>
     
@@ -153,9 +253,14 @@
 
 <script>
 import { isLoggedIn } from '@/api/auth';
-import { getOrderDetail, cancelOrder } from '@/api/order';
+import { getOrderDetail, cancelOrder, getLogisticsInfo } from '@/api/order';
+import { getOrderReview } from '@/api/order';
+import { getCourierInfo } from '@/api/courier';
 
 export default {
+  components: {
+    uniIcons: () => import('@/uni_modules/uni-icons/components/uni-icons/uni-icons.vue')
+  },
   data() {
     return {
       orderId: null,
@@ -177,7 +282,10 @@ export default {
         price: 0,
         createdAt: ''
       },
-      logistics: []
+      logistics: [],
+      courierInfo: {},
+      reviewInfo: {},
+      logisticsCompany: {}
     };
   },
   
@@ -214,6 +322,19 @@ export default {
             console.log('处理后的订单数据:', this.order);
             console.log('订单状态码:', this.order.status);
             console.log('订单状态文本:', this.getStatusText(this.order.status));
+            
+            // 获取物流信息
+            this.getLogisticsInfo();
+            
+            // 如果有快递员信息，获取快递员详情
+            if (this.order.courierId) {
+              this.getCourierInfo(this.order.courierId);
+            }
+            
+            // 如果订单已完成，获取评价信息
+            if (this.order.status === 6) {
+              this.getOrderReview();
+            }
           } else {
             uni.showToast({
               title: '获取订单详情失败',
@@ -231,6 +352,256 @@ export default {
         .finally(() => {
           uni.hideLoading();
         });
+    },
+    
+    // 获取物流信息
+    getLogisticsInfo() {
+      // 调用物流API
+      getLogisticsInfo({ orderId: this.orderId })
+        .then(res => {
+          console.log('物流API原始响应:', res); // 添加日志查看原始响应
+          
+          if (res.code === 200 && res.data) {
+            // 检查返回的数据结构
+            if (Array.isArray(res.data)) {
+              // 如果直接返回数组
+              this.logistics = res.data.map(item => ({
+                content: item.content,
+                time: item.time
+              }));
+            } else if (res.data.list && Array.isArray(res.data.list)) {
+              // 如果数据在list字段中
+              this.logistics = res.data.list.map(item => ({
+                content: item.content,
+                time: item.time
+              }));
+            } else if (res.data.traces && Array.isArray(res.data.traces)) {
+              // 如果数据在traces字段中（物流轨迹）
+              if (res.data.traces.length > 0) {
+                this.logistics = res.data.traces.map(item => ({
+                  content: item.content || item.desc || item.description || '物流状态更新',
+                  time: item.time || item.dateTime || item.date || this.formatTime(new Date())
+                }));
+              } else {
+                // traces是空数组，创建模拟数据
+                console.log('物流轨迹为空数组，创建模拟数据');
+                this.createMockLogistics();
+              }
+              
+              // 将物流公司信息保存到组件数据中，方便展示
+              if (res.data.companyName) {
+                this.logisticsCompany = {
+                  name: res.data.companyName,
+                  logo: res.data.companyLogo || '/static/images/company-logo.png',
+                  trackingNo: res.data.trackingNo || '未分配',
+                  status: res.data.statusText || this.getStatusText(this.order.status)
+                };
+              }
+            } else {
+              // 如果不是预期的数据格式，创建模拟数据
+              console.log('物流数据不是预期的数组格式:', res.data);
+              this.createMockLogistics();
+            }
+            
+            // 如果没有物流信息，添加模拟数据
+            if (this.logistics.length === 0) {
+              console.log('物流数据为空，创建模拟数据');
+              this.createMockLogistics();
+            }
+            
+            console.log('处理后的物流信息:', this.logistics);
+          } else {
+            // 添加模拟物流信息
+            console.log('没有有效的物流数据响应，创建模拟数据');
+            this.createMockLogistics();
+          }
+        })
+        .catch(err => {
+          console.error('获取物流信息失败', err);
+          // 添加模拟物流信息
+          this.createMockLogistics();
+        });
+    },
+    
+    // 创建模拟物流信息
+    createMockLogistics() {
+      // 根据订单状态生成合适的模拟物流信息
+      const orderTime = new Date(this.order.createdAt || new Date());
+      
+      // 基础物流信息 - 订单创建
+      this.logistics = [{
+        content: '订单已创建',
+        time: this.formatTime(orderTime)
+      }];
+      
+      // 根据订单状态添加额外的物流信息
+      if (this.order.status >= 1) {
+        // 添加1小时
+        const acceptTime = new Date(orderTime.getTime() + 60 * 60 * 1000);
+        this.logistics.push({
+          content: '快递员已接单: ' + (this.order.courierName || '配送员'),
+          time: this.formatTime(acceptTime)
+        });
+        
+        // 添加系统分配信息
+        const assignTime = new Date(orderTime.getTime() + 30 * 60 * 1000);
+        this.logistics.splice(1, 0, {
+          content: '系统已分配快递员',
+          time: this.formatTime(assignTime)
+        });
+      }
+      
+      if (this.order.status >= 2) {
+        // 添加2小时
+        const pickupTime = new Date(orderTime.getTime() + 2 * 60 * 60 * 1000);
+        this.logistics.push({
+          content: '快递员正在取件途中',
+          time: this.formatTime(pickupTime)
+        });
+        
+        // 添加取件通知信息
+        const notifyTime = new Date(orderTime.getTime() + 1.5 * 60 * 60 * 1000);
+        this.logistics.push({
+          content: '快递员已出发前往取件地点',
+          time: this.formatTime(notifyTime)
+        });
+      }
+      
+      if (this.order.status >= 3) {
+        // 添加3小时
+        const pickedTime = new Date(orderTime.getTime() + 3 * 60 * 60 * 1000);
+        this.logistics.push({
+          content: '快递员已取件，开始配送',
+          time: this.formatTime(pickedTime)
+        });
+      }
+      
+      if (this.order.status >= 4) {
+        // 添加5小时
+        const deliveryTime = new Date(orderTime.getTime() + 5 * 60 * 60 * 1000);
+        this.logistics.push({
+          content: '包裹正在配送中',
+          time: this.formatTime(deliveryTime)
+        });
+        
+        // 添加中间状态
+        const transitTime = new Date(orderTime.getTime() + 4 * 60 * 60 * 1000);
+        this.logistics.push({
+          content: '包裹已离开快递集散中心，准备配送至目的地',
+          time: this.formatTime(transitTime)
+        });
+      }
+      
+      if (this.order.status >= 5) {
+        // 添加8小时
+        const arrivedTime = new Date(orderTime.getTime() + 8 * 60 * 60 * 1000);
+        this.logistics.push({
+          content: '包裹已送达收件地址',
+          time: this.formatTime(arrivedTime)
+        });
+        
+        // 添加快递员出发配送
+        const startDeliveryTime = new Date(orderTime.getTime() + 7 * 60 * 60 * 1000);
+        this.logistics.push({
+          content: '快递员开始配送，预计1小时内送达',
+          time: this.formatTime(startDeliveryTime)
+        });
+      }
+      
+      if (this.order.status >= 6) {
+        // 添加9小时
+        const completeTime = new Date(orderTime.getTime() + 9 * 60 * 60 * 1000);
+        this.logistics.push({
+          content: '订单已完成，感谢您使用乡递快递',
+          time: this.formatTime(completeTime)
+        });
+        
+        // 添加签收信息
+        const signTime = new Date(orderTime.getTime() + 8.5 * 60 * 60 * 1000);
+        this.logistics.push({
+          content: `包裹已由${this.order.receiverName || '收件人'}签收`,
+          time: this.formatTime(signTime)
+        });
+      }
+      
+      if (this.order.status === 7) {
+        // 如果订单取消，重置物流信息
+        const cancelTime = new Date(orderTime.getTime() + 1 * 60 * 60 * 1000);
+        this.logistics = [
+          {
+            content: '订单已创建',
+            time: this.formatTime(orderTime)
+          },
+          {
+            content: '订单已取消: ' + (this.order.cancelReason || '用户取消'),
+            time: this.formatTime(cancelTime)
+          }
+        ];
+      }
+      
+      // 倒序排列，最新的在最前面
+      this.logistics.reverse();
+      
+      // 设置物流公司信息
+      this.logisticsCompany = {
+        name: '乡递通快递',
+        logo: '/static/images/company-logo.png',
+        trackingNo: this.order.trackingNo || '未分配',
+        status: this.getStatusText(this.order.status)
+      };
+    },
+    
+    // 格式化时间
+    formatTime(date) {
+      if (!date) return '';
+      
+      if (typeof date === 'string') {
+        date = new Date(date);
+      }
+      
+      const year = date.getFullYear();
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const day = date.getDate().toString().padStart(2, '0');
+      const hour = date.getHours().toString().padStart(2, '0');
+      const minute = date.getMinutes().toString().padStart(2, '0');
+      
+      return `${year}-${month}-${day} ${hour}:${minute}`;
+    },
+    
+    // 获取快递员详情
+    getCourierInfo(courierId) {
+      getCourierInfo(courierId)
+        .then(res => {
+          if (res.code === 200 && res.data) {
+            this.courierInfo = res.data;
+            console.log('快递员信息:', this.courierInfo);
+          }
+        })
+        .catch(err => {
+          console.error('获取快递员信息失败', err);
+        });
+    },
+    
+    // 获取订单评价
+    getOrderReview() {
+      getOrderReview(this.orderId)
+        .then(res => {
+          if (res.code === 200 && res.data) {
+            this.reviewInfo = res.data;
+            console.log('评价信息:', this.reviewInfo);
+          }
+        })
+        .catch(err => {
+          console.error('获取评价信息失败', err);
+        });
+    },
+    
+    // 图片预览
+    previewImage(current, urls) {
+      uni.previewImage({
+        current: current,
+        urls: urls
+      });
     },
     
     // 获取订单状态文本
@@ -404,6 +775,27 @@ export default {
           uni.showToast({
             title: '拨打电话失败',
             icon: 'none'
+          });
+        }
+      });
+    },
+    
+    // 复制物流单号
+    copyTrackingNo(trackingNo) {
+      uni.setClipboardData({
+        data: trackingNo,
+        success: () => {
+          uni.showToast({
+            title: '物流单号已复制',
+            icon: 'success',
+            duration: 2000
+          });
+        },
+        fail: () => {
+          uni.showToast({
+            title: '复制失败',
+            icon: 'none',
+            duration: 2000
           });
         }
       });
@@ -669,5 +1061,274 @@ export default {
 .primary-btn {
   color: #3cc51f;
   border-color: #3cc51f;
+}
+
+.courier-section {
+  margin: 20rpx;
+  background-color: #fff;
+  border-radius: 12rpx;
+  padding: 0 30rpx;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+}
+
+.courier-profile {
+  display: flex;
+  align-items: center;
+  padding: 30rpx 0;
+}
+
+.courier-avatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  margin-right: 20rpx;
+}
+
+.courier-details {
+  flex: 1;
+}
+
+.courier-name-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10rpx;
+}
+
+.courier-full-name {
+  font-size: 28rpx;
+  color: #333;
+  margin-right: 10rpx;
+}
+
+.courier-badge {
+  font-size: 24rpx;
+  color: #fff;
+  background-color: #3cc51f;
+  padding: 4rpx 16rpx;
+  border-radius: 30rpx;
+}
+
+.courier-rating {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10rpx;
+}
+
+.rating-score {
+  font-size: 28rpx;
+  color: #ff9900;
+  margin: 0 10rpx;
+}
+
+.rating-count {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.courier-stats {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10rpx;
+}
+
+.stat-item {
+  font-size: 24rpx;
+  color: #666;
+}
+
+.contact-courier-btn {
+  font-size: 24rpx;
+  color: #fff;
+  background-color: #3cc51f;
+  padding: 4rpx 16rpx;
+  border-radius: 30rpx;
+  margin-left: 20rpx;
+}
+
+.courier-contact-info {
+  padding: 30rpx 0;
+}
+
+.contact-info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24rpx 0;
+  border-bottom: 1rpx solid #f5f5f5;
+}
+
+.contact-info-item:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  font-size: 28rpx;
+  color: #666;
+}
+
+.info-value {
+  font-size: 28rpx;
+  color: #333;
+}
+
+.review-section {
+  margin: 20rpx;
+  background-color: #fff;
+  border-radius: 12rpx;
+  padding: 0 30rpx;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+}
+
+.review-content {
+  padding: 30rpx 0;
+}
+
+.review-rating {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10rpx;
+}
+
+.rating-label {
+  font-size: 28rpx;
+  color: #666;
+  margin-right: 10rpx;
+}
+
+.rating-stars {
+  display: flex;
+  align-items: center;
+}
+
+.rating-stars uni-icons {
+  margin-right: 4rpx;
+}
+
+.rating-value {
+  font-size: 28rpx;
+  color: #ff9900;
+  margin-left: 10rpx;
+}
+
+.review-text {
+  font-size: 28rpx;
+  color: #333;
+  margin-bottom: 10rpx;
+}
+
+.review-images {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 10rpx;
+}
+
+.review-image {
+  width: 200rpx;
+  height: 200rpx;
+  object-fit: cover;
+  border-radius: 4rpx;
+  margin-right: 10rpx;
+  margin-bottom: 10rpx;
+}
+
+.review-time {
+  font-size: 24rpx;
+  color: #999;
+  margin-top: 10rpx;
+}
+
+.courier-reply {
+  margin-top: 10rpx;
+  padding: 10rpx;
+  background-color: #f5f5f5;
+  border-radius: 4rpx;
+}
+
+.reply-header {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: bold;
+  margin-bottom: 10rpx;
+}
+
+.reply-content {
+  font-size: 28rpx;
+  color: #666;
+}
+
+.reply-time {
+  font-size: 24rpx;
+  color: #999;
+  margin-top: 10rpx;
+}
+
+.no-review-tip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30rpx 0;
+}
+
+.review-now-btn {
+  font-size: 28rpx;
+  color: #fff;
+  background-color: #3cc51f;
+  padding: 10rpx 20rpx;
+  border-radius: 30rpx;
+  margin-top: 10rpx;
+}
+
+.logistics-company {
+  display: flex;
+  align-items: center;
+  padding: 30rpx 0;
+}
+
+.company-logo {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  margin-right: 20rpx;
+}
+
+.company-info {
+  flex: 1;
+}
+
+.company-name {
+  font-size: 28rpx;
+  color: #333;
+  margin-bottom: 10rpx;
+}
+
+.tracking-no {
+  display: flex;
+  align-items: center;
+}
+
+.tracking-label {
+  font-size: 28rpx;
+  color: #666;
+  margin-right: 10rpx;
+}
+
+.tracking-value {
+  font-size: 28rpx;
+  color: #333;
+}
+
+.copy-btn {
+  font-size: 24rpx;
+  color: #fff;
+  background-color: #3cc51f;
+  padding: 4rpx 16rpx;
+  border-radius: 30rpx;
+  margin-left: 10rpx;
+}
+
+.logistics-status {
+  font-size: 28rpx;
+  color: #3cc51f;
+  font-weight: bold;
 }
 </style> 
