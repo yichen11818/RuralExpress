@@ -46,6 +46,11 @@ public class Review {
     private String content;
     
     /**
+     * 评价标签，以JSON数组形式存储
+     */
+    private String tags;
+    
+    /**
      * 快递员回复
      */
     private String reply;

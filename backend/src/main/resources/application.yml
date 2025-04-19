@@ -79,7 +79,13 @@ app:
 # 文件上传自定义配置
 file:
   upload:
-    # 上传文件存储路径
-    path: uploads
+    # 上传文件基础路径
+    base-path: ${user.dir}/uploads
     # 访问域名
-    domain: http://localhost:8080 
+    base-url: http://localhost:8080/api/uploads
+
+# 图片上传路径配置
+upload:
+  # 评价图片保存路径
+  review-image:
+    path: review 

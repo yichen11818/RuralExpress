@@ -53,6 +53,11 @@ public class Courier {
     private BigDecimal rating;
     
     /**
+     * 评价数量
+     */
+    private Integer ratingCount;
+    
+    /**
      * 账户余额
      */
     private BigDecimal balance;

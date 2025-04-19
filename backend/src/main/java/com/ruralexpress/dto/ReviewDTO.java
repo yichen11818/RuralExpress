@@ -5,6 +5,7 @@ import lombok.Data;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
+import java.util.List;
 
 /**
  * 评价数据传输对象
@@ -41,6 +42,16 @@ public class ReviewDTO {
      * 评价内容
      */
     private String content;
+    
+    /**
+     * 评价标签
+     */
+    private List<String> tags;
+    
+    /**
+     * 评价图片URL列表
+     */
+    private List<String> images;
     
     /**
      * 是否匿名(0-否,1-是)

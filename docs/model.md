@@ -186,6 +186,27 @@
 - 服务实现：`backend/src/main/java/com/ruralexpress/service/impl/SystemSettingsServiceImpl.java`
 - 配置文件：`backend/src/main/resources/application.yml`
 
+### 劳动力画像分析相关文件
+1. 服务接口: `backend/src/main/java/com/ruralexpress/service/CourierAnalysisService.java`
+2. DTO类: `backend/src/main/java/com/ruralexpress/dto/SkillTagDTO.java`
+3. DTO类: `backend/src/main/java/com/ruralexpress/dto/CourierClusterDTO.java`
+4. 服务实现: `backend/src/main/java/com/ruralexpress/service/impl/CourierAnalysisServiceImpl.java`
+
+### 区域用工需求预测相关文件
+1. 服务接口: `backend/src/main/java/com/ruralexpress/service/DemandPredictionService.java`
+2. DTO类: `backend/src/main/java/com/ruralexpress/dto/DemandPredictionDTO.java`
+3. DTO类: `backend/src/main/java/com/ruralexpress/dto/HistoricalDemandDTO.java`
+4. 实体类: `backend/src/main/java/com/ruralexpress/entity/OrderStatistics.java`
+5. 实体类: `backend/src/main/java/com/ruralexpress/entity/DemandPrediction.java`
+6. Mapper接口: `backend/src/main/java/com/ruralexpress/mapper/OrderStatisticsMapper.java`
+7. Mapper接口: `backend/src/main/java/com/ruralexpress/mapper/DemandPredictionMapper.java`
+8. 服务实现: `backend/src/main/java/com/ruralexpress/service/impl/DemandPredictionServiceImpl.java`
+
+### 共享的控制器和依赖
+1. 控制器: `backend/src/main/java/com/ruralexpress/controller/AnalysisController.java`
+2. 依赖配置: 修改了 `backend/pom.xml` 添加了相关依赖
+
+
 *以下是补充模块划分*
 
 14. 短信服务模块

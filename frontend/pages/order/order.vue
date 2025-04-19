@@ -63,27 +63,27 @@
           <view class="order-actions">
             <!-- 用户操作按钮 -->
             <template v-if="viewMode === 'user'">
-              <view 
-                class="action-btn" 
-                v-if="item.status === 0"
-                @click.stop="cancelOrder(item.id)"
-              >
-                取消订单
-              </view>
-              <view 
-                class="action-btn primary-btn" 
-                v-if="item.status === 5"
-                @click.stop="evaluateOrder(item.id)"
-              >
-                评价订单
-              </view>
-              <view 
-                class="action-btn" 
-                v-if="item.status === 5"
-                @click.stop="navigateToDetail(item.id)"
-              >
-                再次下单
-              </view>
+            <view 
+              class="action-btn" 
+              v-if="item.status === 0"
+              @click.stop="cancelOrder(item.id)"
+            >
+              取消订单
+            </view>
+            <view 
+              class="action-btn primary-btn" 
+              v-if="item.status === 5"
+              @click.stop="evaluateOrder(item.id)"
+            >
+              评价订单
+            </view>
+            <view 
+              class="action-btn" 
+              v-if="item.status === 5"
+              @click.stop="navigateToDetail(item.id)"
+            >
+              再次下单
+            </view>
             </template>
             
             <!-- 快递员操作按钮 -->
@@ -94,7 +94,7 @@
                 @click.stop="handleAcceptOrder(item.id)"
               >
                 接单
-              </view>
+          </view>
               <view 
                 class="action-btn" 
                 v-if="[1, 2, 3, 4].includes(item.status)"
@@ -394,7 +394,7 @@ export default {
             }
           });
         }
-      });
+        });
     },
     
     // 切换标签页
@@ -407,7 +407,7 @@ export default {
       if (this.viewMode === 'courier') {
         this.loadCourierData();
       } else {
-        this.loadOrderData();
+      this.loadOrderData();
       }
     },
     
@@ -849,42 +849,42 @@ export default {
           });
       } else {
         // 对于其他标签页，使用常规的查询
-        getUserOrders(this.userInfo.id, params)
-          .then(res => {
-            console.log('获取订单响应:', res);
-            if (res.code === 200 && res.data) {
-              // 合并数据
-              if (this.page === 1) {
-                this.orderList = res.data.records || [];
-              } else {
-                this.orderList = [...this.orderList, ...(res.data.records || [])];
-              }
-              this.total = res.data.total || 0;
-              
-              // 打印订单列表的第一个元素，检查字段
-              if (this.orderList.length > 0) {
-                console.log('订单示例:', this.orderList[0]);
-                console.log('订单状态字段:', this.orderList[0].status);
+      getUserOrders(this.userInfo.id, params)
+        .then(res => {
+          console.log('获取订单响应:', res);
+          if (res.code === 200 && res.data) {
+            // 合并数据
+            if (this.page === 1) {
+              this.orderList = res.data.records || [];
+            } else {
+              this.orderList = [...this.orderList, ...(res.data.records || [])];
+            }
+            this.total = res.data.total || 0;
+            
+            // 打印订单列表的第一个元素，检查字段
+            if (this.orderList.length > 0) {
+              console.log('订单示例:', this.orderList[0]);
+              console.log('订单状态字段:', this.orderList[0].status);
               } else {
                 console.log('订单列表为空，没有数据返回');
-              }
-            } else {
-              uni.showToast({
-                title: res.message || '获取订单失败',
-                icon: 'none'
-              });
             }
-          })
-          .catch(err => {
-            console.error('获取订单失败', err);
+          } else {
             uni.showToast({
-              title: '获取订单失败',
+              title: res.message || '获取订单失败',
               icon: 'none'
             });
-          })
-          .finally(() => {
-            this.loading = false;
+          }
+        })
+        .catch(err => {
+          console.error('获取订单失败', err);
+          uni.showToast({
+            title: '获取订单失败',
+            icon: 'none'
           });
+        })
+        .finally(() => {
+          this.loading = false;
+        });
       }
     },
     
@@ -1092,9 +1092,9 @@ export default {
           url: `/pages/order/courier-detail?id=${id}`
         });
       } else {
-        uni.navigateTo({
-          url: `/pages/order/detail?id=${id}`
-        });
+      uni.navigateTo({
+        url: `/pages/order/detail?id=${id}`
+      });
       }
     },
     

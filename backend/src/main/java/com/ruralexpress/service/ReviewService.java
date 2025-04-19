@@ -2,7 +2,9 @@ package com.ruralexpress.service;
 
 import com.ruralexpress.entity.Review;
 import com.ruralexpress.dto.ReviewDTO;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -56,4 +58,26 @@ public interface ReviewService {
      * @return 统计结果
      */
     Map<String, Object> calculateCourierRating(Long courierId);
+    
+    /**
+     * 上传评价图片
+     * @param file 图片文件
+     * @return 图片URL
+     */
+    String uploadReviewImage(MultipartFile file);
+    
+    /**
+     * 保存评价图片记录
+     * @param reviewId 评价ID
+     * @param imageUrls 图片URL列表
+     * @return 保存的图片记录列表
+     */
+    List<String> saveReviewImages(Long reviewId, List<String> imageUrls);
+    
+    /**
+     * 获取评价的图片列表
+     * @param reviewId 评价ID
+     * @return 图片URL列表
+     */
+    List<String> getReviewImages(Long reviewId);
 } 

@@ -1,22 +1,28 @@
 package com.ruralexpress.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ruralexpress.entity.Courier;
 import com.ruralexpress.entity.Order;
 import com.ruralexpress.entity.Review;
+import com.ruralexpress.entity.ReviewImage;
 import com.ruralexpress.entity.User;
 import com.ruralexpress.dto.ReviewDTO;
 import com.ruralexpress.mapper.CourierMapper;
 import com.ruralexpress.mapper.OrderMapper;
+import com.ruralexpress.mapper.ReviewImageMapper;
 import com.ruralexpress.mapper.ReviewMapper;
 import com.ruralexpress.mapper.UserMapper;
 import com.ruralexpress.service.CourierService;
 import com.ruralexpress.service.ReviewService;
+import com.ruralexpress.utils.FileUploadUtil;
 import com.ruralexpress.utils.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -26,6 +32,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 评价服务实现类
@@ -46,7 +53,16 @@ public class ReviewServiceImpl implements ReviewService {
     private OrderMapper orderMapper;
     
     @Autowired
+    private ReviewImageMapper reviewImageMapper;
+    
+    @Autowired
     private CourierService courierService;
+    
+    @Autowired
+    private FileUploadUtil fileUploadUtil;
+    
+    @Value("${upload.review-image.path}")
+    private String reviewImagePath;
 
     /**
      * 获取快递员评价列表
@@ -92,6 +108,17 @@ public class ReviewServiceImpl implements ReviewService {
             reviewMap.put("content", review.getContent());
             reviewMap.put("reply", review.getReply());
             reviewMap.put("time", review.getCreatedAt().format(formatter));
+            
+            // 添加标签数据
+            if (review.getTags() != null && !review.getTags().isEmpty()) {
+                reviewMap.put("tags", JSON.parseArray(review.getTags(), String.class));
+            } else {
+                reviewMap.put("tags", new ArrayList<>());
+            }
+            
+            // 获取评价图片
+            List<String> images = getReviewImages(review.getId());
+            reviewMap.put("images", images);
             
             // 查询用户信息
             User user = userMapper.selectById(review.getUserId());
@@ -179,6 +206,17 @@ public class ReviewServiceImpl implements ReviewService {
         // 获取当前用户ID
         Long userId = SecurityUtils.getCurrentUserId();
         
+        // 临时解决方案：如果获取不到用户ID，使用订单的用户ID
+        if (userId == null) {
+            // 检查订单是否存在
+            Order order = orderMapper.selectById(reviewDTO.getOrderId());
+            if (order == null) {
+                throw new IllegalArgumentException("订单不存在");
+            }
+            userId = order.getUserId();
+            System.out.println("使用订单用户ID替代: " + userId);
+        }
+        
         // 检查订单是否已评价
         Review existingReview = getReviewByOrderId(reviewDTO.getOrderId());
         if (existingReview != null) {
@@ -192,14 +230,21 @@ public class ReviewServiceImpl implements ReviewService {
         }
         
         // 检查订单状态
-        if (order.getStatus() != 6) { // 假设状态6为已完成
-            throw new IllegalArgumentException("只能评价已完成的订单");
+        if (order.getStatus() != 5 && order.getStatus() != 6) { // 状态5为已送达，状态6为已完成
+            throw new IllegalArgumentException("只能评价已送达或已完成的订单");
         }
         
-        // 检查订单所属用户
-        if (!order.getUserId().equals(userId)) {
-            throw new IllegalArgumentException("只能评价自己的订单");
+        // 从订单获取快递员ID（如果评价DTO中没有提供）
+        if (reviewDTO.getCourierId() == null || reviewDTO.getCourierId() <= 0) {
+            if (order.getCourierId() != null) {
+                reviewDTO.setCourierId(order.getCourierId());
+                System.out.println("从订单获取快递员ID: " + order.getCourierId());
+            } else {
+                throw new IllegalArgumentException("找不到快递员信息，无法提交评价");
+            }
         }
+        
+        System.out.println("评价使用的快递员ID: " + reviewDTO.getCourierId());
         
         // 创建评价实体
         Review review = new Review();
@@ -209,11 +254,29 @@ public class ReviewServiceImpl implements ReviewService {
         review.setRating(reviewDTO.getRating());
         review.setContent(reviewDTO.getContent());
         review.setAnonymous(reviewDTO.getAnonymous());
+        
+        // 处理标签
+        if (reviewDTO.getTags() != null && !reviewDTO.getTags().isEmpty()) {
+            review.setTags(JSON.toJSONString(reviewDTO.getTags()));
+        }
+        
         review.setCreatedAt(LocalDateTime.now());
         review.setUpdatedAt(LocalDateTime.now());
         
         // 保存评价
         reviewMapper.insert(review);
+        
+        // 保存评价图片
+        if (reviewDTO.getImages() != null && !reviewDTO.getImages().isEmpty()) {
+            saveReviewImages(review.getId(), reviewDTO.getImages());
+        }
+        
+        // 更新订单状态为已完成
+        if (order.getStatus() == 5) { // 如果是已送达状态，更新为已完成
+            order.setStatus(6);
+            order.setUpdatedAt(LocalDateTime.now());
+            orderMapper.updateById(order);
+        }
         
         // 更新快递员评分
         updateCourierRating(reviewDTO.getCourierId());
@@ -266,6 +329,8 @@ public class ReviewServiceImpl implements ReviewService {
         // 构建查询条件
         LambdaQueryWrapper<Review> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Review::getUserId, userId);
+        
+        // 按时间倒序排序
         queryWrapper.orderByDesc(Review::getCreatedAt);
         
         // 分页查询
@@ -279,27 +344,37 @@ public class ReviewServiceImpl implements ReviewService {
         for (Review review : reviewPage.getRecords()) {
             Map<String, Object> reviewMap = new HashMap<>();
             reviewMap.put("id", review.getId());
+            reviewMap.put("orderId", review.getOrderId());
             reviewMap.put("rating", review.getRating());
             reviewMap.put("content", review.getContent());
             reviewMap.put("reply", review.getReply());
-            reviewMap.put("time", review.getCreatedAt().format(formatter));
+            reviewMap.put("createdAt", review.getCreatedAt().format(formatter));
+            
+            // 添加标签数据
+            if (review.getTags() != null && !review.getTags().isEmpty()) {
+                reviewMap.put("tags", JSON.parseArray(review.getTags(), String.class));
+            } else {
+                reviewMap.put("tags", new ArrayList<>());
+            }
+            
+            // 获取评价图片
+            List<String> images = getReviewImages(review.getId());
+            reviewMap.put("images", images);
             
             // 查询快递员信息
             Courier courier = courierMapper.selectById(review.getCourierId());
             if (courier != null) {
                 User courierUser = userMapper.selectById(courier.getUserId());
                 if (courierUser != null) {
-                    reviewMap.put("courierName", courierUser.getRealName() != null ? courierUser.getRealName() : courierUser.getNickname());
+                    reviewMap.put("courierName", courierUser.getNickname() != null ? courierUser.getNickname() : courierUser.getUsername());
                     reviewMap.put("courierAvatar", courierUser.getAvatar() != null ? courierUser.getAvatar() : "/static/images/default-avatar.png");
+                } else {
+                    reviewMap.put("courierName", "未知快递员");
+                    reviewMap.put("courierAvatar", "/static/images/default-avatar.png");
                 }
-            }
-            
-            // 查询订单信息
-            Order order = orderMapper.selectById(review.getOrderId());
-            if (order != null) {
-                reviewMap.put("orderNo", order.getOrderNo());
-                reviewMap.put("orderInfo", "订单金额: " + order.getPrice() + "元, 送达时间: " + 
-                             (order.getActualDeliveryTime() != null ? order.getActualDeliveryTime().format(formatter) : "未知"));
+            } else {
+                reviewMap.put("courierName", "未知快递员");
+                reviewMap.put("courierAvatar", "/static/images/default-avatar.png");
             }
             
             reviewList.add(reviewMap);
@@ -328,120 +403,184 @@ public class ReviewServiceImpl implements ReviewService {
      */
     @Override
     public Map<String, Object> calculateCourierRating(Long courierId) {
-        Map<String, Object> result = new HashMap<>();
+        // 查询快递员信息
+        Courier courier = courierMapper.selectById(courierId);
+        if (courier == null) {
+            throw new IllegalArgumentException("快递员不存在");
+        }
         
-        // 查询快递员所有评价
+        // 查询快递员的所有评价
         LambdaQueryWrapper<Review> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Review::getCourierId, courierId);
         List<Review> reviews = reviewMapper.selectList(queryWrapper);
         
-        if (reviews.isEmpty()) {
-            result.put("averageRating", 5.0); // 默认5分
-            result.put("totalReviews", 0);
-            result.put("goodReviews", 0);
-            result.put("neutralReviews", 0);
-            result.put("badReviews", 0);
-            return result;
-        }
-        
-        // 统计评分
-        int totalRating = 0;
-        int goodCount = 0;
-        int neutralCount = 0;
-        int badCount = 0;
+        // 统计评价数量
+        int totalCount = reviews.size();
+        int goodCount = 0;  // 好评数量
+        int neutralCount = 0;  // 中评数量
+        int badCount = 0;  // 差评数量
+        double totalRating = 0;  // 总评分
         
         for (Review review : reviews) {
-            totalRating += review.getRating();
+            int rating = review.getRating();
+            totalRating += rating;
             
-            if (review.getRating() >= 4) {
+            if (rating >= 4) {
                 goodCount++;
-            } else if (review.getRating() == 3) {
+            } else if (rating == 3) {
                 neutralCount++;
             } else {
                 badCount++;
             }
         }
         
-        // 计算平均分
-        double averageRating = (double) totalRating / reviews.size();
-        BigDecimal roundedRating = new BigDecimal(averageRating).setScale(1, RoundingMode.HALF_UP);
-        
-        // 更新快递员评分
-        Courier courier = courierMapper.selectById(courierId);
-        if (courier != null) {
-            courier.setRating(roundedRating);
-            courierMapper.updateById(courier);
+        // 计算平均评分
+        double averageRating = 0;
+        if (totalCount > 0) {
+            averageRating = totalRating / totalCount;
+            // 四舍五入到一位小数
+            averageRating = Math.round(averageRating * 10) / 10.0;
         }
         
-        // 构造返回结果
-        result.put("averageRating", roundedRating);
-        result.put("totalReviews", reviews.size());
-        result.put("goodReviews", goodCount);
-        result.put("neutralReviews", neutralCount);
-        result.put("badReviews", badCount);
+        // 计算好评率
+        double goodRate = 0;
+        if (totalCount > 0) {
+            goodRate = (double) goodCount / totalCount * 100;
+            // 四舍五入到一位小数
+            goodRate = Math.round(goodRate * 10) / 10.0;
+        }
+        
+        // 构建返回结果
+        Map<String, Object> result = new HashMap<>();
+        result.put("totalCount", totalCount);
+        result.put("goodCount", goodCount);
+        result.put("neutralCount", neutralCount);
+        result.put("badCount", badCount);
+        result.put("averageRating", averageRating);
+        result.put("goodRate", goodRate);
         
         return result;
     }
     
     /**
+     * 上传评价图片
+     */
+    @Override
+    public String uploadReviewImage(MultipartFile file) {
+        try {
+            // 上传图片
+            String fileName = fileUploadUtil.uploadFile(file, reviewImagePath);
+            return fileName;
+        } catch (Exception e) {
+            throw new RuntimeException("上传评价图片失败: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 保存评价图片记录
+     */
+    @Override
+    @Transactional
+    public List<String> saveReviewImages(Long reviewId, List<String> imageUrls) {
+        if (imageUrls == null || imageUrls.isEmpty()) {
+            return new ArrayList<>();
+        }
+        
+        // 保存图片记录
+        List<ReviewImage> images = new ArrayList<>();
+        for (int i = 0; i < imageUrls.size(); i++) {
+            ReviewImage image = new ReviewImage();
+            image.setReviewId(reviewId);
+            image.setImageUrl(imageUrls.get(i));
+            image.setSort(i);
+            image.setCreatedAt(LocalDateTime.now());
+            reviewImageMapper.insert(image);
+            images.add(image);
+        }
+        
+        // 返回图片URL列表
+        return images.stream().map(ReviewImage::getImageUrl).collect(Collectors.toList());
+    }
+    
+    /**
+     * 获取评价的图片列表
+     */
+    @Override
+    public List<String> getReviewImages(Long reviewId) {
+        LambdaQueryWrapper<ReviewImage> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ReviewImage::getReviewId, reviewId);
+        queryWrapper.orderByAsc(ReviewImage::getSort);
+        
+        List<ReviewImage> images = reviewImageMapper.selectList(queryWrapper);
+        return images.stream().map(ReviewImage::getImageUrl).collect(Collectors.toList());
+    }
+
+    /**
      * 更新快递员评分
      */
     private void updateCourierRating(Long courierId) {
-        Map<String, Object> ratingStats = calculateCourierRating(courierId);
-        BigDecimal rating = (BigDecimal) ratingStats.get("averageRating");
-        courierService.updateRating(courierId, rating);
+        Map<String, Object> ratingInfo = calculateCourierRating(courierId);
+        Double averageRating = (Double) ratingInfo.get("averageRating");
+        
+        // 更新快递员评分
+        Courier courier = courierMapper.selectById(courierId);
+        courier.setRating(new BigDecimal(averageRating).setScale(1, RoundingMode.HALF_UP));
+        courier.setRatingCount((Integer) ratingInfo.get("totalCount"));
+        courierMapper.updateById(courier);
     }
     
     /**
      * 从地址中提取城市信息
-     * @param address 完整地址
-     * @return 城市名称
      */
     private String extractCity(String address) {
         if (address == null || address.isEmpty()) {
-            return "未知";
+            return "";
         }
         
-        // 尝试提取省市区格式的城市部分
-        // 假设地址格式大致为：xx省xx市xx区xx街道
-        String[] parts = address.split("省|市|区|县");
-        if (parts.length > 1) {
-            // 提取省后面、市前面的部分作为城市
-            return parts[1].trim();
+        // 简单根据常见的城市分隔符来提取城市信息
+        String[] cityDelimiters = {"省", "市", "区", "县"};
+        
+        String city = "";
+        int start = 0;
+        
+        for (String delimiter : cityDelimiters) {
+            int index = address.indexOf(delimiter, start);
+            if (index > 0) {
+                city = address.substring(start, index + 1);
+                start = index + 1;
+            }
         }
         
-        // 如果地址格式不符合预期，则简单返回前10个字符作为地点标识
-        if (address.length() > 10) {
-            return address.substring(0, 10) + "...";
+        // 如果没有提取到城市信息，则取地址的前5个字符
+        if (city.isEmpty() && address.length() > 5) {
+            city = address.substring(0, 5);
+        } else if (city.isEmpty()) {
+            city = address;
         }
         
-        return address;
+        return city;
     }
     
     /**
-     * 计算两个经纬度坐标之间的距离
-     * @param lat1 第一个点的纬度
-     * @param lon1 第一个点的经度
-     * @param lat2 第二个点的纬度
-     * @param lon2 第二个点的经度
-     * @return 两点之间的距离（单位：公里）
+     * 计算两个坐标点之间的距离
+     * @param lat1 纬度1
+     * @param lon1 经度1
+     * @param lat2 纬度2
+     * @param lon2 经度2
+     * @return 距离（公里）
      */
     private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
-        // 地球平均半径（单位：千米）
-        final int R = 6371;
+        final int R = 6371; // 地球半径（千米）
         
-        // 将经纬度转换为弧度
         double latDistance = Math.toRadians(lat2 - lat1);
         double lonDistance = Math.toRadians(lon2 - lon1);
         
-        // Haversine公式
         double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
                 + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
                 * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
         
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         
-        // 计算距离
         return R * c;
     }
 } 

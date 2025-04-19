@@ -84,4 +84,12 @@ public class User {
      * 更新时间
      */
     private LocalDateTime updatedAt;
+    
+    /**
+     * 获取用户名，返回手机号作为用户名
+     * @return 用户名
+     */
+    public String getUsername() {
+        return this.phone;
+    }
 } 
