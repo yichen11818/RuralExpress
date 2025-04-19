@@ -349,9 +349,9 @@ export default {
         // 尝试跳转到订单列表页面
         try {
           uni.redirectTo({
-            url: '/pages/order/index',
+            url: '/pages/order/detail?id=' + orderId,
             fail: (err) => {
-              console.error('跳转到订单列表失败:', err);
+              console.error('跳转到订单详情页失败:', err);
               // 如果跳转失败，尝试返回上一页
               uni.navigateBack({
                 delta: 1,

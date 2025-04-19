@@ -319,7 +319,7 @@ export default {
       } else if (this.statusFilter === 'processing') {
         statusParam = [1, 2, 3, 4]; // 处理中状态码数组
       } else if (this.statusFilter === 'completed') {
-        statusParam = 5; // 已完成状态码
+        statusParam = 6; // 已完成状态码
       }
       
       // 构建参数对象，只有当statusParam不为null时才包含status参数

@@ -377,7 +377,7 @@ export default {
         },
         fail: () => {
           // 获取设置信息失败
-          this.handleLocationFailed('获取权限信息失败，将显示推荐快递员');
+          this.handleLocationFailed('模拟器获取权限信息失败，将显示推荐快递员');
         }
       });
     },

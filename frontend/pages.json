@@ -34,6 +34,18 @@
       }
     },
     {
+      "path": "pages/order/courier-detail",
+      "style": {
+        "navigationBarTitleText": "快递详情"
+      }
+    },
+    {
+      "path": "pages/order/evaluate",
+      "style": {
+        "navigationBarTitleText": "订单评价"
+      }
+    },
+    {
       "path": "pages/user/profile-setup",
       "style": {
         "navigationBarTitleText": "完善个人信息"

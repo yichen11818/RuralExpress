@@ -50,7 +50,7 @@
           </view>
           
           <!-- 订单价格 -->
-          <view class="price-info" v-if="isCourier && item.status === 0">
+          <view class="price-info" v-if="viewMode === 'courier' && item.status === 0">
             <text class="price-label">配送费：</text>
             <text class="price-value">¥{{ item.price }}</text>
           </view>
@@ -62,7 +62,7 @@
           </view>
           <view class="order-actions">
             <!-- 用户操作按钮 -->
-            <template v-if="!isCourier">
+            <template v-if="viewMode === 'user'">
               <view 
                 class="action-btn" 
                 v-if="item.status === 0"
@@ -111,8 +111,8 @@
     <!-- 空状态 -->
     <view class="empty-state" v-else>
       <image class="empty-image" src="/static/images/empty.png" mode="aspectFit"></image>
-      <text class="empty-text">{{ isCourier ? '暂无可接订单' : '暂无订单数据' }}</text>
-      <button class="empty-btn" type="primary" @click="navigateTo('/pages/index/index')" v-if="!isCourier">去下单</button>
+      <text class="empty-text">{{ viewMode === 'courier' ? '暂无可接订单' : '暂无订单数据' }}</text>
+      <button class="empty-btn" type="primary" @click="navigateTo('/pages/index/index')" v-if="viewMode === 'user'">去下单</button>
       <button class="empty-btn" type="primary" @click="refreshPendingOrders()" v-else>刷新订单</button>
     </view>
     
@@ -125,9 +125,17 @@
     </view>
     
     <!-- 位置信息提示 -->
-    <view class="location-tips" v-if="isCourier && showLocationTips">
+    <view class="location-tips" v-if="viewMode === 'courier' && showLocationTips">
       <text>需要开启位置权限才能获取附近订单</text>
       <button class="location-btn" type="primary" size="mini" @click="getLocation">开启位置</button>
+    </view>
+    
+    <!-- 管理员视图切换悬浮按钮 -->
+    <view class="admin-switch-btn" @click="switchViewMode">
+      <view class="switch-icon">
+        <text>{{ viewMode === 'user' ? '快' : '用' }}</text>
+      </view>
+      <text class="switch-text">当前{{ viewMode === 'user' ? '用户' : '快递员' }}视图</text>
     </view>
   </view>
 </template>
@@ -172,6 +180,12 @@ export default {
       // 是否为快递员角色
       isCourier: false,
       
+      // 管理员视图模式 ('user' 或 'courier')
+      viewMode: 'user',
+      
+      // 是否为管理员
+      isAdmin: false,
+      
       // 分页信息
       page: 1,
       size: 10,
@@ -193,9 +207,9 @@ export default {
   },
   
   computed: {
-    // 根据角色返回对应的标签页
+    // 根据视图模式返回对应的标签页
     currentTabs() {
-      return this.isCourier ? this.courierTabs : this.userTabs;
+      return this.viewMode === 'courier' ? this.courierTabs : this.userTabs;
     }
   },
   
@@ -228,10 +242,27 @@ export default {
   },
   
   methods: {
+    // 切换视图模式（用户/快递员）
+    switchViewMode() {
+      this.viewMode = this.viewMode === 'user' ? 'courier' : 'user';
+      this.currentTab = 0;
+      this.page = 1;
+      this.orderList = [];
+      
+      // 重新加载数据
+      this.refreshData();
+      
+      // 显示提示
+      uni.showToast({
+        title: `已切换到${this.viewMode === 'user' ? '用户' : '快递员'}视图`,
+        icon: 'none'
+      });
+    },
+    
     // 刷新数据
     refreshData() {
       this.page = 1;
-      if (this.isCourier) {
+      if (this.viewMode === 'courier') {
         this.loadCourierData();
       } else {
         this.loadOrderData();
@@ -250,6 +281,9 @@ export default {
         .then(res => {
           if (res.code === 200 && res.data) {
             this.userInfo = res.data;
+            
+            // 检查是否为管理员
+            this.checkIsAdmin();
             
             // 判断是否为快递员
             this.checkIsCourier();
@@ -273,6 +307,19 @@ export default {
         });
     },
     
+    // 检查是否为管理员
+    checkIsAdmin() {
+      // 默认都是管理员，方便测试
+      this.isAdmin = true;
+      
+      // 实际项目中取消下面注释并使用正确的逻辑
+      /*
+      if (this.userInfo && this.userInfo.username) {
+        this.isAdmin = this.userInfo.username.includes('admin') || this.userInfo.role === 'admin';
+      }
+      */
+    },
+    
     // 检查是否为快递员
     checkIsCourier() {
       if (!this.userInfo || !this.userInfo.id) return;
@@ -284,16 +331,34 @@ export default {
             this.isCourier = true;
             console.log('当前用户是快递员:', this.courierInfo);
             
-            // 加载快递员订单数据
-            this.loadCourierData();
+            // 将快递员信息保存到本地存储
+            uni.setStorageSync('courierInfo', this.courierInfo);
+            
+            // 如果是快递员，默认设置视图模式为快递员
+            if (!this.isAdmin) {
+              this.viewMode = 'courier';
+            }
+            
+            // 加载订单数据
+            this.refreshData();
           } else {
             console.log('当前用户不是快递员');
+            // 清理本地可能存在的快递员信息
+            uni.removeStorageSync('courierInfo');
+            
+            // 如果不是快递员，默认设置视图模式为用户
+            if (!this.isAdmin) {
+              this.viewMode = 'user';
+            }
+            
             // 加载普通用户订单数据
             this.loadOrderData();
           }
         })
         .catch(err => {
           console.error('检查快递员身份失败', err);
+          // 清理本地可能存在的快递员信息
+          uni.removeStorageSync('courierInfo');
           // 默认加载普通用户订单数据
           this.loadOrderData();
         });
@@ -311,7 +376,7 @@ export default {
           console.log('获取位置成功:', this.location);
           
           // 重新加载待接单数据
-          if (this.isCourier && this.currentTab === 0) {
+          if (this.viewMode === 'courier' && this.currentTab === 0) {
             this.loadPendingOrders();
           }
         },
@@ -339,7 +404,7 @@ export default {
       this.page = 1;
       this.orderList = [];
       
-      if (this.isCourier) {
+      if (this.viewMode === 'courier') {
         this.loadCourierData();
       } else {
         this.loadOrderData();
@@ -348,6 +413,37 @@ export default {
     
     // 加载快递员数据
     loadCourierData() {
+      // 管理员在切换视图模式时可能没有courierInfo
+      if (this.isAdmin && (!this.courierInfo || !this.courierInfo.id)) {
+        if (this.currentTab === 0) {
+          // 加载附近待接单
+          this.loadPendingOrders();
+        } else {
+          // 模拟一个默认的快递员ID用于查看数据
+          uni.showToast({
+            title: '管理员正在查看快递员视图',
+            icon: 'none',
+            duration: 2000
+          });
+          
+          // 获取第一个可用的快递员ID进行数据查看
+          this.getDefaultCourierId().then(id => {
+            if (id) {
+              // 临时使用这个ID查询数据
+              this.loadCourierOrdersWithId(id);
+            } else {
+              uni.showToast({
+                title: '未找到可用快递员数据',
+                icon: 'none'
+              });
+              this.orderList = [];
+            }
+          });
+        }
+        return;
+      }
+      
+      // 正常快递员逻辑
       if (!this.courierInfo || !this.courierInfo.id) {
         uni.showToast({
           title: '快递员信息不完整',
@@ -360,15 +456,64 @@ export default {
         case 0: // 附近订单
           this.loadPendingOrders();
           break;
+        case 1: // 我的订单 - 确保只看到自己接单的
+          this.loadCourierOrders(1, this.courierInfo.id); // 已接单状态
+          break;
+        case 2: // 配送中 - 确保只看到自己接单的
+          this.loadCourierProcessingOrders(this.courierInfo.id);
+          break;
+        case 3: // 已完成 - 确保只看到自己接单的
+          this.loadCourierOrders(6, this.courierInfo.id); // 已完成状态
+          break;
+      }
+    },
+    
+    // 获取默认的快递员ID（用于管理员查看）
+    getDefaultCourierId() {
+      // 这里可以添加API调用来获取系统中的一个快递员ID
+      // 为了演示，我们先返回一个Promise
+      return new Promise((resolve) => {
+        // 示例：从本地存储中尝试获取之前保存的courierInfo
+        const savedCourierInfo = uni.getStorageSync('adminLastViewedCourier');
+        if (savedCourierInfo && savedCourierInfo.id) {
+          resolve(savedCourierInfo.id);
+          return;
+        }
+        
+        // 如果本地没有，可以调用API获取系统中的一个快递员
+        // 这里是一个示例，实际实现应该调用您的后端API
+        setTimeout(() => {
+          // 模拟API返回的快递员ID，实际应从API获取
+          const mockCourierId = '1'; // 默认使用ID为1的快递员
+          resolve(mockCourierId);
+        }, 300);
+      });
+    },
+    
+    // 使用指定ID加载快递员订单
+    loadCourierOrdersWithId(courierId) {
+      if (!courierId) {
+        uni.showToast({
+          title: '缺少快递员ID，无法查询',
+          icon: 'none'
+        });
+        return;
+      }
+      
+      // 根据标签页过滤不同状态
+      switch (this.currentTab) {
         case 1: // 我的订单
-          this.loadCourierOrders(1); // 已接单状态
+          this.loadCourierOrders(1, courierId);
           break;
         case 2: // 配送中
-          this.loadCourierProcessingOrders();
+          this.loadCourierProcessingOrders(courierId);
           break;
         case 3: // 已完成
-          this.loadCourierOrders(6); // 已完成状态
+          this.loadCourierOrders(6, courierId);
           break;
+        default:
+          // 对于其他标签页，使用默认状态
+          this.loadCourierOrders(undefined, courierId);
       }
     },
     
@@ -422,8 +567,13 @@ export default {
         });
     },
     
-    // 加载快递员订单
-    loadCourierOrders(status) {
+    // 加载快递员订单，现在明确要求传入courierId参数
+    loadCourierOrders(status, courierId) {
+      if (!courierId) {
+        console.error('缺少快递员ID，无法查询订单');
+        return;
+      }
+      
       this.loading = true;
       
       // 查询参数
@@ -435,41 +585,121 @@ export default {
       // 如果指定了状态，添加状态过滤
       if (status !== undefined) {
         params.status = status;
+        console.log('快递员订单查询 - 状态码:', status);
       }
       
       // 调用API获取快递员订单列表
-      getCourierOrders(this.courierInfo.id, params)
-        .then(res => {
-          console.log('获取快递员订单响应:', res);
-          if (res.code === 200 && res.data) {
-            // 合并数据
-            if (this.page === 1) {
-              this.orderList = res.data.records || [];
+      console.log('发送快递员订单查询请求，参数:', params);
+      
+      // 对于已完成标签页，也加载已送达(状态5)的订单
+      if (this.currentTab === 3) {
+        // 先加载状态为6的订单
+        getCourierOrders(courierId, params)
+          .then(res => {
+            console.log('获取快递员状态6订单响应:', res);
+            if (res.code === 200 && res.data) {
+              // 保存状态6的订单
+              if (this.page === 1) {
+                this.orderList = res.data.records || [];
+              } else {
+                this.orderList = [...this.orderList, ...(res.data.records || [])];
+              }
+              
+              // 再加载状态为5的订单
+              const params5 = {
+                page: this.page,
+                size: this.size,
+                status: 5
+              };
+              
+              // 获取状态5(已送达)的订单
+              console.log('加载快递员状态5(已送达)的订单');
+              getCourierOrders(courierId, params5)
+                .then(res5 => {
+                  console.log('获取快递员状态5订单响应:', res5);
+                  if (res5.code === 200 && res5.data && res5.data.records) {
+                    // 合并数据
+                    this.orderList = [...this.orderList, ...(res5.data.records || [])];
+                    
+                    // 按时间排序
+                    this.orderList.sort((a, b) => {
+                      return new Date(b.createdAt) - new Date(a.createdAt);
+                    });
+                    
+                    // 更新数据
+                    this.total = this.orderList.length;
+                  }
+                })
+                .catch(err => {
+                  console.error('获取快递员状态5订单失败', err);
+                })
+                .finally(() => {
+                  this.loading = false;
+                });
             } else {
-              this.orderList = [...this.orderList, ...(res.data.records || [])];
+              this.loading = false;
+              uni.showToast({
+                title: res.message || '获取订单失败',
+                icon: 'none'
+              });
             }
-            this.total = res.data.total || 0;
-          } else {
+          })
+          .catch(err => {
+            console.error('获取快递员状态6订单失败', err);
+            this.loading = false;
             uni.showToast({
-              title: res.message || '获取订单失败',
+              title: '获取订单失败',
               icon: 'none'
             });
-          }
-        })
-        .catch(err => {
-          console.error('获取快递员订单失败', err);
-          uni.showToast({
-            title: '获取订单失败',
-            icon: 'none'
           });
-        })
-        .finally(() => {
-          this.loading = false;
-        });
+      } else {
+        // 对于其他标签页，使用常规的查询
+        getCourierOrders(courierId, params)
+          .then(res => {
+            console.log('获取快递员订单响应:', res);
+            if (res.code === 200 && res.data) {
+              // 合并数据
+              if (this.page === 1) {
+                this.orderList = res.data.records || [];
+              } else {
+                this.orderList = [...this.orderList, ...(res.data.records || [])];
+              }
+              this.total = res.data.total || 0;
+              
+              // 调试信息
+              if (this.orderList.length > 0) {
+                console.log('快递员订单示例:', this.orderList[0]);
+                console.log('快递员订单状态:', this.orderList[0].status);
+              } else {
+                console.log('快递员订单列表为空，没有数据返回');
+              }
+            } else {
+              uni.showToast({
+                title: res.message || '获取订单失败',
+                icon: 'none'
+              });
+            }
+          })
+          .catch(err => {
+            console.error('获取快递员订单失败', err);
+            uni.showToast({
+              title: '获取订单失败',
+              icon: 'none'
+            });
+          })
+          .finally(() => {
+            this.loading = false;
+          });
+      }
     },
     
-    // 加载快递员处理中的订单
-    loadCourierProcessingOrders() {
+    // 加载快递员处理中的订单，现在明确要求传入courierId参数
+    loadCourierProcessingOrders(courierId) {
+      if (!courierId) {
+        console.error('缺少快递员ID，无法查询订单');
+        return;
+      }
+      
       this.loading = true;
       
       const promises = [];
@@ -482,7 +712,7 @@ export default {
           status
         };
         
-        promises.push(getCourierOrders(this.courierInfo.id, params));
+        promises.push(getCourierOrders(courierId, params));
       }
       
       // 合并结果
@@ -549,44 +779,113 @@ export default {
           return;
         case 3: // 已完成
           params.status = 6;
+          console.log('加载已完成订单，状态码:', params.status);
           break;
       }
       
       // 调用API获取订单列表
-      getUserOrders(this.userInfo.id, params)
-        .then(res => {
-          console.log('获取订单响应:', res);
-          if (res.code === 200 && res.data) {
-            // 合并数据
-            if (this.page === 1) {
-              this.orderList = res.data.records || [];
+      console.log('发送订单查询请求，参数:', params);
+      
+      // 对于已完成标签页，也加载已送达(状态5)的订单
+      if (this.currentTab === 3) {
+        // 先加载状态为6的订单
+        getUserOrders(this.userInfo.id, params)
+          .then(res => {
+            console.log('获取状态6订单响应:', res);
+            if (res.code === 200 && res.data) {
+              // 保存状态6的订单
+              if (this.page === 1) {
+                this.orderList = res.data.records || [];
+              } else {
+                this.orderList = [...this.orderList, ...(res.data.records || [])];
+              }
+              
+              // 再加载状态为5的订单
+              const params5 = {
+                page: this.page,
+                size: this.size,
+                status: 5
+              };
+              
+              // 获取状态5(已送达)的订单
+              console.log('加载状态5(已送达)的订单');
+              getUserOrders(this.userInfo.id, params5)
+                .then(res5 => {
+                  console.log('获取状态5订单响应:', res5);
+                  if (res5.code === 200 && res5.data && res5.data.records) {
+                    // 合并数据
+                    this.orderList = [...this.orderList, ...(res5.data.records || [])];
+                    
+                    // 按时间排序
+                    this.orderList.sort((a, b) => {
+                      return new Date(b.createdAt) - new Date(a.createdAt);
+                    });
+                    
+                    // 更新数据
+                    this.total = this.orderList.length;
+                  }
+                })
+                .catch(err => {
+                  console.error('获取状态5订单失败', err);
+                })
+                .finally(() => {
+                  this.loading = false;
+                });
             } else {
-              this.orderList = [...this.orderList, ...(res.data.records || [])];
+              this.loading = false;
+              uni.showToast({
+                title: res.message || '获取订单失败',
+                icon: 'none'
+              });
             }
-            this.total = res.data.total || 0;
-            
-            // 打印订单列表的第一个元素，检查字段
-            if (this.orderList.length > 0) {
-              console.log('订单示例:', this.orderList[0]);
-              console.log('订单状态字段:', this.orderList[0].status);
-            }
-          } else {
+          })
+          .catch(err => {
+            console.error('获取状态6订单失败', err);
+            this.loading = false;
             uni.showToast({
-              title: res.message || '获取订单失败',
+              title: '获取订单失败',
               icon: 'none'
             });
-          }
-        })
-        .catch(err => {
-          console.error('获取订单失败', err);
-          uni.showToast({
-            title: '获取订单失败',
-            icon: 'none'
           });
-        })
-        .finally(() => {
-          this.loading = false;
-        });
+      } else {
+        // 对于其他标签页，使用常规的查询
+        getUserOrders(this.userInfo.id, params)
+          .then(res => {
+            console.log('获取订单响应:', res);
+            if (res.code === 200 && res.data) {
+              // 合并数据
+              if (this.page === 1) {
+                this.orderList = res.data.records || [];
+              } else {
+                this.orderList = [...this.orderList, ...(res.data.records || [])];
+              }
+              this.total = res.data.total || 0;
+              
+              // 打印订单列表的第一个元素，检查字段
+              if (this.orderList.length > 0) {
+                console.log('订单示例:', this.orderList[0]);
+                console.log('订单状态字段:', this.orderList[0].status);
+              } else {
+                console.log('订单列表为空，没有数据返回');
+              }
+            } else {
+              uni.showToast({
+                title: res.message || '获取订单失败',
+                icon: 'none'
+              });
+            }
+          })
+          .catch(err => {
+            console.error('获取订单失败', err);
+            uni.showToast({
+              title: '获取订单失败',
+              icon: 'none'
+            });
+          })
+          .finally(() => {
+            this.loading = false;
+          });
+      }
     },
     
     // 加载处理中的订单（包含多种状态）
@@ -762,7 +1061,7 @@ export default {
     
     // 刷新待接单
     refreshPendingOrders() {
-      if (this.isCourier) {
+      if (this.viewMode === 'courier') {
         this.page = 1;
         this.loadPendingOrders();
       }
@@ -787,8 +1086,8 @@ export default {
     
     // 跳转到详情页
     navigateToDetail(id) {
-      // 根据用户身份跳转不同的详情页
-      if (this.isCourier) {
+      // 根据当前视图模式跳转不同的详情页
+      if (this.viewMode === 'courier') {
         uni.navigateTo({
           url: `/pages/order/courier-detail?id=${id}`
         });
@@ -1198,5 +1497,49 @@ export default {
 }
 .status-7 {
   color: #dd524d;
+}
+
+/* 管理员视图切换悬浮按钮样式 */
+.admin-switch-btn {
+  position: fixed;
+  bottom: 120rpx;
+  right: 40rpx;
+  background-color: #3cc51f;
+  border-radius: 100rpx;
+  padding: 20rpx 30rpx;
+  display: flex;
+  align-items: center;
+  z-index: 9999;
+  box-shadow: 0 6rpx 20rpx rgba(60, 197, 31, 0.3);
+  transition: all 0.3s ease;
+  animation: fadeIn 0.5s ease-out;
+}
+
+.admin-switch-btn:active {
+  transform: scale(0.95);
+  box-shadow: 0 3rpx 10rpx rgba(60, 197, 31, 0.2);
+}
+
+.switch-icon {
+  width: 60rpx;
+  height: 60rpx;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 30rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-right: 20rpx;
+}
+
+.switch-icon text {
+  font-size: 36rpx;
+  color: #fff;
+  font-weight: bold;
+}
+
+.switch-text {
+  font-size: 28rpx;
+  color: #fff;
+  font-weight: bold;
 }
 </style> 
