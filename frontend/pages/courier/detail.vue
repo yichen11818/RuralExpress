@@ -13,21 +13,21 @@
           <view class="courier-rating">
             <uni-icons type="star-filled" size="14" color="#ff9900"></uni-icons>
             <text class="rating-text">{{ courierInfo.rating }}</text>
-            <text class="rating-count">({{ courierInfo.ratingCount }}条评价)</text>
+            <text class="rating-count">({{ courierInfo.ratingCount || 0 }}条评价)</text>
           </view>
           <view class="courier-stats">
             <view class="stat-item">
-              <text class="stat-value">{{ courierInfo.completedOrders }}</text>
+              <text class="stat-value">{{ courierInfo.completedOrders || 0 }}</text>
               <text class="stat-label">已完成</text>
             </view>
             <view class="stat-divider"></view>
             <view class="stat-item">
-              <text class="stat-value">{{ courierInfo.serviceTime }}个月</text>
+              <text class="stat-value">{{ courierInfo.serviceTime || 0 }}个月</text>
               <text class="stat-label">服务时长</text>
             </view>
             <view class="stat-divider"></view>
             <view class="stat-item">
-              <text class="stat-value">{{ courierInfo.responseTime }}分钟</text>
+              <text class="stat-value">{{ courierInfo.responseTime || 0 }}分钟</text>
               <text class="stat-label">平均响应</text>
             </view>
           </view>
@@ -51,15 +51,15 @@
       <view class="section-title">服务信息</view>
       <view class="info-item">
         <text class="info-label">服务区域</text>
-        <text class="info-value">{{ courierInfo.serviceArea }}</text>
+        <text class="info-value">{{ courierInfo.serviceArea || '暂无' }}</text>
       </view>
       <view class="info-item">
         <text class="info-label">服务时间</text>
-        <text class="info-value">{{ courierInfo.serviceTime ? '每天 ' + courierInfo.workStartTime + ' - ' + courierInfo.workEndTime : '暂无' }}</text>
+        <text class="info-value">{{ courierInfo.workStartTime ? '每天 ' + courierInfo.workStartTime + ' - ' + courierInfo.workEndTime : '暂无' }}</text>
       </view>
       <view class="info-item">
         <text class="info-label">交通工具</text>
-        <text class="info-value">{{ courierInfo.vehicle }}</text>
+        <text class="info-value">{{ courierInfo.vehicle || '暂无' }}</text>
       </view>
       <view class="info-item">
         <text class="info-label">简介</text>
@@ -123,6 +123,8 @@
 
 <script>
 import uniIcons from '../../uni_modules/uni-icons/components/uni-icons/uni-icons.vue'
+import { getCourierInfo } from '@/api/courier.js'
+import { getCourierReviews } from '@/api/review.js'
 
 export default {
   components: {
@@ -134,135 +136,139 @@ export default {
       reviewFilter: '全部评价',
       reviewPage: 1,
       hasMoreReviews: true,
+      loading: false,
       courierInfo: {
-        id: 1,
-        name: '张师傅',
-        avatar: '/static/images/courier1.jpg',
-        rating: 4.9,
-        ratingCount: 326,
-        completedOrders: 526,
-        serviceTime: 8,
-        responseTime: 15,
-        serviceStatus: 1, // 0-休息中，1-接单中
-        serviceArea: '江西省南昌市青山湖区湖坊镇、艾溪湖区域',
-        workStartTime: '08:00',
-        workEndTime: '20:00',
-        vehicle: '电动三轮车',
-        introduction: '您好，我是张师傅，本地人，熟悉社区环境。送件准时，服务热情，欢迎下单！',
-        tags: ['准时送达', '服务态度好', '有礼貌', '送货快', '认真负责']
+        id: null,
+        name: '',
+        avatar: '',
+        rating: 0,
+        ratingCount: 0,
+        completedOrders: 0,
+        serviceTime: 0,
+        responseTime: 0,
+        serviceStatus: 0,
+        serviceArea: '',
+        workStartTime: '',
+        workEndTime: '',
+        vehicle: '',
+        introduction: '',
+        tags: []
       },
-      reviews: [
-        {
-          id: 1,
-          userName: '客户152****8899',
-          userAvatar: '/static/images/default-avatar.png',
-          rating: 5,
-          content: '送件非常及时，态度很好，下雨天还能及时送达，给五星好评！',
-          time: '2023-03-18',
-          orderInfo: '文件快递 3公里 2023-03-18 送达',
-          reply: '感谢您的认可，我们会继续努力提供更好的服务！'
-        },
-        {
-          id: 2,
-          userName: '客户138****6677',
-          userAvatar: '/static/images/default-avatar.png',
-          rating: 5,
-          content: '快递员很专业，打包很仔细，而且提前跟我确认了送达时间，非常满意。',
-          time: '2023-03-15',
-          orderInfo: '小件快递 5公里 2023-03-15 送达'
-        },
-        {
-          id: 3,
-          userName: '客户186****3344',
-          userAvatar: '/static/images/default-avatar.png',
-          rating: 4,
-          content: '送货速度挺快的，但是没有提前打电话通知我，其他都挺好的。',
-          time: '2023-03-10',
-          orderInfo: '中件快递 2公里 2023-03-10 送达',
-          reply: '非常抱歉给您带来不便，我们会改进服务流程，下次一定提前联系您！'
-        }
-      ]
+      reviews: []
     };
   },
   
   onLoad(options) {
     if (options.id) {
       this.courierId = options.id;
-      // 在实际应用中，这里应该根据ID请求快递员信息
-      // this.getCourierInfo(this.courierId);
+      this.fetchCourierInfo(this.courierId);
+      this.fetchReviews();
+    } else {
+      uni.showToast({
+        title: '参数错误，缺少快递员ID',
+        icon: 'none'
+      });
+      setTimeout(() => {
+        uni.navigateBack();
+      }, 1500);
     }
   },
   
   methods: {
     // 请求快递员信息
-    getCourierInfo(id) {
-      // 这里应该请求后端API获取快递员信息
-      // 示例：
-      /*
-      uni.request({
-        url: `https://api.example.com/courier/${id}`,
-        method: 'GET',
-        success: (res) => {
-          if (res.data.success) {
-            this.courierInfo = res.data.data;
-          } else {
-            uni.showToast({
-              title: res.data.message || '获取快递员信息失败',
-              icon: 'none'
-            });
+    fetchCourierInfo(id) {
+      uni.showLoading({
+        title: '加载中'
+      });
+      
+      getCourierInfo(id).then(res => {
+        uni.hideLoading();
+        if (res.code === 200) {
+          this.courierInfo = res.data;
+          
+          // 处理服务时长（根据创建时间计算月数）
+          if (this.courierInfo.createdAt) {
+            const createDate = new Date(this.courierInfo.createdAt);
+            const now = new Date();
+            const months = (now.getFullYear() - createDate.getFullYear()) * 12 + 
+                          (now.getMonth() - createDate.getMonth());
+            this.courierInfo.serviceTime = Math.max(1, months);
           }
-        },
-        fail: () => {
+          
+          // 处理评分数量
+          if (!this.courierInfo.ratingCount) {
+            this.courierInfo.ratingCount = 0;
+          }
+          
+          console.log('获取到快递员信息:', this.courierInfo);
+        } else {
           uni.showToast({
-            title: '网络异常，请稍后重试',
+            title: res.message || '获取快递员信息失败',
             icon: 'none'
           });
         }
+      }).catch(err => {
+        uni.hideLoading();
+        console.error('获取快递员信息错误:', err);
+        uni.showToast({
+          title: '网络异常，请稍后重试',
+          icon: 'none'
+        });
       });
-      */
     },
     
     // 请求评价列表
-    getReviews() {
-      // 这里应该请求后端API获取评价列表
-      // 示例：
-      /*
-      uni.request({
-        url: `https://api.example.com/courier/${this.courierId}/reviews`,
-        method: 'GET',
-        data: {
-          page: this.reviewPage,
-          filter: this.reviewFilter === '全部评价' ? '' : this.reviewFilter
-        },
-        success: (res) => {
-          if (res.data.success) {
-            if (this.reviewPage === 1) {
-              this.reviews = res.data.data;
-            } else {
-              this.reviews = [...this.reviews, ...res.data.data];
-            }
-            this.hasMoreReviews = res.data.hasMore;
+    fetchReviews() {
+      if (this.loading) return;
+      this.loading = true;
+      
+      // 根据过滤条件准备参数
+      let rating = null;
+      if (this.reviewFilter === '好评') {
+        rating = 'good';
+      } else if (this.reviewFilter === '中评') {
+        rating = 'neutral';
+      } else if (this.reviewFilter === '差评') {
+        rating = 'bad';
+      }
+      
+      getCourierReviews(this.courierId, {
+        page: this.reviewPage,
+        size: 10,
+        rating: rating
+      }).then(res => {
+        this.loading = false;
+        if (res.code === 200) {
+          const newReviews = res.data.list || [];
+          
+          if (this.reviewPage === 1) {
+            this.reviews = newReviews;
           } else {
-            uni.showToast({
-              title: res.data.message || '获取评价失败',
-              icon: 'none'
-            });
+            this.reviews = [...this.reviews, ...newReviews];
           }
-        },
-        fail: () => {
+          
+          this.hasMoreReviews = newReviews.length === 10;
+          console.log('获取到评价列表:', this.reviews);
+        } else {
           uni.showToast({
-            title: '网络异常，请稍后重试',
+            title: res.message || '获取评价失败',
             icon: 'none'
           });
         }
+      }).catch(err => {
+        this.loading = false;
+        console.error('获取评价列表错误:', err);
+        uni.showToast({
+          title: '网络异常，请稍后重试',
+          icon: 'none'
+        });
       });
-      */
     },
     
     // 加载更多评价
     loadMoreReviews() {
       this.reviewPage++;
-      this.getReviews();
+      this.fetchReviews();
     },
     
     // 显示筛选选项
@@ -273,20 +279,28 @@ export default {
           const filters = ['全部评价', '好评', '中评', '差评'];
           this.reviewFilter = filters[res.tapIndex];
           this.reviewPage = 1;
-          this.getReviews();
+          this.fetchReviews();
         }
       });
     },
     
     // 联系快递员
     callCourier() {
+      if (!this.courierInfo.phone) {
+        uni.showToast({
+          title: '暂无联系方式',
+          icon: 'none'
+        });
+        return;
+      }
+      
       uni.showActionSheet({
         itemList: ['拨打电话', '发送消息'],
         success: (res) => {
           if (res.tapIndex === 0) {
             // 拨打电话
             uni.makePhoneCall({
-              phoneNumber: '10086', // 这里应该是快递员的电话
+              phoneNumber: this.courierInfo.phone,
               fail: () => {
                 uni.showToast({
                   title: '拨打电话失败',
@@ -307,6 +321,14 @@ export default {
     
     // 创建订单
     createOrder() {
+      if (this.courierInfo.serviceStatus !== 1) {
+        uni.showToast({
+          title: '该快递员目前不接单',
+          icon: 'none'
+        });
+        return;
+      }
+      
       uni.navigateTo({
         url: `/pages/delivery/send?courierId=${this.courierId}`
       });
