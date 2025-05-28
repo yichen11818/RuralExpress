@@ -1,6 +1,6 @@
 import request from '@/utils/request'
 
-const baseUrl = '/api/notice'
+const baseUrl = '/notice'
 
 const notice = {
   /**

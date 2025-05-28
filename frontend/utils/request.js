@@ -5,7 +5,7 @@
 import { isLoggedIn } from './auth.js';
 
 // API基础URL
-const BASE_URL = 'http://localhost:8080';
+const BASE_URL = 'http://localhost:8080/api';
 
 // 记录环境信息和API基础URL
 console.log('[请求工具] API基础URL:', BASE_URL);
@@ -166,7 +166,7 @@ export default {
     console.log('[请求工具] 开始测试服务器连接...');
     return new Promise((resolve) => {
       uni.request({
-        url: `${BASE_URL}/api/health`,
+        url: `${BASE_URL}/health`,
         method: 'GET',
         timeout: 5000,
         success: (res) => {

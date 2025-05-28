@@ -1,5 +1,7 @@
 package com.ruralexpress.config;
 
+import com.ruralexpress.entity.User;
+import com.ruralexpress.mapper.UserMapper;
 import com.ruralexpress.utils.JwtTokenUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +17,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * JWT认证过滤器
@@ -26,6 +29,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     
     @Autowired
     private JwtTokenUtil jwtTokenUtil;
+    
+    @Autowired
+    private UserMapper userMapper;
     
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
@@ -47,12 +53,35 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     Long userId = jwtTokenUtil.getUserIdFromToken(jwt);
                     log.info("JWT令牌验证成功，用户ID: {}", userId);
                     
-                    // 创建认证信息
-                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                            userId, null, Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")));
-                    
-                    // 设置认证信息
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                    // 查询用户信息，获取用户类型
+                    User user = userMapper.selectById(userId);
+                    if (user != null) {
+                        // 根据用户类型设置不同的权限
+                        List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+                        
+                        // 基本用户角色
+                        authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+                        
+                        // 根据用户类型添加额外角色
+                        if (user.getUserType() == 1) {
+                            // 快递员
+                            authorities.add(new SimpleGrantedAuthority("ROLE_COURIER"));
+                        } else if (user.getUserType() == 2) {
+                            // 管理员
+                            authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+                        }
+                        
+                        // 创建认证信息
+                        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                                userId, null, authorities);
+                        
+                        // 设置认证信息
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                        
+                        log.info("用户{}已被授予权限: {}", userId, authorities);
+                    } else {
+                        log.warn("无法找到用户: {}", userId);
+                    }
                 } else {
                     log.warn("JWT令牌无效");
                 }

@@ -10,7 +10,7 @@ import request from '@/utils/request';
  * @returns {Promise} 搜索结果
  */
 export function search(keyword, params = {}) {
-  return request.get('/api/search', {
+  return request.get('/search', {
     params: {
       keyword,
       ...params
@@ -26,7 +26,7 @@ export function search(keyword, params = {}) {
  * @returns {Promise} 搜索结果
  */
 export function searchPackages(keyword, page = 1, pageSize = 10) {
-  return request.get('/api/search/packages', {
+  return request.get('/search/packages', {
     params: {
       keyword,
       page,
@@ -43,7 +43,7 @@ export function searchPackages(keyword, page = 1, pageSize = 10) {
  * @returns {Promise} 搜索结果
  */
 export function searchOrders(keyword, page = 1, pageSize = 10) {
-  return request.get('/api/search/orders', {
+  return request.get('/search/orders', {
     params: {
       keyword,
       page,
@@ -61,7 +61,7 @@ export function searchOrders(keyword, page = 1, pageSize = 10) {
  */
 export function searchCouriers(keyword, page = 1, pageSize = 10) {
   console.log('调用搜索快递员API', { keyword, page, pageSize });
-  return request.get('/api/search/couriers', {
+  return request.get('/search/couriers', {
     params: {
       keyword: keyword || '', // 确保关键词不为undefined
       page,
@@ -84,7 +84,7 @@ export function searchCouriers(keyword, page = 1, pageSize = 10) {
  * @returns {Promise} 搜索结果
  */
 export function searchStations(keyword, page = 1, pageSize = 10) {
-  return request.get('/api/search/stations', {
+  return request.get('/search/stations', {
     params: {
       keyword,
       page,

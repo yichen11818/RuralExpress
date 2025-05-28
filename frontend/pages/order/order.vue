@@ -274,7 +274,8 @@ export default {
       this.userLoading = true;
       
       uni.showLoading({
-        title: '加载中...'
+        title: '加载中...',
+        mask: true // 添加遮罩防止重复点击
       });
       
       getUserProfile()
@@ -288,20 +289,21 @@ export default {
             // 判断是否为快递员
             this.checkIsCourier();
           } else {
-            uni.showToast({
-              title: '获取用户信息失败',
-              icon: 'none'
-            });
+            throw new Error(res.message || '获取用户信息失败');
           }
         })
         .catch(err => {
           console.error('获取用户信息失败', err);
           uni.showToast({
             title: '获取用户信息失败',
-            icon: 'none'
+            icon: 'none',
+            duration: 2000
           });
+          // 确保在出错时也会加载订单数据
+          this.loadOrderData();
         })
         .finally(() => {
+          // 确保在任何情况下都会隐藏加载提示
           uni.hideLoading();
           this.userLoading = false;
         });

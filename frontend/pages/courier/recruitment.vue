@@ -388,88 +388,6 @@ export default {
       return true;
     },
     
-    // 上传身份证图片
-    uploadIdCardImages() {
-      return new Promise((resolve, reject) => {
-        const uploadTasks = [];
-        
-        // 上传身份证正面
-        uploadTasks.push(
-          new Promise((innerResolve, innerReject) => {
-            uni.uploadFile({
-              url: 'http://localhost:8080/api/file/upload',
-              filePath: this.formData.idCardFront,
-              name: 'file',
-              header: {
-                'Authorization': `Bearer ${uni.getStorageSync('token')}`
-              },
-              formData: {
-                'type': 'idcard'
-              },
-              success: (uploadRes) => {
-                try {
-                  const response = JSON.parse(uploadRes.data);
-                  if (response.code === 200 && response.data) {
-                    innerResolve(response.data.url);
-                  } else {
-                    innerReject(new Error(response.message || '上传身份证正面失败'));
-                  }
-                } catch (e) {
-                  innerReject(new Error('上传身份证正面失败'));
-                }
-              },
-              fail: () => {
-                innerReject(new Error('上传身份证正面失败'));
-              }
-            });
-          })
-        );
-        
-        // 上传身份证反面
-        uploadTasks.push(
-          new Promise((innerResolve, innerReject) => {
-            uni.uploadFile({
-              url: 'http://localhost:8080/api/file/upload',
-              filePath: this.formData.idCardBack,
-              name: 'file',
-              header: {
-                'Authorization': `Bearer ${uni.getStorageSync('token')}`
-              },
-              formData: {
-                'type': 'idcard'
-              },
-              success: (uploadRes) => {
-                try {
-                  const response = JSON.parse(uploadRes.data);
-                  if (response.code === 200 && response.data) {
-                    innerResolve(response.data.url);
-                  } else {
-                    innerReject(new Error(response.message || '上传身份证反面失败'));
-                  }
-                } catch (e) {
-                  innerReject(new Error('上传身份证反面失败'));
-                }
-              },
-              fail: () => {
-                innerReject(new Error('上传身份证反面失败'));
-              }
-            });
-          })
-        );
-        
-        Promise.all(uploadTasks)
-          .then(results => {
-            resolve({
-              idCardFront: results[0],
-              idCardBack: results[1]
-            });
-          })
-          .catch(error => {
-            reject(error);
-          });
-      });
-    },
-    
     // 提交申请
     submitApplication() {
       if (this.submitting) return;
@@ -485,27 +403,45 @@ export default {
         mask: true
       });
       
-      // 先上传身份证照片
-      this.uploadIdCardImages()
-        .then(idCardUrls => {
-          // 准备提交的数据
-          const courierData = {
-            name: this.formData.name,
-            phone: this.formData.phone,
-            idCard: this.formData.idCard,
-            province: this.formData.region[0],
-            city: this.formData.region[1],
-            district: this.formData.region[2],
-            address: this.formData.address,
-            vehicle: this.formData.vehicle,
-            idCardFrontUrl: idCardUrls.idCardFront,
-            idCardBackUrl: idCardUrls.idCardBack
-          };
-          
-          // 调用API提交申请
-          return applyCourier(courierData);
-        })
+      // 从本地存储获取用户ID
+      const userInfo = uni.getStorageSync('userInfo');
+      if (!userInfo || !userInfo.id) {
+        uni.hideLoading();
+        uni.showToast({
+          title: '请先登录',
+          icon: 'none'
+        });
+        this.submitting = false;
+        return;
+      }
+      
+      // 准备提交的数据
+      const courierData = {
+        userId: userInfo.id, // 添加用户ID
+        name: this.formData.name,
+        phone: this.formData.phone,
+        idCard: this.formData.idCard,
+        province: this.formData.region[0],
+        city: this.formData.region[1],
+        district: this.formData.region[2],
+        address: this.formData.address,
+        vehicle: this.formData.vehicle,
+        // 直接使用本地临时文件路径的文件名部分
+        idCardFront: this.formData.idCardFront ? this.getFileNameFromPath(this.formData.idCardFront) : '',
+        idCardBack: this.formData.idCardBack ? this.getFileNameFromPath(this.formData.idCardBack) : '',
+        // 为毕设添加其他必要字段
+        serviceArea: `${this.formData.region[0]} ${this.formData.region[1]} ${this.formData.region[2]}`,
+        workStartTime: '08:00',
+        workEndTime: '18:00',
+        introduction: '我是一名负责任的快递员，期待为乡村地区提供优质的物流服务。'
+      };
+      
+      console.log('提交申请数据:', courierData);
+      
+      // 调用API提交申请
+      applyCourier(courierData)
         .then(res => {
+          console.log('申请提交响应:', res);
           if (res.code === 200) {
             uni.hideLoading();
             uni.showModal({
@@ -525,12 +461,23 @@ export default {
           uni.hideLoading();
           uni.showToast({
             title: err.message || '提交失败，请重试',
-            icon: 'none'
+            icon: 'none',
+            duration: 3000
           });
         })
         .finally(() => {
           this.submitting = false;
         });
+    },
+    
+    // 从文件路径中提取文件名
+    getFileNameFromPath(path) {
+      if (!path) return '';
+      // 移除路径中的参数部分
+      const cleanPath = path.split('?')[0];
+      // 取最后一部分作为文件名
+      const parts = cleanPath.split('/');
+      return parts[parts.length - 1] || '临时文件.png';
     }
   }
 };

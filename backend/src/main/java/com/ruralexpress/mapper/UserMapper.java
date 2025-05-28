@@ -25,4 +25,10 @@ public interface UserMapper extends BaseMapper<User> {
             "OR nickname LIKE CONCAT('%', #{keyword}, '%') " +
             "OR real_name LIKE CONCAT('%', #{keyword}, '%')")
     List<Long> findUserIdsByKeyword(@Param("keyword") String keyword);
+
+    /**
+     * 查找所有管理员用户ID
+     */
+    @Select("SELECT id FROM t_user WHERE user_type = 2")
+    List<Long> findAdminUserIds();
 } 

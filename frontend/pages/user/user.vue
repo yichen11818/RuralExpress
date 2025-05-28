@@ -68,6 +68,12 @@
           <text class="menu-name">个人资料</text>
           <uni-icons type="right" size="16" color="#ccc"></uni-icons>
         </view>
+        <view class="menu-item" @click="navigateTo('/pages/user/messages')">
+          <uni-icons type="notification" size="20" color="#3cc51f"></uni-icons>
+          <text class="menu-name">消息中心</text>
+          <view class="badge" v-if="unreadCount > 0">{{ unreadCount > 99 ? '99+' : unreadCount }}</view>
+          <uni-icons type="right" size="16" color="#ccc"></uni-icons>
+        </view>
         <view class="menu-item" @click="navigateTo('/pages/user/address')">
           <uni-icons type="location" size="20" color="#3cc51f"></uni-icons>
           <text class="menu-name">收货地址</text>
@@ -135,11 +141,13 @@
 
 <script>
 import { getUserInfo, logout, isLoggedIn } from '@/api/auth';
+import { getUnreadMessageCount } from '@/api/message';
 
 export default {
   data() {
     return {
-      userInfo: {}
+      userInfo: {},
+      unreadCount: 0
     };
   },
   
@@ -154,6 +162,9 @@ export default {
     
     // 获取用户信息
     this.userInfo = getUserInfo() || {};
+    
+    // 获取未读消息数量
+    this.getUnreadCount();
     
     // 添加调试日志
     console.log('当前用户信息:', this.userInfo);
@@ -190,6 +201,19 @@ export default {
             logout();
           }
         }
+      });
+    },
+    
+    // 获取未读消息数量
+    getUnreadCount() {
+      getUnreadMessageCount().then(res => {
+        if (res.code === 200) {
+          this.unreadCount = res.data || 0;
+        }
+      }).catch(err => {
+        console.error('获取未读消息数量失败', err);
+        // 设置默认值为0，避免UI显示错误
+        this.unreadCount = 0;
       });
     }
   }
@@ -330,5 +354,14 @@ export default {
   width: 25rpx;
   height: 25rpx;
   filter: brightness(0) saturate(100%) invert(55%) sepia(87%) saturate(1206%) hue-rotate(334deg) brightness(101%) contrast(103%);
+}
+
+.badge {
+  background-color: #ff5a5f;
+  color: #fff;
+  font-size: 20rpx;
+  padding: 2rpx 6rpx;
+  border-radius: 10rpx;
+  margin-left: 10rpx;
 }
 </style> 

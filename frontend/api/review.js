@@ -10,7 +10,7 @@ import request from '@/utils/request';
  * @returns {Promise} 评价列表
  */
 export function getCourierReviews(courierId, params = {}) {
-  return request.get(`/api/review/courier/${courierId}`, { params });
+  return request.get(`/review/courier/${courierId}`, { params });
 }
 
 /**
@@ -19,7 +19,7 @@ export function getCourierReviews(courierId, params = {}) {
  * @returns {Promise} 提交结果
  */
 export function submitReview(data) {
-  return request.post('/api/review', data);
+  return request.post('/review', data);
 }
 
 /**
@@ -29,7 +29,7 @@ export function submitReview(data) {
  * @returns {Promise} 回复结果
  */
 export function replyToReview(reviewId, reply) {
-  return request.post(`/api/review/${reviewId}/reply`, { reply });
+  return request.post(`/review/${reviewId}/reply`, { reply });
 }
 
 /**
@@ -38,5 +38,5 @@ export function replyToReview(reviewId, reply) {
  * @returns {Promise} 评价列表
  */
 export function getUserReviews(params = {}) {
-  return request.get('/api/review/user', { params });
+  return request.get('/review/user', { params });
 } 

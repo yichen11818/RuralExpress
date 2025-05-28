@@ -31,6 +31,19 @@ export function getUserInfo() {
 }
 
 /**
+ * 获取用户令牌
+ * @returns {string} 用户令牌
+ */
+export function getToken() {
+  try {
+    return uni.getStorageSync('token') || '';
+  } catch (e) {
+    console.error('获取用户令牌失败', e);
+    return '';
+  }
+}
+
+/**
  * 保存登录状态
  * @param {string} token 令牌
  * @param {object} userInfo 用户信息
@@ -78,4 +91,14 @@ export function checkLogin(redirect = true) {
   }
   
   return loggedIn;
+}
+
+/**
+ * 退出登录
+ */
+export function logout() {
+  clearLoginState();
+  uni.reLaunch({
+    url: '/pages/login/login'
+  });
 } 

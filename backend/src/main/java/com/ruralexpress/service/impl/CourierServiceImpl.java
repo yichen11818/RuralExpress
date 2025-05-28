@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.ruralexpress.dto.CourierDTO;
+import com.ruralexpress.service.MessageService;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -42,6 +43,9 @@ public class CourierServiceImpl implements CourierService {
     @Autowired
     private UserMapper userMapper;
 
+    @Autowired
+    private MessageService messageService;
+
     /**
      * 申请成为快递员
      */
@@ -62,10 +66,23 @@ public class CourierServiceImpl implements CourierService {
             throw new IllegalArgumentException("您已经申请过快递员");
         }
         
+        // 生成临时文件URL（用于毕设演示）
+        String idCardFrontUrl = idCardFront;
+        String idCardBackUrl = idCardBack;
+        
+        // 如果提供的是文件名而非完整URL，则构造一个模拟的URL
+        if (idCardFront != null && !idCardFront.startsWith("http")) {
+            idCardFrontUrl = "http://localhost:8080/mock-uploads/" + idCardFront;
+        }
+        
+        if (idCardBack != null && !idCardBack.startsWith("http")) {
+            idCardBackUrl = "http://localhost:8080/mock-uploads/" + idCardBack;
+        }
+        
         // 设置快递员信息
         courier.setUserId(userId);
-        courier.setIdCardFront(idCardFront);
-        courier.setIdCardBack(idCardBack);
+        courier.setIdCardFront(idCardFrontUrl);
+        courier.setIdCardBack(idCardBackUrl);
         courier.setAuditStatus(0); // 待审核
         courier.setServiceStatus(0); // 休息中
         courier.setRating(new BigDecimal("5.0")); // 初始评分为5分
@@ -80,6 +97,10 @@ public class CourierServiceImpl implements CourierService {
         // 更新用户类型为快递员
         user.setUserType(1); // 快递员
         userMapper.updateById(user);
+        
+        // 发送申请消息给管理员
+        String userName = user.getRealName() != null ? user.getRealName() : user.getNickname();
+        messageService.sendCourierApplicationMessage(courier.getId(), userId, userName);
         
         return courier.getId();
     }

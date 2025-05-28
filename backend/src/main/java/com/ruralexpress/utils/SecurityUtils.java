@@ -2,6 +2,7 @@ package com.ruralexpress.utils;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 
 /**
  * 安全工具类
@@ -14,17 +15,9 @@ public class SecurityUtils {
      */
     public static Long getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.isAuthenticated()) {
-            Object principal = authentication.getPrincipal();
-            if (principal instanceof org.springframework.security.core.userdetails.User) {
-                // 从UserDetails中获取用户名（实际上是用户ID字符串）
-                String username = ((org.springframework.security.core.userdetails.User) principal).getUsername();
-                try {
-                    return Long.parseLong(username);
-                } catch (NumberFormatException e) {
-                    return null;
-                }
-            }
+        if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {
+            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+            return Long.parseLong(userDetails.getUsername());
         }
         return null;
     }
@@ -62,5 +55,15 @@ public class SecurityUtils {
             return authentication.getName();
         }
         return null;
+    }
+
+    /**
+     * 判断当前用户是否为管理员
+     */
+    public static boolean isAdmin() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null && 
+               authentication.getAuthorities().stream()
+                   .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
     }
 } 

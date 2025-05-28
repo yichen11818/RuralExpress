@@ -2,6 +2,7 @@
  * 快递员相关的API服务
  */
 import request from '@/utils/request';
+import { getToken } from '@/utils/auth';
 
 /**
  * 申请成为快递员
@@ -9,7 +10,16 @@ import request from '@/utils/request';
  * @returns {Promise} 申请结果
  */
 export function applyCourier(data) {
-  return request.post('/api/courier/apply', data);
+  console.log('调用快递员申请API:', data);
+  return request.post('/courier/apply', data)
+    .then(res => {
+      console.log('快递员申请API响应:', res);
+      return res;
+    })
+    .catch(err => {
+      console.error('快递员申请API错误:', err);
+      throw err;
+    });
 }   
 
 /**
@@ -18,7 +28,7 @@ export function applyCourier(data) {
  * @returns {Promise} 快递员信息
  */
 export function getCourierInfo(id) {
-  return request.get(`/api/courier/${id}`);
+  return request.get(`/courier/${id}`);
 }
 
 /**
@@ -27,7 +37,7 @@ export function getCourierInfo(id) {
  * @returns {Promise} 快递员信息
  */
 export function getCourierByUserId(userId) {
-  return request.get(`/api/courier/user/${userId}`);
+  return request.get(`/courier/user/${userId}`);
 }
 
 /**
@@ -37,7 +47,7 @@ export function getCourierByUserId(userId) {
  * @returns {Promise} 更新结果
  */
 export function updateCourier(id, data) {
-  return request.put(`/api/courier/${id}`, data);
+  return request.put(`/courier/${id}`, data);
 }
 
 /**
@@ -47,7 +57,7 @@ export function updateCourier(id, data) {
  * @returns {Promise} 更新结果
  */
 export function updateServiceStatus(id, status) {
-  return request.put(`/api/courier/${id}/status?status=${status}`);
+  return request.put(`/courier/${id}/status?status=${status}`);
 }
 
 /**
@@ -58,7 +68,7 @@ export function updateServiceStatus(id, status) {
  * @returns {Promise} 快递员列表
  */
 export function getNearby(longitude, latitude, distance = 5) {
-  return request.get(`/api/courier/nearby?longitude=${longitude}&latitude=${latitude}&distance=${distance}`);
+  return request.get(`/courier/nearby?longitude=${longitude}&latitude=${latitude}&distance=${distance}`);
 }
 
 /**
@@ -67,7 +77,7 @@ export function getNearby(longitude, latitude, distance = 5) {
  * @returns {Promise} 快递员列表
  */
 export function list(params) {
-  return request.get('/api/courier/list', { params });
+  return request.get('/courier/list', { params });
 }
 
 /**
@@ -90,7 +100,7 @@ export function formatRating(score, count = 0) {
  * @returns {Promise} 标签列表
  */
 export function getCourierTags(courierId) {
-  return request.get(`/api/courier/tags?courierId=${courierId}`);
+  return request.get(`/courier/tags?courierId=${courierId}`);
 }
 
 /**
@@ -104,4 +114,15 @@ export function formatWorkTime(startTime, endTime) {
     return '工作时间未设置';
   }
   return `${startTime} - ${endTime}`;
+}
+
+/**
+ * 审核快递员申请
+ * @param {Number} courierId 快递员ID
+ * @param {Number} auditStatus 审核状态(1-通过,2-拒绝)
+ * @param {String} auditRemark 审核备注
+ * @returns {Promise} 审核结果
+ */
+export function auditCourier(courierId, auditStatus, auditRemark = '') {
+  return request.put(`/courier/${courierId}/audit?status=${auditStatus}&reason=${auditRemark}`);
 } 

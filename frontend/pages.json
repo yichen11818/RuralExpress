@@ -88,6 +88,12 @@
       }
     },
     {
+      "path": "pages/user/messages",
+      "style": {
+        "navigationBarTitleText": "消息中心"
+      }
+    },
+    {
       "path": "pages/order/tracking-list",
       "style": {
         "navigationBarTitleText": "物流追踪列表",
